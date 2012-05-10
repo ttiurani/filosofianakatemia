@@ -223,9 +223,51 @@ span.field-label { /* The inline field label used by the Fences module */
 #footer {
 }
 
+
 /*
  * Page bottom
  */
 
 .region-bottom { /* Wrapper for any blocks placed in the page bottom region */
 }
+
+/*
+ * Front Page
+ */
+body.front{
+  background-color: #eee;
+  background-image: none;
+}
+
+.menu{
+  text-transform: uppercase;
+}
+
+/**
+ * Settings for the active menu item
+ */
+.menu .active{
+  font-size: 2em;
+}
+
+#block-system-main-menu .menu, #block-system-main-menu .leaf {
+  list-style-type: none;
+  list-style-image: none;
+  margin-left: 0;
+  padding-left: 0;
+} 
+
+li.active-trail {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+/*
+ * Koulutus Page
+ */
+.page-node-5{
+  background-color: #999;
+  background-image: none;
+}
+
+

@@ -47,6 +47,7 @@
  */
 
 .node-page { /* Page content node */
+  padding-left: 5em;
 }
 
 .node-article { /* Article content node */

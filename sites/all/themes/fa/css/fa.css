@@ -1,0 +1,14 @@
+/**
+ * @file
+ * Filosofian Akatemia specific div's and their styling
+ */
+
+#fa-address {
+float:left;
+}
+
+#fa-customers {
+  float: left;
+  background-color: red;
+  padding-left: 5em;
+}

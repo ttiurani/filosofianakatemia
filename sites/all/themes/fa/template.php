@@ -148,7 +148,10 @@ function fa_preprocess_html(&$variables, $hook) {
  */
 /* -- Delete this line if you want to use this function
 function fa_preprocess_page(&$variables, $hook) {
-  $variables['sample_variable'] = t('Lorem ipsum.');
+	if ($variables['is_front']){
+		menu_set_active_item('<front>');
+		//menu_execute_active_handler('<front>');
+	}
 }
 // */
 
