@@ -257,10 +257,12 @@ body.front{
   padding-left: 0;
 } 
 
-li.active-trail {
+.menu li.active-trail {
   margin-top: 12px;
   margin-bottom: 12px;
 }
+
+a {text-decoration:none}
 
 /*
  * Koulutus Page
