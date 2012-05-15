@@ -13,8 +13,9 @@
  */
 
 body {
-  margin: 0;
+  margin-top: 3em;
   padding: 0;
+  font-family: 'ITC Slimbach Std';
 }
 
 #page {
@@ -231,22 +232,23 @@ span.field-label { /* The inline field label used by the Fences module */
 .region-bottom { /* Wrapper for any blocks placed in the page bottom region */
 }
 
-/*
- * Front Page
- */
-body.front{
-  background-color: #eee;
-  background-image: none;
+.title{
+  font-family:Gotham;
+  margin-top: 0px;
+  padding-top: 0px;
 }
 
 .menu{
   text-transform: uppercase;
+  font-family:Gotham;  
 }
 
 /**
  * Settings for the active menu item
  */
-.menu .active{
+.menu a.active-trail{
+  font-family: Gotham;
+  font-weight: bold;
   font-size: 2em;
 }
 
@@ -262,14 +264,11 @@ body.front{
   margin-bottom: 12px;
 }
 
+.menu .menu { display:none }
+
 a {text-decoration:none}
 
-/*
- * Koulutus Page
- */
-.page-node-5{
-  background-color: #999;
-  background-image: none;
+.node-title, .title{
+	display:none;
 }
-
 

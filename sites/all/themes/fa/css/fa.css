@@ -4,11 +4,43 @@
  */
 
 #fa-address {
-float:left;
+  font-size: 12px;
+  float:left;
 }
 
 #fa-customers {
+  font-size: 12px;
   float: left;
-  background-color: red;
-  padding-left: 5em;
+  padding-left: 4.2em;
 }
+
+#fa-some {
+  font-family:Gotham;
+}
+
+#fa-frontheading {
+  font-family:Gotham;
+  font-weight:bold;
+  font-size: 25px;
+}
+
+b.fa-title{
+  font-family:Gotham;
+  font-weight:bold;
+}
+
+/*
+ * Front Page
+ */
+body.front{
+  background-image: none;
+}
+
+/*
+ * Koulutus Page
+ */
+.page-node-5{
+  background-image: none;
+}
+
+
