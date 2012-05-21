@@ -142,6 +142,7 @@
           // "Main menu" on your sub-theme's settings form, deleting this PHP
           // code block, and, instead, using the "Menu block" module.
           // @see http://drupal.org/project/menu_block
+
           print theme('links__system_main_menu', array(
             'links' => $main_menu,
             'attributes' => array(

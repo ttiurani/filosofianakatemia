@@ -5,5 +5,8 @@ sites/*/settings*.php
 sites/*/files
 sites/*/private
 
+# Ignore devel module
+sites/*/modules/devel
+
 # Ignore old site
 a

@@ -1,0 +1,6 @@
+name = Menu Block Hide Inactive
+description = Hides all parent level inactive menu items and adds an "Up" link. 
+core = 7.x
+dependencies[] = menu_block
+
+files[] = menu_block_hide.module

@@ -222,8 +222,9 @@ span.field-label { /* The inline field label used by the Fences module */
  */
 
 #footer {
+	border-top: medium;
+	border-color: black;
 }
-
 
 /*
  * Page bottom
@@ -252,19 +253,17 @@ span.field-label { /* The inline field label used by the Fences module */
   font-size: 30px;
 }
 
-#block-system-main-menu .menu, #block-system-main-menu .leaf {
+#block-menu-block-1 .menu, #block-menu-block-1 .leaf {
   list-style-type: none;
   list-style-image: none;
   margin-left: 0;
   padding-left: 0;
 } 
 
-.menu li.active-trail {
+.menu li.active {
   margin-top: 12px;
   margin-bottom: 12px;
 }
-
-.menu .menu { display:none }
 
 a {text-decoration:none}
 
