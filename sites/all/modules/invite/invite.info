@@ -1,0 +1,15 @@
+name = Invite
+description = Allows your users to send and track invitations to join your site.
+core = 7.x
+package = Invite
+dependencies[] = token
+files[] = invite.module
+files[] = invite.admin.inc
+files[] = invite.pages.inc
+files[] = invite.tokens.inc
+files[] = invite.install
+configure = admin/config/people/invite
+
+version = "7.x-2.1-beta2-fa"
+core = "7.x"
+project = "invite"
