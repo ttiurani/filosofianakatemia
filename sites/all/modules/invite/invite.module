@@ -99,6 +99,10 @@ function invite_permission() {
       'title' => t('Send mass invitations'),
       'description' => t('Send invitations to multiple recipients.'),
     ),
+    'assign invitation roles' => array(
+  	  'title' => t('Assign roles to invitations'),
+  	  'description' => t('Assign roles to invitations.'),
+    ),
     'track invitations' => array(
       'title' => t('Track invitations'),
       'description' => t('Track sent invitations.'),
@@ -460,7 +464,7 @@ function invite_load($code) {
       ->condition('reg_code', $code)
       ->execute()
       ->fetchObject();
-
+    
     if ($invite) {
       $invite->inviter = user_load($invite->uid);
       $invite->data = unserialize($invite->data);
@@ -1059,6 +1063,27 @@ function invite_page_form($remaining_invites, $edit = array()) {
       '#value' => $edit['email'],
     );
   }
+  
+  // Specify roles if permitted
+  if (!$edit && user_access('assign invitation roles')){
+
+    $selected_roles = array();    
+    $roles = user_roles(TRUE);
+    
+    // Need to unset all the target roles that are assigned automatically:
+    // the default and role specific. 
+    unset($roles[variable_get('invite_target_role_default', DRUPAL_AUTHENTICATED_RID)]);
+    foreach($user->roles as $rid => $role) {
+      unset($roles[variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID)]);
+    }
+    $form['invite_roles'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Roles'),
+        '#default_value' => $selected_roles,
+        '#options' => $roles,
+        '#disabled' => FALSE,
+    );
+  }
 
   // Message subject.
   if ($edit && !empty($edit['data']['subject'])) {
@@ -1257,12 +1282,10 @@ function invite_form_submit($form, &$form_state) {
     // Create or load the invite object.
     if (!empty($form_state['values']['reg_code'])) {
       $invite = invite_load($form_state['values']['reg_code']);
-
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
     }
     else {
       $invite = invite_create();
-
       $invite->email = $email;
     }
 
@@ -1270,13 +1293,19 @@ function invite_form_submit($form, &$form_state) {
 
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
+      // Update the role mappings
+      $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array(':iid' => $invite->iid));
+      if (isset($form_state['values']['invite_roles'])) {
+        $active_roles = array_filter($form_state['values']['invite_roles']);
+        foreach($active_roles as $rid => $role) {
+          $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array(':iid' => $invite->iid, 'rid' => $rid));
+        }
+      }
       $processed_invites[] = $invite;
     }
     else {
       $failed_emails[] = $email;
     }
-
-
   }
 
   // Store failed e-mails for re-display.

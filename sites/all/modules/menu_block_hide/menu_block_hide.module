@@ -90,6 +90,7 @@ function menu_block_hide_block_info() {
 * Prepares the contents of the block.
 */
 function menu_block_hide_block_view($delta = '') {
+  $block = array();
   switch($delta){
     case 'menu_block_hide':
       if(user_access('access content')){

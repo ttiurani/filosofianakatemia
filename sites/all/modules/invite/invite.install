@@ -112,29 +112,29 @@ function invite_schema() {
       'uid_invitee' => array('uid', 'invitee'),
     )
   );
-  
+
   $schema['invite_roles'] = array(
-  		'description' => t('Maps invites to roles.'),
-  		'fields' => array(
-  					'iid' => array(
-  					    'type' => 'int',
-	        			'unsigned' => TRUE,
-	        			'not null' => TRUE,
-  						'default' => 0,
-  						'description' => 'Primary Key: {invite}.iid for invite.',
-      				),
-  					'rid' => array(
-  						'type' => 'int',
-  						'unsigned' => TRUE,
-  						'not null' => TRUE,
-  						'default' => 0,
-  						'description' => t('Primary Key: {role}.rid for role.'),
-  					),
-  		),
-  		'primary key' => array('iid', 'rid'),
-  		'indexes' => array(
-  				'rid' => array('rid'),
-  		),
+      'description' => t('Maps invites to roles.'),
+      'fields' => array(
+          'iid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {invite}.iid for invite.'),
+          ),
+          'rid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {role}.rid for role.'),
+          ),
+      ),
+      'primary key' => array('iid', 'rid'),
+      'indexes' => array(
+          'rid' => array('rid'),
+      ),
   );
 
   return $schema;

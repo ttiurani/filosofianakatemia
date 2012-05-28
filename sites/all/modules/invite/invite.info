@@ -10,6 +10,9 @@ files[] = invite.tokens.inc
 files[] = invite.install
 configure = admin/config/people/invite
 
-version = "7.x-2.1-beta2-fa"
+; Information added by drupal.org packaging script on 2011-12-05
+version = "7.x-2.1-beta2"
 core = "7.x"
 project = "invite"
+datestamp = "1323057641"
+
