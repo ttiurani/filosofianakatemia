@@ -122,7 +122,7 @@ function invite_accept($invite) {
         break;
 
       case INVITE_USED:
-        drupal_set_message(t('This invitation has already been used.'));
+        drupal_set_message(t('This invitation has already been used.'), 'error');
         break;
 
       case INVITE_EXPIRED:
@@ -182,4 +182,27 @@ function theme_invite_user_overview($variables) {
   }
 
   return $output;
+}
+
+/**
+ * Menu callback; Retrieve a JSON object containing autocomplete suggestions for existing users.
+ */
+function invite_user_autocomplete($string = '') {
+  $matches = array();
+  if ($string) {
+    $result = db_select('users')
+    	->fields('users', array('name', 'mail'))
+    	->condition(
+    		db_or()
+    		->condition('name', db_like($string) . '%', 'LIKE')
+    		->condition('mail', db_like($string) . '%', 'LIKE')
+    	  )
+    	->range(0, 10)
+      ->execute();
+    foreach ($result as $account) {
+      $matches[$account->name] = check_plain($account->name.' ('.$account->mail.')');
+    }
+  }
+
+  drupal_json_output($matches);
 }

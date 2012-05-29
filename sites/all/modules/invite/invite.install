@@ -462,7 +462,9 @@ function invite_update_7200() {
       'invite' => 'iid',
     )
   );
-  db_add_field('invite', 'iid', $spec, $new_keys);
+  if (!db_field_exists('invite', 'iid')) {
+    db_add_field('invite', 'iid', $spec, $new_keys);
+  }
 }
 
 /**

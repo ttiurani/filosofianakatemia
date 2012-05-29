@@ -125,6 +125,12 @@ function invite_settings() {
     '#required' => TRUE,
     '#description' => t('Use the syntax [token] if you want to insert a replacement pattern.'),
   );
+  $form['email']['invite_mail_template_editable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Editable mail template'),
+    '#description' => t('Choose whether users should be able to edit the mail template or just enter a message that can then be embedded as a token. If this option is unchecked, be sure to include [invite:invite-message] in the mail template.'),
+    '#default_value' => variable_get('invite_mail_template_editable', TRUE),
+  );
   $form['email']['token_help'] = array(
     '#title' => t('Replacement patterns'),
     '#type' => 'fieldset',
@@ -387,13 +393,16 @@ function invite_admin_details_filter_form($form, &$form_state, $uid, $filter) {
     '#prefix' => '<div class="container-inline">',
     '#suffix' => '</div>',
   );
+
   $form['filter']['filter'] = array(
     '#markup' => check_plain($filter),
   );
+
   $form['filter']['op'] = array(
     '#type' => 'button',
     '#value' => t('Clear'),
     '#prefix' => ' ',
   );
+
   return $form;
 }

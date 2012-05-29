@@ -195,6 +195,15 @@ function invite_menu() {
     'file' => 'invite.pages.inc',
   );
 
+  $items['invite/invite_user_autocomplete'] = array(
+    'title' => 'Invite User autocomplete',
+    'page callback' => 'invite_user_autocomplete',
+    'access callback' => 'user_access',
+    'access arguments' => array('access user profiles'),
+    'type' => MENU_CALLBACK,
+    'file' => 'invite.pages.inc',
+  );
+
   // User profile tabs
   $items['user/%user/invites'] = array(
     'title' => 'Invitations',
@@ -464,7 +473,7 @@ function invite_load($code) {
       ->condition('reg_code', $code)
       ->execute()
       ->fetchObject();
-    
+
     if ($invite) {
       $invite->inviter = user_load($invite->uid);
       $invite->data = unserialize($invite->data);
@@ -769,6 +778,14 @@ function invite_target_roles($invite, $account) {
     if ($target != DRUPAL_AUTHENTICATED_RID) {
       $targets[$target] = $target;
     }
+  }
+  // Map to explicitly set roles, if any
+  $result = db_query("SELECT DISTINCT r.rid FROM {invite_roles} ir " 
+                     ."INNER JOIN {role} r ON (ir.rid = r.rid) "
+                     ."INNER JOIN {invite} i ON (ir.iid = i.iid) " 
+                     ."WHERE i.iid = :iid", array('iid' => $invite->iid));
+  foreach($result as $role){
+    $targets[$role->rid] = $role->rid;
   }
 
   invite_invoke_all('invite_target_roles', $targets, $invite, $account);
@@ -1118,12 +1135,16 @@ function invite_page_form($remaining_invites, $edit = array()) {
     );
   }
 
+  $default_message = variable_get('invite_mail_template_editable', TRUE) ? token_replace(_invite_get_mail_template(), invite_token_data()) : '';
   $form['message'] = array(
     '#title' => t('Message'),
     '#type' => 'textarea',
-    '#default_value' => ($edit && !empty($edit['data']['message'])) ? $edit['data']['message'] : token_replace(_invite_get_mail_template(), invite_token_data()),
+    '#default_value' => ($edit && !empty($edit['data']['message'])) ? $edit['data']['message'] : $default_message,
     '#description' => t('This is the message the invitation email will contain. The <i>[invite:join-link]</i> token in the message will be replaced by the registration link the recipient can use to join. Make sure this token is always included in the message.'),
   );
+  if (!variable_get('invite_mail_template_editable', TRUE)) {
+    $form['message']['#description'] = t('A personal message to be included in the invitation e-mail.');
+  }
 
   // Remaining invites.
   if ($remaining_invites != INVITE_UNLIMITED) {
@@ -1213,8 +1234,7 @@ function invite_form_validate($form, &$form_state) {
       if (count($failed_emails)) {
         $error = format_plural(count($failed_emails), 'The following recipient is already a member:', 'The following recipients are already members:') . '<br />';
         foreach ($failed_emails as $key => $email) {
-          $account = user_load_by_mail($email);
-          $failed_emails[$key] = theme('username', array('account' => $account)) . ' (' . check_plain($email) . ')';
+          $failed_emails[$key] = check_plain($email);
         }
         $error .= implode(', ', $failed_emails);
         drupal_set_message($error, 'error');
@@ -1282,14 +1302,24 @@ function invite_form_submit($form, &$form_state) {
     // Create or load the invite object.
     if (!empty($form_state['values']['reg_code'])) {
       $invite = invite_load($form_state['values']['reg_code']);
+
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
     }
     else {
       $invite = invite_create();
+
       $invite->email = $email;
     }
 
-    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => token_replace($form_state['values']['message'], invite_token_data($invite)));
+    $invite->data = array('subject' => trim($form_state['values']['subject']), 'message' => '');
+    if (variable_get('invite_mail_template_editable', TRUE)) {
+      $message = $form_state['values']['message'];
+    }
+    else {
+      $message = _invite_get_mail_template();
+      $invite->data['user_message'] = $form_state['values']['message'];
+    }
+    $invite->data['message'] = token_replace($message, invite_token_data($invite));
 
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
@@ -1306,6 +1336,8 @@ function invite_form_submit($form, &$form_state) {
     else {
       $failed_emails[] = $email;
     }
+
+
   }
 
   // Store failed e-mails for re-display.
@@ -1585,6 +1617,10 @@ function _invite_get_mail_template() {
 To become a member of [site:name], click the link below or paste it into the address bar of your browser.
 
 [invite:join-link]
+
+The inviter's message to you:
+
+[invite:invite-message]
 ");
 
   return variable_get('invite_default_mail_template', $template);
@@ -1693,4 +1729,72 @@ function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
   }
 
   return $return;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function invite_form_user_profile_form_alter(&$form, &$form_state){
+  $account = $form['#user'];
+
+  if (user_access('administer invitations')) {
+    $invite = db_select('invite', 'i')
+      ->fields('i')
+      ->condition('invitee', $account->uid)
+      ->execute()
+      ->fetchObject();
+
+    $default_value = '';
+    if(!empty($invite)) {
+      $inviter = user_load($invite->uid);
+      $default_value = $inviter->name;
+    }
+
+    $form['inviter'] = array(
+      '#type' => 'textfield',
+      '#size' => 120,
+      '#title' => t('Inviter'),
+      '#default_value' => $default_value,
+      '#description' => t('The username of the inviter. You can type the name or email to search.'),
+      '#element_validate' => array('invite_inviter_validate'),
+      '#autocomplete_path' => 'invite/invite_user_autocomplete',
+    );
+    if (!empty($default_value)) {
+      $form['inviter']['#disabled'] = TRUE;
+    }
+  }
+  $form['#submit'] = array('invite_user_form_submit');
+}
+
+/**
+ * Implements the validate function associated with user_profile_form.
+ */
+function invite_inviter_validate($element, &$form_state, $form) {
+  if (!empty($element['#value'])) {
+    $inviter = user_load_by_name($form_state['values']['inviter']);
+    if (empty($inviter)) {
+      form_set_error('inviter', t('An account with that email address does not exist.'));
+    } else {
+      $form_state['inviter_account'] = $inviter;
+    }
+  }
+}
+
+/**
+ * Implements the submit function associated with user_profile_form.
+ */
+function invite_user_form_submit($form, &$form_state) {
+  $account = $form['#user'];
+
+  if (empty($form['inviter']['#default_value']) && !empty($form_state['inviter_account'])) {
+    $inviter = $form_state['inviter_account'];
+    if(!empty($inviter->uid)) {
+      $invite = invite_create();
+      $invite->email = $account->mail;
+      $invite->uid = $inviter->uid;
+      $invite->invitee = $account->uid;
+      $invite->joined = REQUEST_TIME;
+      invite_save($invite);
+    }
+  }
 }
