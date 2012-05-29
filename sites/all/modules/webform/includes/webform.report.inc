@@ -412,6 +412,7 @@ function webform_results_download_form($form, &$form_state, $node) {
       'new' => t('Only new submissions since your last download'),
       'latest' => t('Only the latest'),
       'range' => t('All submissions starting from'),
+      'role' => t('All submissions from users with role'),
     ),
     '#default_value' => 'all',
   );
@@ -433,6 +434,10 @@ function webform_results_download_form($form, &$form_state, $node) {
     '#maxlength' => 8,
     '#default_value' => '',
     '#description' => '',
+  );
+  $form['range']['role'] = array(
+      '#type' => 'select',
+      '#options' => user_roles(TRUE),
   );
 
   // By default results are downloaded. User can override this value if
@@ -599,6 +604,12 @@ function theme_webform_results_download_range($variables) {
   $last_sid = $download_info['sid'] ? $download_info['sid'] : drupal_placeholder(t('none'));
   $element['range_type']['range']['#description'] = '(' . t('Use submission IDs for the range. Last downloaded end SID: !sid.', array('!sid' => $last_sid)) . ')';
 
+  // Render submissions by role option.
+  $element['role']['#attributes']['class'] = array('webform-set-active');
+  $element['range_type']['role']['#theme_wrappers'] = array('webform_inline_radio');
+  $element['range_type']['role']['#inline_element'] = t('Only submissions of users with role !role', array('!role' => drupal_render($element['role'])));
+  $element['range_type']['role']['#title'] = NULL;
+  
   return drupal_render_children($element);
 }
 
