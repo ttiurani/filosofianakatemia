@@ -509,6 +509,11 @@ function webform_results_download_range_validate($element, $form_state) {
         }
       }
       break;
+    case 'role':
+      if ($element['role']['#value'] == NULL || $element['role']['#value'] == '') {
+        form_error($element['role'], t('Role field is required.'));
+      }
+      break;
   }
 
 }
@@ -972,6 +977,14 @@ function webform_download_sids($nid, $range_options, $uid = NULL) {
         $query->condition('sid', $range_options['end'], '<=');
       }
       $query->orderBy('sid', 'ASC');
+      break;
+    case 'role':
+      // All From Users With Given Role
+      $query->innerJoin('users', 'u', 'ws.uid = u.uid');
+      $query->innerJoin('users_roles', 'ur', 'u.uid = ur.uid');
+      $query->innerJoin('role', 'r', 'ur.rid = r.rid');
+      $query->condition('r.rid', $range_options['role']);
+      $query->orderBy('ws.sid', 'ASC');
       break;
   }
 

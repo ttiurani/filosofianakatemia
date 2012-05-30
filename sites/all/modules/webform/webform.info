@@ -23,10 +23,3 @@ files[] = tests/components.test
 files[] = tests/permissions.test
 files[] = tests/submission.test
 files[] = tests/webform.test
-
-; Information added by drupal.org packaging script on 2012-05-13
-version = "7.x-3.18"
-core = "7.x"
-project = "webform"
-datestamp = "1336890411"
-
