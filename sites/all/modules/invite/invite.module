@@ -1324,7 +1324,7 @@ function invite_form_submit($form, &$form_state) {
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
       // Update the role mappings
-      $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array(':iid' => $invite->iid));
+      $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array('iid' => $invite->iid));
       if (isset($form_state['values']['invite_roles'])) {
         $active_roles = array_filter($form_state['values']['invite_roles']);
         foreach($active_roles as $rid => $role) {
