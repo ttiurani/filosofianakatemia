@@ -1,0 +1,50 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * MailChimp Import module install file.
+ * Creates table to store MailChimp campaign IDs against Drupal node IDs.
+ */
+
+function mailchimp_import_schema() {
+  $schema['mailchimp_import'] = array(
+    'description' => t('Table for MailChimp Import module, storing MailChimp campaign IDs against Drupal node IDs.'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The Drupal node ID for a campaign.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),
+      'cid' => array(
+        'description' => t('The MailChimp campaign ID for a campaign.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ), # fields
+    'primary key' => array('nid'),
+  ); # table mailchimp_import
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function mailchimp_import_uninstall() {
+  
+  // Remove variables.
+  variable_del('mailchimp_import_lists');
+  variable_del('mailchimp_import_campaign_status');
+  variable_del('mailchimp_import_input_format');
+  variable_del('mailchimp_import_nodetype');
+  variable_del('mailchimp_import_cron');
+  variable_del('mailchimp_import_extract_title');
+  variable_del('mailchimp_import_title_id');
+  variable_del('mailchimp_import_only_selected');
+  variable_del('mailchimp_import_content_id');
+  variable_del('mailchimp_import_cleanup_html');  
+}

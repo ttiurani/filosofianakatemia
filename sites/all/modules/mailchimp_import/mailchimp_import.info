@@ -1,0 +1,9 @@
+name = Mailchimp Import
+description = Imports Mailchimp campaigns as nodes.
+package = MailChimp
+core = 7.x
+dependencies[] = mailchimp
+
+files[] = mailchimp_import.install
+files[] = mailchimp_import.module
+files[] = mailchimp_import.inc

@@ -783,7 +783,7 @@ function invite_target_roles($invite, $account) {
   $result = db_query("SELECT DISTINCT r.rid FROM {invite_roles} ir " 
                      ."INNER JOIN {role} r ON (ir.rid = r.rid) "
                      ."INNER JOIN {invite} i ON (ir.iid = i.iid) " 
-                     ."WHERE i.iid = :iid", array('iid' => $invite->iid));
+                     ."WHERE i.iid = :iid", array(':iid' => $invite->iid));
   foreach($result as $role){
     $targets[$role->rid] = $role->rid;
   }
@@ -1324,11 +1324,11 @@ function invite_form_submit($form, &$form_state) {
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
       // Update the role mappings
-      $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array('iid' => $invite->iid));
+      $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array(':iid' => $invite->iid));
       if (isset($form_state['values']['invite_roles'])) {
         $active_roles = array_filter($form_state['values']['invite_roles']);
         foreach($active_roles as $rid => $role) {
-          $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array('iid' => $invite->iid, 'rid' => $rid));
+          $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array(':iid' => $invite->iid, ':rid' => $rid));
         }
       }
       $processed_invites[] = $invite;
