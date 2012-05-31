@@ -1328,7 +1328,7 @@ function invite_form_submit($form, &$form_state) {
       if (isset($form_state['values']['invite_roles'])) {
         $active_roles = array_filter($form_state['values']['invite_roles']);
         foreach($active_roles as $rid => $role) {
-          $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array(':iid' => $invite->iid, 'rid' => $rid));
+          $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array('iid' => $invite->iid, 'rid' => $rid));
         }
       }
       $processed_invites[] = $invite;
