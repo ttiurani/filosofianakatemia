@@ -55,18 +55,13 @@ function mailchimp_import_cron() {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implementation of hook_node_delete().
  *
  * Deletes from the mailchimp_import table on deletion of the imported node.
  * This means that when an imported newsletter node is deleted, it will be
  * re-imported as a new node next time the import runs.
  */
-function mailchimp_import_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-
-  switch ($op) {
-    case 'delete':
-      // Delete the record corresponding to this node from the mailchimp_import table.
-      db_query('DELETE FROM {mailchimp_import} WHERE nid = %d;', $node->nid);
-      break;
-  }
+function mailchimp_import_node_delete($node) {
+  // Delete the record corresponding to this node from the mailchimp_import table.
+  db_query('DELETE FROM {mailchimp_import} WHERE nid = :nid', array(':nid' => $node->nid));
 }

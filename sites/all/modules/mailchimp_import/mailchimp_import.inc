@@ -247,7 +247,6 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                 
                 // Check if title should be extracted
                 if (variable_get('mailchimp_import_extract_title', FALSE)){
-                  dpm('Extracting title');
                   $title = _mailchimp_import_extract_title($campaign_html, 
                       variable_get('mailchimp_import_title_id', 'mailchimp-import-title'));
                   if ($title != NULL){
@@ -263,9 +262,10 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                 }
                 
                 if ($campaign_html != NULL){
+                                    
                   // Strip out the HTML.
                   $campaign_html = mailchimp_import_strip_html($campaign_html, $input_format);
-  
+                                    
                   // Get the user object to assign as the author.
                   global $user;
   
@@ -274,14 +274,15 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                   $node->type = $nodetype;
                   $node->uid = $user->uid;
                   $node->title = $node_title;
-                  $node->body = $campaign_html;
-                  $node->format = $input_format;
+                  $node->language = LANGUAGE_NONE;
+                  $node->body[$node->language][0]['value']   = $campaign_html;
+                  $node->body[$node->language][0]['format']  = $input_format;;
                   $node->created = strtotime($campaign['send_time']); // The created date of the node will be set to the sent date of the campaign.
                   node_save($node);
   
                   // If there's a nid now, then we saved it.
                   if ($node->nid) {
-                  // Insert a record into the MailChimp Import table.
+                    // Insert a record into the MailChimp Import table.
                     db_query('INSERT INTO {mailchimp_import} (cid, nid) VALUES (:cid, :nid)', 
                         array(':cid' => $campaign['id'], ':nid' => $node->nid));
                     $counter++;
@@ -342,7 +343,7 @@ function _mailchimp_import_extract_title(&$html, $title_id) {
   $dom->preserveWhiteSpace = false;
   $dom->validateOnParse = true;
   $dom->strictErrorChecking = false;
-  $dom->loadHTML($html);
+  @$dom->loadHTML($html);
 
   // Try to find the title
   $title_element = $dom->getElementById($title_id);
@@ -351,11 +352,12 @@ function _mailchimp_import_extract_title(&$html, $title_id) {
     return NULL;
   }
   
-  $dom->removeChild($title_element);
+  $title = $title_element->nodeValue;
+  $title_element->parentNode->removeChild($title_element);
   $html = $dom->saveXML();
 
-  // Return XML representation of the selected element
-  return $title_element->nodeValue;
+  // Return string representation of the selected element
+  return trim($title_element->nodeValue);
 }
 
 /**
@@ -368,17 +370,15 @@ function _mailchimp_import_get_selected($html, $content_id) {
   $dom->preserveWhiteSpace = false;
   $dom->validateOnParse = true;
   $dom->strictErrorChecking = false;
-  $dom->recover = true;
-  $dom->loadHTML($html);
+  @$dom->loadHTML($html);
 
   // Find the selected div
   $selected_element = $dom->getElementById($content_id);
   if ($selected_element == NULL){
-    drupal_set_message(t('Could not find div with id "mailchimp-import"!'));
+    drupal_set_message(t('Could not find div with id "' . $content_id . '"'));
     return NULL;
   }
   
-  // Return XML representation of the selected element
   return $dom->saveXML($selected_element);
 }
 
