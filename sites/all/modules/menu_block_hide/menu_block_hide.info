@@ -1,5 +1,5 @@
 name = Menu Block Hide Inactive
-description = Hides all parent level inactive menu items and adds an "Up" link. 
+description = Hides all parent level inactive menu items. 
 core = 7.x
 dependencies[] = menu_block
 

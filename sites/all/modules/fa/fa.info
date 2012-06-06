@@ -1,0 +1,6 @@
+name = Filosofian Akatemia Theme Block
+description = Provides a new block which contains Filosofian Akatemia specific pictures 
+core = 7.x
+dependencies[] = menu_block
+
+files[] = fa.module

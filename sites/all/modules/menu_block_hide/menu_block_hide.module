@@ -30,7 +30,7 @@ function menu_block_hide_help($path, $arg) {
  * @param $config
  *   An array containing the configuration of the tree.
  */
-function menu_block_hide_menu_block_tree_alter($tree, $config) {
+function menu_block_hide_menu_block_tree_alter(&$tree, $config) {
 	
 	// First go through the entire tree to find out if something should be hidden
 	// i.e. if some child node is active
@@ -61,101 +61,12 @@ function menu_block_hide_menu_block_tree_alter($tree, $config) {
 /**
  * Hides inactive parents
  */
-function _hide_inactive_items($tree){
+function _hide_inactive_items(&$tree){
 	// Go through the tree and hide everything except the tree
-	foreach ($tree as $treenode){
+	foreach ($tree as &$treenode){
 		if (!$treenode['link']['in_active_trail']){
 		  $treenode['link']['hidden'] = TRUE;
-		  if ($treenode['link']['href'] == '<front>'){
-		  	$treenode['link']['external'] = FALSE;
-		  }
 		}
 	}
-}
-
-/**
- * Implements hook_block_info().
- */
-function menu_block_hide_block_info() {
-	$blocks['menu_block_hide'] = array(
-			'info' => t('Up one'), //The name that will appear in the block list.
-			'cache' => DRUPAL_CACHE_PER_ROLE, //Default
-	);
-	return $blocks;
-}
-
-/**
-* Implements hook_block_view().
-*
-* Prepares the contents of the block.
-*/
-function menu_block_hide_block_view($delta = '') {
-  $block = array();
-  switch($delta){
-    case 'menu_block_hide':
-      if(user_access('access content')){
-      	$config = menu_block_get_config($delta);
-      	$tree = menu_tree_build($config);
-
-      	if ($tree != NULL && isset($tree['content']) && isset($tree['content']['#content'])){
-      		$parentofactive = _find_parent_of_active($tree['content']['#content']);
-      		
-      		if (is_string($parentofactive)){
-      			$menubg = strtolower($parentofactive);
-      		}else{
-      			$menubg = strtolower($parentofactive['#title']);
-      		}	
-      		$block['content'] =
-      			'<div class="background-text"><img src="sites/all/themes/fa/images/menu-background-'
-      			. $menubg
-      			. '.png"/></div>';
-      		
-      		if (!is_string($parentofactive)){
-      			$options = array(
-      					'attributes' => array(
-      							'class' => array('up-one'),
-      							'id' => 'up-one',
-      							'alt' => $parentofactive['#title']),
-      					'html' => TRUE,
-      			);
-      			$block['content'] .= l(
-      					'<img src="sites/all/themes/fa/images/menu-up.png" />',
-      					$parentofactive['#href'],
-      					$options);
-      		}
-      	}
-      }
-  }
-  return $block;
-}
-
-/**
- * Recursively finds closest parent of active node
- * from list of parents, returns the title of the active
- * parent as string if parent is itself active.
- * @param unknown_type $parentnodes
- */
-function _find_parent_of_active($parentnodes) {
-	$parentofactive = NULL;
-	foreach($parentnodes as $parentnode){
-		if (isset($parentnode['#attributes']) &&
-				isset($parentnode['#attributes']['class'])){
-			if (in_array('active-trail', $parentnode['#attributes']['class'])){
-				if (in_array('active', $parentnode['#attributes']['class'])){
-					// Parent is itself active, return title
-					$parentofactive = $parentnode['#title'];
-					break;
-				}else{
-					// Parent is in active trail, but not active, see children
-					$parentofactive = _find_parent_of_active($parentnode['#below']);
-					if (is_string($parentofactive)){
-						// Found a parent of an active node!
-						$parentofactive = $parentnode; 
-						break;
-					}
-				}
-			}
-		}
-	}
-	return $parentofactive;
+	unset($treenode);
 }

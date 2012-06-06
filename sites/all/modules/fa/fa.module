@@ -1,0 +1,110 @@
+<?php
+/**
+* @file
+* A menu_block module extension for the Filosofian Akatemia theme.
+*/
+
+/**
+* Implements hook_help.
+*
+* Displays help and module information.
+*
+* @param path
+*   Which path of the site we're using to display help
+* @param arg
+*   Array that holds the current path as returned from arg() function
+*/
+function fa_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#fa":
+      return '<p>'.  t("Filosofian Akatemia theme module that extends menu_block") .'</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function fa_block_info() {
+  $blocks['fa'] = array(
+      'info' => t('Filosofian Akatemia'), //The name that will appear in the block list.
+      'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+  );
+  return $blocks;
+}
+
+/**
+* Implements hook_block_view().
+*
+* Prepares the contents of the block.
+*/
+function fa_block_view($delta = '') {
+  $block = array();
+  switch($delta){
+    case 'fa':
+      if(user_access('access content')){
+      	$config = menu_block_get_config($delta);
+      	$tree = menu_tree_build($config);
+
+      	if ($tree != NULL && isset($tree['content']) && isset($tree['content']['#content'])){
+      		$parentofactive = _find_parent_of_active($tree['content']['#content']);
+      		
+      		if (is_string($parentofactive)){
+      			$menubg = strtolower($parentofactive);
+      		}else{
+      			$menubg = strtolower($parentofactive['#title']);
+      		}	
+      		$block['content'] =
+      			'<div class="background-text"><img src="sites/all/themes/fa/images/menu-background-'
+      			. $menubg
+      			. '.png"/></div>';
+      		
+      		if (!is_string($parentofactive)){
+      			$options = array(
+      					'attributes' => array(
+      							'class' => array('up-one'),
+      							'id' => 'up-one',
+      							'alt' => $parentofactive['#title']),
+      					'html' => TRUE,
+      			);
+      			$block['content'] .= l(
+      					'<img src="sites/all/themes/fa/images/menu-up.png" />',
+      					$parentofactive['#href'],
+      					$options);
+      		}
+      	}
+      }
+  }
+  return $block;
+}
+
+/**
+ * Recursively finds closest parent of active node
+ * from list of parents, returns the title of the active
+ * parent as string if parent is itself active.
+ * @param unknown_type $parentnodes
+ */
+function _find_parent_of_active($parentnodes) {
+	$parentofactive = NULL;
+	foreach($parentnodes as $parentnode){
+		if (isset($parentnode['#attributes']) &&
+				isset($parentnode['#attributes']['class'])){
+			if (in_array('active-trail', $parentnode['#attributes']['class'])){
+				if (in_array('active', $parentnode['#attributes']['class'])){
+					// Parent is itself active, return title
+					$parentofactive = $parentnode['#title'];
+					break;
+				}else{
+					// Parent is in active trail, but not active, see children
+					$parentofactive = _find_parent_of_active($parentnode['#below']);
+					if (is_string($parentofactive)){
+						// Found a parent of an active node!
+						$parentofactive = $parentnode; 
+						break;
+					}
+				}
+			}
+		}
+	}
+	return $parentofactive;
+}
