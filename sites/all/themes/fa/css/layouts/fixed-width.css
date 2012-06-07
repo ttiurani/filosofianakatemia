@@ -35,7 +35,7 @@
 #footer {
   padding-left: 10px;
   padding-right: 10px;
-  border: 0 !important;
+  border: 0;
   word-wrap: break-word;
   _display: inline;
   _overflow: hidden;

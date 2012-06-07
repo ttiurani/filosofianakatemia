@@ -26,8 +26,12 @@ function fa_help($path, $arg) {
  * Implements hook_block_info().
  */
 function fa_block_info() {
-  $blocks['fa'] = array(
-      'info' => t('Filosofian Akatemia'), //The name that will appear in the block list.
+  $blocks['fa-bg'] = array(
+      'info' => t('Filosofian Akatemia Background Text'), //The name that will appear in the block list.
+      'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+  );
+  $blocks['fa-up'] = array(
+      'info' => t('Filosofian Akatemia Up One'), //The name that will appear in the block list.
       'cache' => DRUPAL_CACHE_PER_ROLE, //Default
   );
   return $blocks;
@@ -41,39 +45,54 @@ function fa_block_info() {
 function fa_block_view($delta = '') {
   $block = array();
   switch($delta){
-    case 'fa':
-      if(user_access('access content')){
+    case 'fa-bg':
+      if(!drupal_is_front_page() && user_access('access content')){
       	$config = menu_block_get_config($delta);
       	$tree = menu_tree_build($config);
 
       	if ($tree != NULL && isset($tree['content']) && isset($tree['content']['#content'])){
       		$parentofactive = _find_parent_of_active($tree['content']['#content']);
       		
+      		$bgdivid = 'fa-bg-';
       		if (is_string($parentofactive)){
-      			$menubg = strtolower($parentofactive);
+      			$menutext = strtolower($parentofactive);
+      			$bgdivid .= $menutext. '-menu';
       		}else{
-      			$menubg = strtolower($parentofactive['#title']);
-      		}	
-      		$block['content'] =
-      			'<div class="background-text"><img src="sites/all/themes/fa/images/menu-background-'
-      			. $menubg
-      			. '.png"/></div>';
-      		
-      		if (!is_string($parentofactive)){
-      			$options = array(
-      					'attributes' => array(
-      							'class' => array('up-one'),
-      							'id' => 'up-one',
-      							'alt' => $parentofactive['#title']),
-      					'html' => TRUE,
-      			);
-      			$block['content'] .= l(
-      					'<img src="sites/all/themes/fa/images/menu-up.png" />',
-      					$parentofactive['#href'],
-      					$options);
+      			$menutext = strtolower($parentofactive['#title']);
+      			$bgdivid .= $menutext;
       		}
+      		$block['content'] =
+      			'<div id="' . $bgdivid . '" class="fa-bg"><img src="sites/all/themes/fa/images/menu-background-'
+      			. $menutext
+      			. '.png"/></div>';      		
       	}
       }
+      break;
+    case 'fa-up':
+      if(user_access('access content')){
+        $config = menu_block_get_config($delta);
+        $tree = menu_tree_build($config);
+      
+        if ($tree != NULL && isset($tree['content']) && isset($tree['content']['#content'])){
+          $parentofactive = _find_parent_of_active($tree['content']['#content']);
+      
+          if (!is_string($parentofactive)){
+            $options = array(
+                'attributes' => array(
+                    'class' => array('up-one'),
+                    'id' => 'up-one',
+                    'alt' => $parentofactive['#title']),
+                'html' => TRUE,
+            );
+            $block['content'] = l(
+                '<img src="sites/all/themes/fa/images/menu-up.png" />',
+                $parentofactive['#href'],
+                $options);
+             
+          }
+        }
+      }
+      break;
   }
   return $block;
 }

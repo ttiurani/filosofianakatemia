@@ -24,6 +24,23 @@
   font-size: 25px;
 }
 
+/* Position background images for texts in the right place behind menu link */
+
+#fa-bg-ihmiset-menu {
+  position:absolute;
+  top:-135px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#fa-bg-ihmiset {
+  position:absolute;
+  top:-55px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+
 b.fa-title{
   font-family:Gotham;
   font-weight:bold;
@@ -32,8 +49,10 @@ b.fa-title{
 /*
  * Front Page
  */
-body.front{
-  background-image: none;
+
+body.front #page{
+  background-image: url('../images/fa-etusivu.png');
+  background-repeat: no-repeat;
 }
 
 /*
@@ -42,5 +61,4 @@ body.front{
 .page-node-5{
   background-image: none;
 }
-
 
