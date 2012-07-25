@@ -7,16 +7,12 @@
   font-size: 12px;
   float:left;
   padding-left: 52px;
-  margin-top: -10px;
-  margin-bottom: -10px;
 }
 
 #fa-customers {
   font-size: 12px;
   float: left;
   padding-left: 170px;
-  margin-top: -10px;
-  margin-bottom: -10px;
 }
 
 #fa-some {
@@ -44,70 +40,70 @@
 
 #fa-bg-blogi-menu {
   position:absolute;
-  top:105px;
+  top:110px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-blogi {
   position:absolute;
-  top: 70px;
+  top: 80px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-koulutus-menu {
   position:absolute;
-  top:130px;
+  top:140px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-koulutus {
   position:absolute;
-  top: 70px;
+  top: 80px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-tutkimus-menu {
   position:absolute;
-  top:150px;
+  top:160px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-tutkimus {
   position:absolute;
-  top: 70px;
+  top: 80px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-ihmiset-menu {
   position:absolute;
-  top:170px;
+  top:180px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-ihmiset {
   position:absolute;
-  top: 70px;
+  top: 80px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-lykeion-menu {
   position:absolute;
-  top:195px;
+  top:205px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-lykeion {
   position:absolute;
-  top: 70px;
+  top: 80px;
   z-index: -1;
   overflow: hidden;
 }
@@ -137,7 +133,7 @@ b.fa-title{
 .front #page{
   background-image: url('../images/front-background.png');
   background-repeat: no-repeat;
-  background-position: 0px -20px;
+  background-position: 0px -17px;
 }
 
 .front .node{

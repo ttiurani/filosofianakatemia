@@ -111,7 +111,6 @@
     <?php print render($page['header']); ?>
 
   </header>
-
   <div id="main">
 
     <div id="content" class="column" role="main">
@@ -173,11 +172,12 @@
         <?php print $sidebar_second; ?>
       </aside><!-- /.sidebars -->
     <?php endif; ?>
-
   </div><!-- /#main -->
   
   <?php print render($page['footer']); ?>
   
 </div><!-- /#page -->
-
-<?php print render($page['bottom']); ?>
+<div class="push"></div>
+</div><!-- /#page-wrapper from html.tpl.php-->
+<div class="sticky-footer">
+  <?php print render($page['bottom']); ?>
