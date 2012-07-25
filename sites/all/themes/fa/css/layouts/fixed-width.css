@@ -109,8 +109,12 @@
 }
 
 .sidebar-first .node {
-  margin-left: 80px;
+  margin-left: 160px;
   padding-right: 40px;
+}
+
+.front.sidebar-first .node {
+  margin-left: 80px;  
 }
 
 /*
