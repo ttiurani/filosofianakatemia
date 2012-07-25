@@ -7,15 +7,16 @@
  * ul.links, .pager, .more-link, etc.
  */
 
-
 /*
  * Body
  */
 
 body {
-  margin-top: 3em;
+  margin-top: 40px;
   padding: 0;
   font-family: 'ITC Slimbach Std';
+  font-size: 14px;
+  color: #606060;
 }
 
 #page {
@@ -39,16 +40,22 @@ body {
   color: #fff;
 }
 
+a {
+  color: #00c3ff;
+}
+
+
 /*
  * Header
  */
 
 #header {
+  padding-left: 52px;
 }
 
 #logo { /* Wrapping link for logo */
   float: left; /* LTR */
-  margin: 0;
+  margin-top: 0;
   padding: 0;
 }
 #logo img {
@@ -88,12 +95,13 @@ body {
  */
 
 #main {
+  margin-top: -12px;
+  height: 100%;
 }
 
 /*
  * Content
  */
-
 #content {
 }
 
@@ -222,8 +230,8 @@ span.field-label { /* The inline field label used by the Fences module */
  */
 
 #footer {
-  border-top: 1px solid blue;
-  border-bottom: 1px solid blue;
+  border-top: 1px dotted #00abe5;
+  border-bottom: 1px dotted #00abe5;
 }
 
 /*
@@ -251,6 +259,7 @@ span.field-label { /* The inline field label used by the Fences module */
   font-family: Gotham;
   font-weight: bold;
   font-size: 30px;
+  color: #00c3ff;
 }
 
 #block-menu-block-1 .menu, #block-menu-block-1 .leaf {
@@ -260,9 +269,9 @@ span.field-label { /* The inline field label used by the Fences module */
   padding-left: 0;
 } 
 
-.menu li.active {
-  margin-top: 12px;
-  margin-bottom: 12px;
+.menu li.active-trail {
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 a {text-decoration:none}

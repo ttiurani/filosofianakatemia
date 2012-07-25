@@ -6,59 +6,141 @@
 #fa-address {
   font-size: 12px;
   float:left;
+  padding-left: 52px;
+  margin-top: -10px;
+  margin-bottom: -10px;
 }
 
 #fa-customers {
   font-size: 12px;
   float: left;
-  padding-left: 140px;
+  padding-left: 170px;
+  margin-top: -10px;
+  margin-bottom: -10px;
 }
 
 #fa-some {
   font-family:Gotham;
 }
 
-#fa-frontheading {
+#fa-front-heading {
+  padding-top: 30px;
   font-family:Gotham;
   font-weight:bold;
-  font-size: 25px;
+  font-size: 20px;
+  color: #00abe5;
+}
+
+#fa-front-action {
+  padding-top: 70px;
 }
 
 /* Position background images for texts in the right place behind menu link */
 
+#block-fa-fa-bg {
+  margin-left: -62px;
+}
+
+
+#fa-bg-blogi-menu {
+  position:absolute;
+  top:105px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#fa-bg-blogi {
+  position:absolute;
+  top: 70px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#fa-bg-koulutus-menu {
+  position:absolute;
+  top:130px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#fa-bg-koulutus {
+  position:absolute;
+  top: 70px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#fa-bg-tutkimus-menu {
+  position:absolute;
+  top:150px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#fa-bg-tutkimus {
+  position:absolute;
+  top: 70px;
+  z-index: -1;
+  overflow: hidden;
+}
+
 #fa-bg-ihmiset-menu {
   position:absolute;
-  top:-135px;
+  top:170px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-ihmiset {
   position:absolute;
-  top:-55px;
+  top: 70px;
   z-index: -1;
   overflow: hidden;
 }
 
+#fa-bg-lykeion-menu {
+  position:absolute;
+  top:195px;
+  z-index: -1;
+  overflow: hidden;
+}
 
+#fa-bg-lykeion {
+  position:absolute;
+  top: 70px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* 
+ * Special classes that can be used in content
+ */
 b.fa-title{
   font-family:Gotham;
   font-weight:bold;
+}
+
+.fa-blue{
+  color: #00abe5;
+}
+
+.fa-separator {
+  text-align: center;
+  margin-top: -20px;
+  margin-bottom: -20px; 
 }
 
 /*
  * Front Page
  */
 
-body.front #page{
-  background-image: url('../images/fa-etusivu.png');
+.front #page{
+  background-image: url('../images/front-background.png');
   background-repeat: no-repeat;
+  background-position: 0px -20px;
 }
 
-/*
- * Koulutus Page
- */
-.page-node-5{
-  background-image: none;
+.front .node{
+  padding-top: 20px;
 }
 

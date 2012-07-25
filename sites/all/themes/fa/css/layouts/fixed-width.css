@@ -20,7 +20,7 @@
    * this is the standards-compliant way to do that. */
   margin-left: auto;
   margin-right: auto;
-  width: 980px;
+  width: 1008px;
 }
 
 /*
@@ -90,7 +90,6 @@
 /*
  * The layout when there is only one sidebar, the left one.
  */
-
 .sidebar-first #content {
   /* Span 4 columns, starting in 2nd column from left. */
   float: left;
@@ -105,6 +104,13 @@
   width: 176px;
   margin-left: 0px;
   margin-right: -196px;
+  margin-top: 10px;
+  padding-left: 55px;
+}
+
+.sidebar-first .node {
+  margin-left: 80px;
+  padding-right: 40px;
 }
 
 /*
