@@ -241,20 +241,16 @@ span.field-label { /* The inline field label used by the Fences module */
 .region-bottom { /* Wrapper for any blocks placed in the page bottom region */
 }
 
-.title{
-  font-family:Gotham;
-  margin-top: 0px;
-  padding-top: 0px;
-}
 
+/**
+ * Settings for the menu
+ */
 .menu{
   text-transform: uppercase;
   font-family:Gotham;  
 }
 
-/**
- * Settings for the active menu item
- */
+
 .menu a.active-trail{
   font-family: Gotham;
   font-weight: bold;
@@ -274,9 +270,27 @@ span.field-label { /* The inline field label used by the Fences module */
   margin-bottom: 8px;
 }
 
-a {text-decoration:none}
+/**
+ * Settings for nodes
+ */
+
+.node{
+  padding-top:7px;
+}
+
 
 .node-title, .title{
-	display:none;
+  display:none;
+}
+
+/**
+ * General extra settings
+ */
+a {text-decoration:none}
+
+.title{
+  font-family:Gotham;
+  margin-top: 0px;
+  padding-top: 0px;
 }
 
