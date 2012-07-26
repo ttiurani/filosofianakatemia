@@ -14,6 +14,11 @@ define('LOGIN_DESTINATION_REDIRECT_PHP', 2);
 define('LOGIN_DESTINATION_STATIC', 0);
 define('LOGIN_DESTINATION_SNIPPET', 1);
 
+// Default weight constants
+define('LOGIN_DESTINATION_WEIGHT_ZERO', 0);
+define('LOGIN_DESTINATION_WEIGHT_LOWEST', -1);
+define('LOGIN_DESTINATION_WEIGHT_HIGHEST', 1);
+
 /**
  * Implement hook_help().
  */
@@ -61,7 +66,7 @@ function login_destination_menu() {
     'title' => 'Delete login destination rule',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('login_destination_delete_form', 5),
-    'access arguments' => array('administer userson'),
+    'access arguments' => array('administer users'),
     'file' => 'login_destination.admin.inc',
   );
   $items['admin/config/people/login-destination/list'] = array(
@@ -102,7 +107,7 @@ function login_destination_load($id) {
   if (empty($result['roles'])) {
     $result['roles'] = array();
   }
-  
+
   return $result;
 }
 
@@ -187,14 +192,14 @@ function login_destination_validate($form, &$form_state) {
       }
       break;
   }
-  
+
   // Fix the current page in case of 403 page.
   if ($form['#form_id'] == 'user_login') {
     if(drupal_get_http_header('Status') == '403 Forbidden') {
       $_GET['current'] = $_GET['destination'];
     }
   }
-    
+
 }
 
 /**
@@ -211,7 +216,8 @@ function login_destination_menu_link_alter(&$item) {
   // Flag a link to be altered by hook_translated_menu_link_alter().
   // This is called only on menu rebuild, so we have to add this information
   // manually to the database on install. Clearing caches also helps.
-  if ($item['link_path'] == 'user/logout' || $item['link_path'] == 'user') {
+  $paths = array('user/logout', 'user/login', 'user');
+  if (in_array($item['link_path'], $paths)) {
     $item['options']['alter'] = TRUE;
   }
 }
@@ -221,8 +227,9 @@ function login_destination_menu_link_alter(&$item) {
  */
 function login_destination_translated_menu_link_alter(&$item, $map) {
   global $user;
+  $paths = array('user/login', 'user');
   // Append the current path to URL.
-  if ($item['link_path'] == 'user/logout' || ($item['link_path'] == 'user' && user_is_anonymous())) {
+  if ($item['link_path'] == 'user/logout' || (in_array($item['link_path'], $paths) && user_is_anonymous())) {
     $item['localized_options']['query'] = array('current' => $_GET['q']);
   }
 }
@@ -350,6 +357,34 @@ function login_destination_get_destination($trigger = '', $current = NULL) {
 
   // no rule matched
   return FALSE;
+}
+
+/**
+ * Gets a value for weight that is either the lowest, the highest or zero
+ * depending on given $weight_type.
+ */
+function _login_destination_get_new_weight($weight_type){
+  $weight = 0;
+  if (isset($weight_type) && $weight_type != LOGIN_DESTINATION_WEIGHT_ZERO){
+    $query = db_select('login_destination', 'l');
+    $query->fields('l',array('weight'));
+    if ($weight_type == LOGIN_DESTINATION_WEIGHT_LOWEST){
+      $query->orderBy('weight', 'ASC');
+    }else if ($weight_type == LOGIN_DESTINATION_WEIGHT_HIGHEST){
+      $query->orderBy('weight', 'DESC');
+    }
+    $query->range(0,1);
+    $result = $query->execute();
+    foreach ($query->execute() as $row) {
+      if ($weight_type == LOGIN_DESTINATION_WEIGHT_LOWEST){
+        $weight = $row->weight - 1;
+      }else if ($weight_type == LOGIN_DESTINATION_WEIGHT_HIGHEST){
+        $weight = $row->weight + 1;
+      }
+      break;
+    }
+  }
+  return $weight;
 }
 
 /**

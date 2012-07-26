@@ -96,7 +96,7 @@ function theme_login_destination_triggers($variables) {
 
 function theme_login_destination_pages($variables) {
   $type = $variables['pages_type'];
-  
+
   if ($type == LOGIN_DESTINATION_REDIRECT_PHP) {
     return nl2br(check_plain($variables['pages']));
   }
@@ -120,7 +120,7 @@ function theme_login_destination_pages($variables) {
       $output .= "~ ";
     }
     $output .= $page . "<br/>";
-  } 
+  }
 
   return $output;
 }
@@ -140,15 +140,24 @@ function theme_login_destination_roles($variables) {
  */
 function login_destination_edit_form($form, &$form_state, array $rule = array()) {
   // default values
+  $default_triggers = array();
+  if (variable_get('login_destination_default_login', FALSE)){
+    $default_triggers['login'] = 'login';
+  }
+  if (variable_get('login_destination_default_logout', FALSE)){
+    $default_triggers['logout'] = 'logout';
+  }
+  $weight = _login_destination_get_new_weight(
+      variable_get('login_destination_default_weight_type', LOGIN_DESTINATION_WEIGHT_ZERO));
   $rule += array(
-    'triggers' => array(),
+    'triggers' => $default_triggers,
     'roles' => array(),
-    'pages_type' => LOGIN_DESTINATION_REDIRECT_NOTLISTED,
-    'pages' => '',
+    'pages_type' => variable_get('login_destination_default_pages_type', LOGIN_DESTINATION_REDIRECT_NOTLISTED),
+    'pages' => variable_get('login_destination_default_pages', ''),
     'destination_type' => LOGIN_DESTINATION_STATIC,
-    'destination' => '<front>',
+    'destination' => variable_get('login_destination_default_destination', '<front>'),
     'id' => NULL,
-    'weight' => 0,
+    'weight' => $weight,
   );
 
   $access = user_access('use PHP for settings');
@@ -252,8 +261,15 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
     '#description' => 'Redirect only the selected role(s). If you select no roles, all users will be redirected.',
   );
 
+  // Change default delta to one bigger than the original
+  // so that there is always room for 10 more
+  $weight_delta = 10;
+  if ((abs($rule['weight']) +10) > $weight_delta){
+    $weight_delta = abs($rule['weight'])+10;
+  }
   $form['weight'] = array(
     '#type' => 'weight',
+    '#delta' => $weight_delta,
     '#title' => t('Weight'),
     '#default_value' => $rule['weight'],
     '#description' => t('When evaluating login destination rules, those with lighter (smaller) weights get evaluated before rules with heavier (larger) weights.'),
@@ -296,7 +312,7 @@ function login_destination_edit_form_submit($form, &$form_state) {
   }
 
   drupal_set_message(t('Login destination to %destination has been saved.', array('%destination' => $form_state['values']['destination'])));
-  
+
   $form_state['redirect'] = 'admin/config/people/login-destination';
 }
 
@@ -351,6 +367,54 @@ function login_destination_settings() {
     '#default_value' => variable_get('login_destination_immediate_redirect', FALSE),
     '#title' => t('Redirect immediately after using one-time login link'),
     '#description' => t("User will be redirected before given the possibility to change their password."),
+  );
+
+  // Default values for new rule
+  $form['settings']['default'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Default rule values'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+  );
+  $form['settings']['default']['login_destination_default_destination'] = array(
+      '#type' => 'textarea',
+      '#default_value' => variable_get('login_destination_default_destination', '<front>'),
+      '#title' => t('Default value for destination text'),
+      '#description' => t("This will be the default value for the destination text when making new rules."),
+  );
+  $form['settings']['default']['login_destination_default_login'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => variable_get('login_destination_default_login', FALSE),
+      '#title' => t('Set "Login, registration, one-time login link" redirect trigger by default'),
+  );
+  $form['settings']['default']['login_destination_default_logout'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => variable_get('login_destination_default_logout', FALSE),
+      '#title' => t('Set "Logout" redirect trigger by default'),
+  );
+  $form['settings']['default']['login_destination_default_pages_type'] = array(
+      '#type' => 'radios',
+      '#default_value' => variable_get('login_destination_default_pages_type', LOGIN_DESTINATION_REDIRECT_NOTLISTED),
+      '#title' => t('Default value for "Redirect from specific pages"'),
+      '#options' => array(
+          LOGIN_DESTINATION_REDIRECT_NOTLISTED => t('All pages except those listed'),
+          LOGIN_DESTINATION_REDIRECT_LISTED => t('Only the listed pages'),
+      ),
+  );
+  $form['settings']['default']['login_destination_default_pages'] = array(
+      '#type' => 'textarea',
+      '#default_value' => variable_get('login_destination_default_pages', ''),
+      '#title' => t('Default value for pages text'),
+  );
+  $form['settings']['default']['login_destination_default_weight_type'] = array(
+      '#type' => 'radios',
+      '#default_value' => variable_get('login_destination_default_weight_type', LOGIN_DESTINATION_WEIGHT_ZERO),
+      '#title' => t('Default value for weight'),
+      '#options' => array(
+          LOGIN_DESTINATION_WEIGHT_ZERO => t('Weight 0'),
+          LOGIN_DESTINATION_WEIGHT_LOWEST => t('Lowest weight, i.e. new rule goes to the top of the list'),
+          LOGIN_DESTINATION_WEIGHT_HIGHEST => t('Highest weight, i.e. new rule goes to the bottom of list'),
+      ),
   );
 
   return system_settings_form($form);
