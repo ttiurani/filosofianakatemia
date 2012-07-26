@@ -40,70 +40,70 @@
 
 #fa-bg-blogi-menu {
   position:absolute;
-  top:110px;
+  margin-top: -218px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-blogi {
   position:absolute;
-  top: 80px;
+  margin-top: -115px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-koulutus-menu {
   position:absolute;
-  top:140px;
+  margin-top: -190px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-koulutus {
   position:absolute;
-  top: 80px;
+  margin-top: -115px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-tutkimus-menu {
   position:absolute;
-  top:160px;
+  margin-top: -170px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-tutkimus {
   position:absolute;
-  top: 80px;
+  margin-top: -115px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-ihmiset-menu {
   position:absolute;
-  top:180px;
+  margin-top: -150px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-ihmiset {
   position:absolute;
-  top: 80px;
+  margin-top: -115px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-lykeion-menu {
   position:absolute;
-  top:205px;
+  margin-top: -115px;
   z-index: -1;
   overflow: hidden;
 }
 
 #fa-bg-lykeion {
   position:absolute;
-  top: 80px;
+  margin-top: -115px;
   z-index: -1;
   overflow: hidden;
 }
