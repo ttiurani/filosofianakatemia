@@ -1563,10 +1563,8 @@ function _menu_tree_data(&$links, $parents, $depth) {
   $tree = array();
   while ($item = array_pop($links)) {
     // We need to determine if we're on the path to root so we can later build
-    // the correct active trail and breadcrumb. A special case is needed for
-    // links to <front>
-    $item['in_active_trail'] = in_array($item['mlid'], $parents)
-                              || (drupal_is_front_page() && $item['link_path'] == '<front>');
+    // the correct active trail and breadcrumb.
+    $item['in_active_trail'] = in_array($item['mlid'], $parents);
     // Add the current link to the tree.
     $tree[$item['mlid']] = array(
       'link' => $item,

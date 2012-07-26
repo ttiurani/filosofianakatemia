@@ -270,7 +270,7 @@ span.field-label { /* The inline field label used by the Fences module */
 }
 
 
-.menu a.active-trail{
+.menu a.active{
   font-family: Gotham;
   font-weight: bold;
   font-size: 30px;
@@ -284,7 +284,7 @@ span.field-label { /* The inline field label used by the Fences module */
   padding-left: 0;
 } 
 
-.menu li.active-trail {
+.menu li.active {
   margin-top: 8px;
   margin-bottom: 8px;
 }
