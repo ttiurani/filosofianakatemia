@@ -671,9 +671,7 @@ function menu_block_tree_output(&$tree, $config = array()) {
       $class[] = 'has-children';
     }
     // Set a class if the link is in the active trail
-    // or if this is the front page and link points to the front page
-    if ($data['link']['in_active_trail']
-      || (drupal_is_front_page() && $data['link']['href'] == '<front>')) {
+    if ($data['link']['in_active_trail']){
       $class[] = 'active-trail';
       $data['link']['localized_options']['attributes']['class'][] = 'active-trail';
     }
