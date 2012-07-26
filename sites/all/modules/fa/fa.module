@@ -76,7 +76,7 @@ function fa_block_view($delta = '') {
         if ($tree != NULL && isset($tree['content']) && isset($tree['content']['#content'])){
           $parentofactive = _find_parent_of_active($tree['content']['#content']);
       
-          if (!is_string($parentofactive)){
+          if (isset($parentofactive) && !is_string($parentofactive)){
             $options = array(
                 'attributes' => array(
                     'class' => array('up-one'),
@@ -87,8 +87,7 @@ function fa_block_view($delta = '') {
             $block['content'] = l(
                 '<img src="sites/all/themes/fa/images/menu-up.png" />',
                 $parentofactive['#href'],
-                $options);
-             
+                $options); 
           }
         }
       }

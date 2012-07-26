@@ -20,7 +20,7 @@ ul.secondary {
   border-bottom: 1px solid #bbbbbb;
   list-style: none;
   margin: 1em 0 1.5em;
-  padding: 0 2px;
+  padding: 12px 2px 0;
   white-space: nowrap;
 }
 
