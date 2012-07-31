@@ -9,6 +9,7 @@
  * Menu callback; Display the settings form for Facebook OAuth.
  */
 function fboauth_settings_form($form, &$form_state) {
+  firep($form);
   module_load_include('inc', 'fboauth', 'includes/fboauth.fboauth');
 
   $form['fboauth_id'] = array(
@@ -26,6 +27,12 @@ function fboauth_settings_form($form, &$form_state) {
     '#maxlengh' => 50,
     '#description' => t('To use Facebook connect, a Facebook Application must be created. Set up your app in <a href="http://www.facebook.com/developers/apps.php">my apps</a> on Facebook.') . ' ' . t('Enter your App Secret here.'),
     '#default_value' => variable_get('fboauth_secret', ''),
+  );
+  $form['fboauth_auto_create_account'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Automatically create account when users register through Facebook'),
+      '#description' => t('If checked, then the user account will automatically be created when the user registers using Facebook, using whatever profile fields are configured.  Otherwise, the normal user registration form is displayed with profile fields pre-filled with Facebook values, and the actual user account is not created until that form is submitted.'),
+      '#default_value' => variable_get('fboauth_auto_create_account', TRUE),
   );
 
   $form['fboauth_basic_mapping'] = array(
@@ -55,8 +62,9 @@ function fboauth_settings_form($form, &$form_state) {
     '#options' => array(
       'username' => t('Facebook username (i.e. johnsmith)'),
       'name' => t('Real name (i.e. John Smith)'),
+      'none' => t('Don\'t import user name'),
     ),
-    '#description' => t('Select the Facebook value used to set the user\'s name when connecting with Facebook.'),
+    '#description' => t('Select the Facebook value used to set the user\'s name when connecting with Facebook. NOTE: "Don\'t import user name" is not possible if "Automatically create account when users register through Facebook" is checked!'),
     '#default_value' => variable_get('fboauth_user_username', 'username'),
   );
 
@@ -122,6 +130,14 @@ function fboauth_settings_form($form, &$form_state) {
  * Form validation function for fboauth_settings_form().
  */
 function fboauth_settings_form_validate($form, &$form_state) {
+
+  // Check that automatic user creation is not set without user name import
+  if ($form_state['values']['fboauth_user_username'] == 'none'
+      && $form_state['values']['fboauth_auto_create_account'] == TRUE){
+    form_error($form['fboauth_basic_mapping']['fboauth_user_username'],
+        t('Value "Don\'t user name" is not possible when "Automatically create account when users register through Facebook" is unchecked!'));
+  }
+
   // Remove trailing spaces from keys.
   $form_state['values']['fboauth_id'] = trim($form_state['values']['fboauth_id']);
   $form_state['values']['fboauth_secret'] = trim($form_state['values']['fboauth_secret']);
@@ -141,7 +157,7 @@ function fboauth_settings_form_validate($form, &$form_state) {
 function fboauth_settings_form_submit($form, &$form_state) {
   variable_set('fboauth_id', $form_state['values']['fboauth_id']);
   variable_set('fboauth_secret', $form_state['values']['fboauth_secret']);
-
+  variable_set('fboauth_auto_create_account', $form_state['values']['fboauth_auto_create_account']);
   variable_set('fboauth_user_email', $form_state['values']['fboauth_user_email']);
   variable_set('fboauth_user_username', $form_state['values']['fboauth_user_username']);
   variable_set('fboauth_user_picture', $form_state['values']['fboauth_user_picture']);

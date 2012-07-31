@@ -203,3 +203,29 @@ function fboauth_field_convert_date($facebook_property_name, $fbuser, $field, $i
   }
   return $value;
 }
+
+/**
+* Recursively traverses a Drupal form array (specified by $form), searching for any
+* field specified in $profile_field_values, and sets the default_value for every one
+* it finds.
+* @param $form
+*   The current form array that is being recursed through (either the entire form
+*   or some part of it).
+* @param $profile_field_values
+*   An associative array that maps names of profile fields to values returned from
+*   the API call to Facebook. @see $edit as used by hook_user.
+* @return The $form that was passed in, with modified #default_values.
+*/
+function _fboauth_set_register_user_fields(&$form, &$profile_field_values) {
+  foreach ($form as $key => $value) {
+    if ($key == '#field_name' && in_array($value, array_keys($profile_field_values))) {
+      // TODO: Is there a better way to handle this?  I'm not terribly familiar with the Field API.
+      $form['#default_value'] = $profile_field_values[$value]['und'][0]['value'];
+    }
+    elseif (is_array($value)) {
+      $form[$key] = _fboauth_set_register_user_fields($value, $profile_field_values);
+    }
+  }
+
+  return $form;
+}

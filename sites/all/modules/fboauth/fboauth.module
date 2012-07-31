@@ -88,6 +88,10 @@ function fboauth_block_view($delta) {
 function fboauth_user_insert(&$edit, &$account, $category) {
   if (isset($edit['fboauth_fbid'])) {
     fboauth_save($account->uid, $edit['fboauth_fbid']);
+    // Unset the session var if we used it to create the new user.
+    if (isset($_SESSION['fboauth_fbuser'])) {
+      unset($_SESSION['fboauth_fbuser']);
+    }
   }
 }
 
@@ -434,4 +438,77 @@ function theme_fboauth_user_form_connect($variables) {
     $output .= '<div class="description">' . t('Connect with Facebook to login with your Facebook account instead of a password.') . '</div>';
   }
   return $output;
+}
+
+/**
+* Modifies the user register form to populate the fields with data retrieved from
+* Facebook after the user has authenticated with Facebook during attempted registration.
+* Implements hook_form_alter().
+*/
+function fboauth_form_user_register_form_alter(&$form, &$form_state) {
+  if (variable_get('fboauth_auto_create_account', 1)) {
+    // Don't change the register form if users are being automatically created.
+    return;
+  }
+
+  global $user;
+  if ($user->uid > 0) {
+    // Don't modify the form for admins attempting to add users.
+    return;
+  }
+
+  if (!isset($_SESSION['fboauth_fbuser'])) {
+    // Don't modify the form if the fbuser isn't found.
+    return;
+  }
+
+  $fbuser = $_SESSION['fboauth_fbuser'];
+
+  // Go through all of the fields in the form and populate them with data on fbuser.
+  $profile_field_values = array();
+  if (variable_get('fboauth_user_email', FALSE) && !empty($fbuser->email)){
+    $profile_field_values['mail'] = $fbuser->email;
+  }
+  $fboauth_user_username = variable_get('fboauth_user_username', 'username');
+  if ($fboauth_user_username  == 'username' && !empty($fbuser->username)) {
+    $profile_field_values['name'] = $fbuser->username;
+  }
+  else if ($fboauth_user_username == 'name' && !empty($fbuser->name)){
+    $profile_field_values['name'] = $fbuser->name;
+  }
+
+  // Load additional data for fields from the Profile module if it's enabled.
+  if (module_exists('profile')) {
+    module_load_include('inc', 'fboauth', 'includes/fboauth.profile');
+    fboauth_profile_create_user($profile_field_values, $fbuser);
+    $form = _fboauth_set_register_profile_fields($form, $profile_field_values);
+  }
+
+  // Load additional data for fields from the user fields.
+  module_load_include('inc', 'fboauth', 'includes/fboauth.field');
+  fboauth_field_create_user($profile_field_values, $fbuser);
+  $form = _fboauth_set_register_user_fields($form, $profile_field_values);
+
+  // Pass in the FBID as a hidden value so the hook_user implementation that associates
+  // the FB user and the Drupal user can access it.
+  $form['fboauth_fbid'] = array(
+    '#type' => 'value',
+    '#value' => $fbuser->id,
+  );
+}
+
+/**
+ * Make sure that fboauth's user register form alter hook fires after the Profile module's
+ * form alter hook so that the form elements we need are created (and can thus have their
+ * #default_values adjusted).
+ * Implements hook_module_implements_alter().
+ */
+function fboauth_module_implements_alter(&$implementations, $hook) {
+  if ($hook === "form_alter") {
+    if (isset($implementations['fboauth'])){
+      $temp = $implementations['fboauth'];
+      unset($implementations['fboauth']);
+      $implementations['fboauth'] = $temp;
+    }
+  }
 }

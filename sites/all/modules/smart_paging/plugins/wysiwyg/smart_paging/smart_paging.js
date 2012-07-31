@@ -49,6 +49,7 @@ Drupal.wysiwyg.plugins['smart_paging'] = {
     pattern = new RegExp('([^p]>)' + pagebreak + '<\/p>', 'ig');
     content = content.replace(pattern, '$1</p>' + placeholder);
     // Other breaks.
+    pagebreak =  new RegExp(pagebreak, 'g');
     content = content.replace(pagebreak, placeholder);
 
     return content;

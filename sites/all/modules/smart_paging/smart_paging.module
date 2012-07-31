@@ -5,7 +5,7 @@
  * @file
  * Provides smart paging capability to Drupal contents.
  *
- * @author Roland Michael dela Peña.
+ * @author Roland Michael dela PeÃ±a.
  * @version $Id: smart_paging.module,v 1.1.2.10 2011/02/22 15:29:51 arpeggio Exp $
  */
 
@@ -471,25 +471,29 @@ function smart_paging_entity_insert($entity, $entity_type) {
  * Implements hook_url_inbound_alter().
  */
 function smart_paging_url_inbound_alter(&$path, &$original_path, $path_language) {
-  $arg_count = count(arg()) - 1;
-  $page      = arg($arg_count);
-  $sub_page  = arg($arg_count - 1);
-  // Check if path has pattern of http://example.com/<path alias>/<pager prefix>/<sub_page>/<page>
-  if ($arg_count > 2 && is_numeric($sub_page) && is_numeric($page)) {
-    if (arg($arg_count - 2) == variable_get('smart_paging_path_prefix', 'page')) {
-      // Set the 'page' value of GET method
-      $_GET['page'] = "$sub_page,$page";
-      // Extract alias from arg()
-      $alias = arg();
-      unset($alias[$arg_count - 2], $alias[$arg_count - 1], $alias[$arg_count]);
-      // Get the Drupal system URL for a path alias
-      $drupal_path = drupal_lookup_path('source', implode('/', $alias) , $path_language);
-      if (!empty($drupal_path)) {
-        // Alter inbound URL request
-        $path = $drupal_path;
-      }
-      else {
-        $path = implode('/', $alias);
+  if (variable_get('smart_paging_enable_clean_url', TRUE)) {
+    $arg_count = count(arg()) - 1;
+    $page      = arg($arg_count);
+    $sub_page  = arg($arg_count - 1);
+    // Check if path has pattern of http://example.com/<path alias>/<pager prefix>/<sub_page>/<page>
+    if ($arg_count > 2 && is_numeric($sub_page) && is_numeric($page)) {
+      if (arg($arg_count - 2) == variable_get('smart_paging_path_prefix', 'page')) {
+        // Set the 'page' value of GET method
+        $_GET['page'] = "$sub_page,$page";
+        // Extract alias from arg()
+        $alias = arg();
+        unset($alias[$arg_count - 2], $alias[$arg_count - 1], $alias[$arg_count]);
+        // Get the Drupal system URL for a path alias
+        if (!($drupal_path = drupal_lookup_path('source', implode('/', $alias) , $path_language)) && function_exists("path_alias_xt_get_normal_path")) {
+          $drupal_path = path_alias_xt_get_normal_path(implode('/', $alias) , $path_language);
+        }
+        if (!empty($drupal_path)) {
+          // Alter inbound URL request
+          $path = $drupal_path;
+        }
+        else {
+          $path = implode('/', $alias);
+        }
       }
     }
   }
@@ -501,17 +505,24 @@ function smart_paging_url_inbound_alter(&$path, &$original_path, $path_language)
  * Change pagination query type URL to a clean URL
  */
 function smart_paging_url_outbound_alter(&$path, &$options, $original_path) {
-  if (isset($options['query']['page'])) {
+  if (isset($options['query']['page']) && variable_get('smart_paging_enable_clean_url', TRUE)) {
     $url_fragment = smart_paging_get_url_fragment();
     $page_query = explode(',', $options['query']['page']);
-    foreach ($url_fragment as $index => $fragment) {
-      if ($page_query[1] == $index) {
-        $options['fragment'] = $fragment;
+    if (!(empty($url_fragment)) && is_array($url_fragment)){
+      foreach ($url_fragment as $index => $fragment) {
+        if ($page_query[1] == $index) {
+          $options['fragment'] = $fragment;
+        }
       }
     }
     if (!empty($path) && !$options['alias']) {
       $language = isset($options['language']) && isset($options['language']->language) ? $options['language']->language : NULL;
-      $alias = drupal_get_path_alias($original_path, $language);
+      if (function_exists("path_alias_xt_get_path_alias")) {
+        $alias = path_alias_xt_get_path_alias($original_path, $language);
+      }
+      else {
+        $alias = drupal_get_path_alias($original_path, $language);
+      } 
       if ($alias != $original_path) {
         $path = $alias;
         $options['alias'] = TRUE;
@@ -522,15 +533,16 @@ function smart_paging_url_outbound_alter(&$path, &$options, $original_path) {
         $path = empty($path_arg) ? $original_path : implode('/', $path_arg);
       }
     }
+    $path_prefix = variable_get('smart_paging_path_prefix', 'page');
     if (isset($page_query[1]) && $page_query[1] != 0) {
       $sub_page = $page_query[0];
       $page  = isset($page_query[1]) ? $page_query[1] : '0';
-      $path .= '/' . variable_get('smart_paging_path_prefix', 'page') . "/$sub_page/$page";
+      $path .= "/$path_prefix/$sub_page/$page";
     }
     else {
       $sub_page = $page_query[0];
       if ($sub_page) {
-        $path .= '/' . variable_get('smart_paging_path_prefix', 'page') . "/$sub_page/0";
+        $path .= "/$path_prefix/$sub_page/0";
       }
     }
     unset($options['query']['page']);
@@ -717,7 +729,10 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
             // Check if last page is an empty tag
             $pagebreak = array_filter(explode($placeholder, $markup_content));
             $pagebreak_end = count($pagebreak) - 1;
-            $last_page = strip_tags($pagebreak[$pagebreak_end]);
+            $last_page = '';
+            if (isset($pagebreak[$pagebreak_end])) {
+              $last_page = strip_tags($pagebreak[$pagebreak_end]);
+            }
             if (empty($last_page)) {
               // Remove the last page with only an empty tag content
               unset($pagebreak[$pagebreak_end]);
@@ -793,19 +808,72 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
     }
     
     if (!empty($total_page)) {
-      if (variable_get('smart_paging_use_js_pager', TRUE)) {
-        global $base_url;
+      global $base_url;
+      $current_url = function_exists("path_alias_xt_get_path_alias") ? path_alias_xt_get_path_alias($_GET['q']) : drupal_get_path_alias($_GET['q']);
+      $current_url = preg_replace('#(^/)|(/$)#', '', $current_url);
+      $clean_url   = variable_get('clean_url', 0);
+      $current_url = $clean_url ? $current_url : "?q=$current_url";
+      $pager_details = array(
+        'first_element' => empty($pager_page_array[0]) ? 0 : $pager_page_array[0],
+        'current_page'  => $current_page,
+        'base_url'      => $base_url,
+        'current_url'   => $current_url,
+        'path_prefix'   => variable_get('smart_paging_path_prefix', 'page'),
+        'custom_url_page' => $custom_url_page,
+      );
+
+      if (variable_get('smart_paging_use_js_pager', TRUE) && variable_get('smart_paging_enable_clean_url', TRUE)) {
         drupal_add_js(drupal_get_path('module', 'smart_paging') . '/js/smart_paging-pager.js');
-        drupal_add_js(array('smart_paging' => array(
-          'first_element' => empty($pager_page_array[0]) ? 0 : $pager_page_array[0],
-          'current_page'  => $current_page,
-          'base_url'      => $base_url,
-          'current_url'   => drupal_get_path_alias($_GET['q']),
-          'path_prefix'   => variable_get('smart_paging_path_prefix', 'page'),
-          'clean_url'     => variable_get('clean_url', 0),
-          'custom_url_page' => $custom_url_page,
-        )), 'setting');
+        drupal_add_js(array('smart_paging' => $pager_details), 'setting');
       }
+
+      if (variable_get('smart_paging_use_link_rel', TRUE)) {
+        // Pagination with rel="next" and rel="prev"
+        // Ref: http://googlewebmastercentral.blogspot.co.uk/2011/09/pagination-with-relnext-and-relprev.html
+        $total_page_offset = $total_page - 1;
+        $pager_prefix = $pager_details['path_prefix'] . '/' . $pager_details['first_element'];
+        if ($current_page == 0) {
+          // We are on first page
+          $link_rel_next_page = "$pager_prefix/1";
+        }
+        else if ($current_page == $total_page_offset) {
+          // We are on last page
+          $link_rel_prev_page = $total_page_offset - 1;
+          if ($link_rel_prev_page) {
+            $link_rel_prev_page = "$pager_prefix/$link_rel_prev_page";
+          }
+        }
+        else {
+          // We are on middle page
+          $link_rel_next_page = $current_page + 1;
+          if ($link_rel_next_page) {
+            $link_rel_next_page = "$pager_prefix/$link_rel_next_page";
+          }
+          $link_rel_prev_page = $current_page - 1;
+          if ($link_rel_prev_page) {
+            $link_rel_prev_page = "$pager_prefix/$link_rel_prev_page";
+          }
+        }
+        if (isset($link_rel_prev_page)) {
+          drupal_add_html_head(array(
+            '#attributes' => array(
+              'rel'  => 'prev',
+              'href' => $link_rel_prev_page ? "$base_url/$current_url/$link_rel_prev_page" : "$base_url/$current_url",
+            ),
+            '#tag' => 'link'
+          ), 'smart_paging_link_rel_prev');
+        }
+        if (isset($link_rel_next_page)) {
+          drupal_add_html_head(array(
+            '#attributes' => array(
+              'rel'  => 'next',
+              'href' => $link_rel_next_page ? "$base_url/$current_url/$link_rel_next_page" : "$base_url/$current_url",
+            ),
+            '#tag' => 'link'
+          ), 'smart_paging_link_rel_next');
+        }
+      }
+
       $pager_total[$pager_element] = $total_page;
       if ($display_suffix && $current_page > 0) {
         $title_suffix = theme('smart_paging_page_title_suffix', array('page' => array(
@@ -834,6 +902,11 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
             $markup_content = str_replace('<!--smart_paging_filter-->', '', $markup_content);            
             $markup_content = str_replace(variable_get('smart_paging_pagebreak', '<!--pagebreak-->'), '', $markup_content);
             $build[$field_name][$delta]['#markup'] = $markup_content;
+          }
+          if (isset($field_content['#markup']) && strpos($field_content['#markup'], '<!--smart_paging_autop_filter-->') !== FALSE) {
+            $markup_content = $build[$field_name][$delta]['#markup'];
+            $markup_content = str_replace('<!--smart_paging_autop_filter-->', '', $markup_content); 
+            $build[$field_name][$delta]['#markup'] = _filter_autop($markup_content);
           }
         }
       }
@@ -889,6 +962,14 @@ function smart_paging_html_head_alter(&$head_elements) {
           ),
         );
         unset($tags[$target_name]);
+      }
+    }
+  }
+  if (isset($head_elements['smart_paging_link_rel_prev']) || isset($head_elements['smart_paging_link_rel_next'])) {
+    // Remove rel="canonical" link
+    foreach ($head_elements as $head_element_key => $head_element) {
+      if (isset($head_element['#tag']) && $head_element['#tag'] == 'link' && $head_element['#attributes']['rel'] == 'canonical') {
+        unset($head_elements[$head_element_key]);
       }
     }
   }
@@ -1173,7 +1254,7 @@ function theme_smart_paging_page_title_suffix($variable) {
       // MODULE_preprocess_smart_paging_page_title_suffix()
       if (!$set_title_done && !isset($variable['bypass_drupal_set_title'])) {
         // Target head title (<title> tag)
-        drupal_set_title(drupal_get_title() . $title_suffix);
+        drupal_set_title(drupal_get_title() . check_plain ($title_suffix), PASS_THROUGH);
         $set_title_done = TRUE;
       }
     }

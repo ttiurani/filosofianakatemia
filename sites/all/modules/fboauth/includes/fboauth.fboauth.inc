@@ -96,6 +96,12 @@ function fboauth_action_connect($app_id, $access_token) {
     }
     // Register a new user only if allowed.
     elseif (variable_get('user_register', 1)) {
+      // If accounts aren't automatically created, then save the fbuser to the session and go to the
+      // user registration page.
+      if (!variable_get('fboauth_auto_create_account', 1)) {
+        $_SESSION['fboauth_fbuser'] = $fbuser;
+        drupal_goto('user/register');
+      }
       $account = fboauth_create_user($fbuser);
       // Load the account fresh just to have a fully-loaded object.
       $account = user_load($account->uid);
