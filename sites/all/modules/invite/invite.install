@@ -107,9 +107,6 @@ function invite_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-    ),
-    'unique keys' => array(
-      'uid_invitee' => array('uid', 'invitee'),
     )
   );
 

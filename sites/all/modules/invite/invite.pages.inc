@@ -24,6 +24,7 @@ function invite_user_overview($page, $account) {
 
   $query = db_select('invite', 'i')
     ->fields('i')
+    ->fields('r', array('name'))
     ->extend('PagerDefault')
     ->condition('i.uid', $account->uid)
     ->condition('canceled', 0);
@@ -34,18 +35,24 @@ function invite_user_overview($page, $account) {
     // defaulted to and the other cases will never be hit.
     default:
       $query->leftJoin('users', 'u', 'u.uid = i.invitee AND u.uid <> 0');
+      $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
+      $query->leftJoin('role', 'r', 'ir.rid = r.rid');
       $query->fields('u', array('uid', 'status'));
       $query->condition('i.joined', 0, '<>');
       $query->orderBy('u.uid', 'DESC');
       //$sql = "SELECT i.*, u.uid AS account FROM {invite} i LEFT JOIN {users} u ON u.uid = i.invitee AND u.uid <> 0 WHERE i.uid = %d AND i.joined <> 0 AND canceled = 0 ORDER BY u.uid DESC";
       break;
     case 'pending':
+      $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
+      $query->leftJoin('role', 'r', 'ir.rid = r.rid');
       $query->condition('i.joined', 0);
       $query->condition('i.expiry', REQUEST_TIME, '>=');
       $query->orderBy('i.expiry', 'DESC');
       //$sql = "SELECT * FROM {invite} WHERE uid = %d AND joined = 0 AND canceled = 0 AND expiry >= %d ORDER BY expiry DESC";
       break;
     case 'expired':
+      $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
+      $query->leftJoin('role', 'r', 'ir.rid = r.rid');
       $query->condition('i.joined', 0);
       $query->condition('i.expiry', REQUEST_TIME, '<');
       $query->orderBy('i.expiry', 'DESC');
@@ -53,42 +60,65 @@ function invite_user_overview($page, $account) {
       break;
   }
 
+  $query->orderBy('i.iid', 'DESC');
+
   //$result = pager_query($sql, 50, 0, NULL, $user->uid, REQUEST_TIME);
   $result = $query->execute()->fetchAll();
 
-  foreach ($result as $invite) {
+  // Create a map of roles per iid
+  $invite_roles = array();
+  $current_iid = NULL;
+  foreach($result as $invite_row){
+    if (empty($invite_row->name)){
+      $invite_roles[$invite_row->iid] = '';
+    }else{
+      if (!isset($invite_roles[$invite_row->iid]))
+        $invite_roles[$invite_row->iid] = $invite_row->name;
+      else
+        $invite_roles[$invite_row->iid] .= ', ' . $invite_row->name;
+    }
+  }
+
+  foreach ($result as $invite_row) {
+    if (!isset($invite_roles[$invite_row->iid])){
+      continue;
+    }
     $row = array();
     switch ($page) {
       case 'accepted':
       default:
-        $account_exists = !is_null($invite->uid);
+        $account_exists = !is_null($invite_row->uid);
 
-        if ($profile_access && $account_exists && $invite->status > 0) {
-          $row[] = l($invite->email, 'user/' . $invite->invitee, array('title' => t('View user profile.')));
+        if ($profile_access && $account_exists && $invite_row->status > 0) {
+          $row[] = l($invite_row->email, 'user/' . $invite_row->invitee, array('title' => t('View user profile.')));
         }
         else {
-          $row[] = check_plain($invite->email);
+          $row[] = check_plain($invite_row->email);
         }
+        $row[] = $invite_roles[$invite_row->iid];
+        unset($invite_roles[$invite_row->iid]);
         $row[] = $account_exists ? t('Accepted') : t('Deleted');
-        $row[] = $allow_accepted_delete ? l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination())) : '';
+        $row[] = $allow_accepted_delete ? l(t('withdraw'), "invite/withdraw/$invite_row->reg_code", array('query' => drupal_get_destination())) : '';
         break;
 
       case 'pending':
       case 'expired':
-        $expired = ($invite->expiry < REQUEST_TIME);
+        $expired = ($invite_row->expiry < REQUEST_TIME);
 
-        $row[] = check_plain($invite->email);
+        $row[] = check_plain($invite_row->email);
+        $row[] = $invite_roles[$invite_row->iid];
+        unset($invite_roles[$invite_row->iid]);
         $row[] = $expired ? t('Expired') : t('Pending');
 
         $operations = array();
         if ($allow_delete) {
-          $operations[] = l(t('withdraw'), "invite/withdraw/$invite->reg_code", array('query' => drupal_get_destination()));
+          $operations[] = l(t('withdraw'), "invite/withdraw/$invite_row->reg_code", array('query' => drupal_get_destination()));
         }
         if ($expired && $account->uid == $user->uid) {
-          $operations[] = l(t('resend'), "invite/resend/$invite->reg_code");
+          $operations[] = l(t('resend'), "invite/resend/$invite_row->reg_code");
         }
         if ($page ==  'pending') {
-          $operations[] = l(t('show link'), 'invite/accept/' . $invite->reg_code, array('attributes' => array('class' => array('invite-reg-link'), 'title' => t('Registration link for @email', array('@email' => $invite->email))), 'absolute' => TRUE));
+          $operations[] = l(t('show link'), 'invite/accept/' . $invite_row->reg_code, array('attributes' => array('class' => array('invite-reg-link'), 'title' => t('Registration link for @email', array('@email' => $invite_row->email))), 'absolute' => TRUE));
         }
 
         $row[] = implode(' | ', $operations);
@@ -111,27 +141,34 @@ function invite_accept($invite) {
 
   $status = invite_validate($invite);
 
-  if (!$user->uid && $status == INVITE_VALID) {
+  if ($status == INVITE_VALID || $status == INVITE_USED) {
+    if (isset($_GET['destination'])){
+      $_SESSION[INVITE_SESSION_DESTINATION] = $_GET['destination'];
+      unset($_GET['destination']);
+    }
+
+    $_SESSION[INVITE_SESSION_EMAIL] = $invite->email;
+    $_SESSION[INVITE_SESSION_STATUS] = $status;
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
-    drupal_goto(variable_get('invite_registration_path', 'user/register'));
+
+    if ($status == INVITE_VALID &&
+        !db_query("SELECT COUNT(*) FROM {users} WHERE mail = :mail",
+          array(':mail' => $invite->email))->fetchField()){
+      drupal_goto(variable_get('invite_registration_path', 'user/register'));
+    }else{
+      drupal_goto('user/login');
+    }
   }
   else {
     switch ($status) {
       case INVITE_WITHDRAWN:
         drupal_set_message(t('This invitation has been withdrawn.'));
         break;
-
-      case INVITE_USED:
-        drupal_set_message(t('This invitation has already been used.'), 'error');
-        break;
-
       case INVITE_EXPIRED:
         drupal_set_message(t('This invitation has expired.'));
         break;
-    }
+     }
   }
-
-  drupal_goto();
 }
 
 /**
@@ -173,7 +210,7 @@ function theme_invite_user_overview($variables) {
   }
 
   if (count($items) > 0) {
-    $headers = array(t('E-mail'), t('Status'), t('Operations'));
+    $headers = array(t('E-mail'), t('Roles'), t('Status'), t('Operations'));
     $output  .= theme('table', array('header' => $headers, 'rows' => $items, 'attributes' => array('id' => 'invite-user-overview')));
     $output .= theme('pager');
   }

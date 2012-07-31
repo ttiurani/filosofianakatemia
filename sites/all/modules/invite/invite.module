@@ -9,6 +9,9 @@
  * Session names.
  */
 define('INVITE_SESSION', 'invite_code');
+define('INVITE_SESSION_STATUS', 'invite_status');
+define('INVITE_SESSION_DESTINATION', 'invite_destination');
+define('INVITE_SESSION_EMAIL', 'invite_email');
 define('INVITE_ADMIN_SESSION', 'invite_admin_filter');
 
 /**
@@ -23,6 +26,7 @@ define('INVITE_VALID', 1);
 define('INVITE_WITHDRAWN', 2);
 define('INVITE_USED', 3);
 define('INVITE_EXPIRED', 4);
+define('INVITE_PROCESSED', 5);
 
 /**
  * Registration settings form values.
@@ -116,18 +120,6 @@ function invite_permission() {
       'description' => t('Withdraw own invitations that have already been accepted.'),
     ),
   );
-}
-
-/**
- * Implements hook_init().
- */
-function invite_init() {
-  global $user;
-
-  // Notify current user about newly joined invitees.
-  if (!empty($user->data['invite_accepted']) && !module_invoke('throttle', 'status')) {
-    invite_notify($user->uid);
-  }
 }
 
 /**
@@ -644,22 +636,32 @@ function invite_send($invite, $send = TRUE) {
  * Implements hook_user_insert().
  */
 function invite_user_insert(&$edit, $account, $category) {
-  $invite = invite_find_invite($account->mail);
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
+      && !$_SESSION[INVITE_SESSION_STATUS] == INVITE_PROCESSED){
+    $invite = invite_find_invite($account->mail);
 
-  if ($invite) {
-    invite_process_invite($invite, $account);
-
-    module_invoke_all('invite_accept', $invite, $account);
-
-    // Flag the inviting user, this triggers status notifications and
-    // saves us some queries otherwise.
-    if ($invite->inviter->uid) {
-      user_save($invite->inviter, array('data' => array('invite_accepted' => TRUE)));
+    if ($invite) {
+      _accept_invite($invite, $account);
     }
+  }
+}
 
-    if (isset($_SESSION)) {
-      unset($_SESSION[INVITE_SESSION]);
-    }
+function _accept_invite($invite, $account){
+  invite_process_invite($invite, $account);
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])){
+    $_SESSION[INVITE_SESSION_STATUS] = INVITE_PROCESSED;
+  }
+
+  module_invoke_all('invite_accept', $invite, $account);
+
+  if (isset($_SESSION)) {
+    unset($_SESSION[INVITE_SESSION]);
+    if (isset($_SESSION[INVITE_SESSION_STATUS]))
+      unset($_SESSION[INVITE_SESSION_STATUS]);
+    if (isset($_SESSION[INVITE_SESSION_DESTINATION]))
+      unset($_SESSION[INVITE_SESSION_DESTINATION]);
+    if (isset($_SESSION[INVITE_SESSION_EMAIL]))
+      unset($_SESSION[INVITE_SESSION_EMAIL]);
   }
 }
 
@@ -668,21 +670,49 @@ function invite_user_insert(&$edit, $account, $category) {
  */
 function invite_user_presave(&$edit, $account, $category) {
   if ($account->is_new && !empty($account->mail)) {
-    $invite = invite_find_invite($account->mail);
+    _add_user_roles($edit, $account);
+  }
+}
 
-    if ($invite) {
-      $roles = invite_target_roles($invite, $edit);
+/**
+ * Implements hook_user_login()
+  */
+function invite_user_login(&$edit, $account){
 
-      if ($roles) {
-        if (!isset($edit['roles']) || !is_array($edit['roles'])) {
-          $edit['roles'] = array();
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS]) &&
+      $_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
+    $invite = _add_user_roles($edit, $account);
+    if ($invite){
+      // Need to explicitly save roles
+      if (isset($edit['roles'])) {
+        foreach ($edit['roles'] as $role) {
+          user_multiple_role_edit(array($account->uid), 'add_role', $role);
         }
-        foreach ($roles as $role) {
-          $edit['roles'][$role] = $role;
-        }
+      }
+      _accept_invite($invite, $account);
+    }
+  }
+}
+
+/**
+ * Adds user roles to $edit
+ */
+function _add_user_roles(&$edit, $account){
+  $invite = invite_find_invite($account->mail);
+
+  if ($invite) {
+    $roles = invite_target_roles($invite, $edit);
+
+    if ($roles) {
+      if (!isset($edit['roles']) || !is_array($edit['roles'])) {
+        $edit['roles'] = array();
+      }
+      foreach ($roles as $role) {
+        $edit['roles'][$role] = $role;
       }
     }
   }
+  return $invite;
 }
 
 /**
@@ -780,9 +810,9 @@ function invite_target_roles($invite, $account) {
     }
   }
   // Map to explicitly set roles, if any
-  $result = db_query("SELECT DISTINCT r.rid FROM {invite_roles} ir " 
+  $result = db_query("SELECT DISTINCT r.rid FROM {invite_roles} ir "
                      ."INNER JOIN {role} r ON (ir.rid = r.rid) "
-                     ."INNER JOIN {invite} i ON (ir.iid = i.iid) " 
+                     ."INNER JOIN {invite} i ON (ir.iid = i.iid) "
                      ."WHERE i.iid = :iid", array(':iid' => $invite->iid));
   foreach($result as $role){
     $targets[$role->rid] = $role->rid;
@@ -1080,15 +1110,15 @@ function invite_page_form($remaining_invites, $edit = array()) {
       '#value' => $edit['email'],
     );
   }
-  
+
   // Specify roles if permitted
   if (!$edit && user_access('assign invitation roles')){
 
-    $selected_roles = array();    
+    $selected_roles = array();
     $roles = user_roles(TRUE);
-    
+
     // Need to unset all the target roles that are assigned automatically:
-    // the default and role specific. 
+    // the default and role specific.
     unset($roles[variable_get('invite_target_role_default', DRUPAL_AUTHENTICATED_RID)]);
     foreach($user->roles as $rid => $role) {
       unset($roles[variable_get('invite_target_role_' . $rid, DRUPAL_AUTHENTICATED_RID)]);
@@ -1228,36 +1258,12 @@ function invite_form_validate($form, &$form_state) {
   if (!$form_state['values']['reg_code']) {
     if (count($emails) > 0) {
       // Filter out already registered users, but pass validation.
-      $failed_emails = _invite_filter_registered_emails($emails);
-      $emails = array_diff($emails, $failed_emails);
-
-      if (count($failed_emails)) {
-        $error = format_plural(count($failed_emails), 'The following recipient is already a member:', 'The following recipients are already members:') . '<br />';
-        foreach ($failed_emails as $key => $email) {
-          $failed_emails[$key] = check_plain($email);
-        }
-        $error .= implode(', ', $failed_emails);
-        drupal_set_message($error, 'error');
-      }
+      $registered_emails = _invite_filter_registered_emails($emails);
     }
 
     if (!empty($emails)) {
       // Filter out already invited users, but pass validation.
-      $failed_emails = _invite_filter_invited_emails($emails);
-      $emails = array_diff($emails, $failed_emails);
-
-      if (count($failed_emails)) {
-        $error = format_plural(count($failed_emails), 'The following recipient has already been invited:', 'The following recipients have already been invited:') . '<br />';
-        $error .= implode(', ', array_map('check_plain', $failed_emails));
-        drupal_set_message($error, 'error');
-      }
-    }
-
-    // Check that there is at least one valid e-mail remaining after filtering
-    // out dupes.
-    if (count($emails) == 0) {
-      form_set_error('email');
-      return;
+      $invited_emails = _invite_filter_invited_emails($emails);
     }
 
     // Check invite limit, fail to let the user choose which ones to send.

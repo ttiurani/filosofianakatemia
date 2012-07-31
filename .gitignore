@@ -5,8 +5,9 @@ sites/*/settings*.php
 sites/*/files
 sites/*/private
 
-# Ignore devel module
+# Ignore devel modules
 sites/*/modules/devel
+sites/*/modules/drupalforfirebug
 
 # Ignore old site
 a
