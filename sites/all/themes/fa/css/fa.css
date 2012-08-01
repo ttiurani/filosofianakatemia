@@ -140,3 +140,9 @@ b.fa-title{
   padding-top: 20px;
 }
 
+/*
+ * Settings for blog texts
+ */
+.node-mailchimp-campaign .node-title {
+	display:inherit;
+}

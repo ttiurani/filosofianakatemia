@@ -104,6 +104,21 @@ html.js #user-login-form li.openid-link,
 }
 
 /*
+ * Need to float Facebook Connect and login side by side
+ */
+#user-login #edit-actions, #user-login #fboauth-login, 
+#user-login-form #edit-actions, #user-login-form #fboauth-login, 
+#user-register-form #edit-actions, #user-register-form #fboauth-login {
+  float: left;
+}
+#user-login #fboauth-login, #user-login-form #fboauth-login,
+#user-register-form #fboauth-login {
+  padding-top: 14px;
+  padding-left: 8px;
+}
+
+
+/*
  * Drupal admin tables
  *
  * We overrode these styles in normalize.css, but restore them for the admin

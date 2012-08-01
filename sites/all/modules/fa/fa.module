@@ -39,6 +39,13 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
     $form['account']['name']['#default_value'] = $form['account']['mail']['#default_value'];
     // Hide the username field
     $form['account']['name']['#access'] = FALSE;
+
+    // Add Facebook Connect button to the login form
+    $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+    $form['facebook'] = array(
+        '#markup' => $facebook_output,
+        '#weight' => 101,
+    );
   }
 }
 
@@ -66,7 +73,16 @@ function fa_form_alter(&$form, &$form_state, $form_id){
       $form['name']['#default_value'] = $_SESSION[INVITE_SESSION_EMAIL];
       // Disable editing of the username field
       $form['name']['#disabled'] = TRUE;
+
+
     }
+    // Add Facebook Connect button to the login form
+    $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+    $form['facebook'] = array(
+     '#markup' => $facebook_output,
+        '#weight' => 101,
+    );
+
   }else if ($form_id == 'user_login_block'){
     if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
          && ($_SESSION[INVITE_SESSION_STATUS] == INVITE_USED
@@ -75,6 +91,19 @@ function fa_form_alter(&$form, &$form_state, $form_id){
       // to give the role to someone else
       $form['#access'] = FALSE;
     }
+  }
+}
+
+/**
+ * Alter login block to include Facebook login
+ */
+function fa_block_view_user_login_alter(&$data, $block) {
+  if (isset($data) && !empty($data) ){
+    $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+    $data['content']['facebook'] = array(
+        '#markup' => $facebook_output,
+        '#weight' => 101, // One over the "Log in" button
+        );
   }
 }
 
