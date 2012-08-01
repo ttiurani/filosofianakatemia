@@ -35,16 +35,17 @@ function mailchimp_import_schema() {
  * Implementation of hook_uninstall().
  */
 function mailchimp_import_uninstall() {
-  
+
   // Remove variables.
   variable_del('mailchimp_import_lists');
   variable_del('mailchimp_import_campaign_status');
   variable_del('mailchimp_import_input_format');
   variable_del('mailchimp_import_nodetype');
+  variable_del('mailchimp_import_menu');
   variable_del('mailchimp_import_cron');
   variable_del('mailchimp_import_extract_title');
   variable_del('mailchimp_import_title_id');
   variable_del('mailchimp_import_only_selected');
   variable_del('mailchimp_import_content_id');
-  variable_del('mailchimp_import_cleanup_html');  
+  variable_del('mailchimp_import_cleanup_html');
 }

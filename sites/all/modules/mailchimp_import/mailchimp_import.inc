@@ -33,7 +33,7 @@ function mailchimp_import_admin_settings() {
       '#default_value'  => variable_get('mailchimp_import_lists', array()),
       '#description'    => t('Select the lists you want to import campaigns from.'),
     );
-    
+
     $status_options = array(
       'save' => 'Saved',
       'paused' => 'Paused',
@@ -41,7 +41,7 @@ function mailchimp_import_admin_settings() {
       'sending' => 'Sending',
       'sent' => 'Sent'
     );
-    
+
     $form['mailchimp_import_campaign_status'] = array(
       '#type'           => 'select',
       '#multiple'       => 1,
@@ -50,7 +50,7 @@ function mailchimp_import_admin_settings() {
       '#default_value'  => variable_get('mailchimp_import_campaign_status', array('sent')),
       '#description'    => t('Select the statuses of the campaigns you want to import.'),
     );
-    
+
     $form['mailchimp_import_nodetype'] = array(
       '#type'           => 'select',
       '#multiple'       => FALSE,
@@ -60,7 +60,13 @@ function mailchimp_import_admin_settings() {
       '#description'    => t('Select the node type to create the imported campaigns as.'),
     );
 
-    
+    $form['mailchimp_import_menu'] = array(
+        '#type'           => 'checkbox',
+        '#title'          => t('Add main menu link with default parent.'),
+        '#description'    => t('If checked, MailChimp Import will add a menu link using the default parent given to the node type, or if no default is given, set the link to the root of the main menu.'),
+        '#default_value'  => variable_get('mailchimp_import_menu', FALSE)
+    );
+
     // Input formats.
     $formats = filter_formats();
 
@@ -85,11 +91,11 @@ function mailchimp_import_admin_settings() {
     $form['mailchimp_import_cron'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Check for campaigns to import on every cron run.'),
-      '#description'    => t('If checked, MailChimp Import will check for campaigns to import from your MailChimp 
+      '#description'    => t('If checked, MailChimp Import will check for campaigns to import from your MailChimp
                              account every time cron runs.'),
       '#default_value'  => variable_get('mailchimp_import_cron', TRUE)
     );
-    
+
     $form['mailchimp_import_extract_title'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Extract node title from content'),
@@ -97,7 +103,7 @@ function mailchimp_import_admin_settings() {
             content. Title is identified with Title Id below.'),
         '#default_value'  => variable_get('mailchimp_import_extract_title', FALSE)
     );
-    
+
     $form['mailchimp_import_title_id'] = array(
         '#type'           => 'textfield',
         '#title'          => t('Title Id'),
@@ -105,7 +111,7 @@ function mailchimp_import_admin_settings() {
             of a div.'),
         '#default_value'  => variable_get('mailchimp_import_title_id', 'mailchimp-import-title')
     );
-    
+
     $form['mailchimp_import_only_selected'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Import only selected portion of campaign'),
@@ -113,7 +119,7 @@ function mailchimp_import_admin_settings() {
             from the campaign identified with Content Id below.'),
         '#default_value'  => variable_get('mailchimp_import_only_selected', FALSE)
     );
-    
+
     $form['mailchimp_import_content_id'] = array(
         '#type'           => 'textfield',
         '#title'          => t('Content Id'),
@@ -128,17 +134,17 @@ function mailchimp_import_admin_settings() {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    
+
     // Get the HTML cleanup options.
     $cleanup_options = variable_get('mailchimp_import_cleanup_html', array());
-    
+
     $form['mailchimp_import_cleanup_html']['mailchimp_import_strip_style'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Strip out embedded CSS in &lt;style&gt; tags.'),
-      '#description'    => t('If checked, MailChimp Import will strip out any &lt;style&gt; tags and the code 
-        between them from the campaign content on import. This is useful, because otherwise embedded CSS from 
+      '#description'    => t('If checked, MailChimp Import will strip out any &lt;style&gt; tags and the code
+        between them from the campaign content on import. This is useful, because otherwise embedded CSS from
         the campaign can mess up page styles.'),
-      '#default_value'  => isset($cleanup_options['mailchimp_import_strip_style']) ? 
+      '#default_value'  => isset($cleanup_options['mailchimp_import_strip_style']) ?
         $cleanup_options['mailchimp_import_strip_style'] : TRUE,
     );
 
@@ -147,19 +153,19 @@ function mailchimp_import_admin_settings() {
       '#title'          => t('Strip out Javascript in &lt;script&gt; tags.'),
       '#description'    => t('If checked, MailChimp Import strip out any &lt;script&gt; tags and the code
         between them from the campaign content on import.'),
-      '#default_value'  => isset($cleanup_options['mailchimp_import_strip_script']) ? 
+      '#default_value'  => isset($cleanup_options['mailchimp_import_strip_script']) ?
         $cleanup_options['mailchimp_import_strip_script'] : TRUE,
     );
-    
+
     // Settings for stripping out certain tags and the content between them.
     $invisible_tags = array('!DOCTYPE', 'head', 'object', 'embed', 'applet', 'noframes', 'noscript', 'noembed');
     foreach ($invisible_tags as $tag) {
       $form['mailchimp_import_cleanup_html']['mailchimp_import_strip_'.$tag] = array(
         '#type'           => 'checkbox',
         '#title'          => 'Strip ' . $tag . '  tags.',
-        '#description'    => 'If checked, MailChimp Import will strip out any &lt;' . $tag . '&gt; tags and any 
+        '#description'    => 'If checked, MailChimp Import will strip out any &lt;' . $tag . '&gt; tags and any
         code or text inside them from the campaign content on import.',
-        '#default_value'  => isset($cleanup_options['mailchimp_import_strip_'.$tag]) ? 
+        '#default_value'  => isset($cleanup_options['mailchimp_import_strip_'.$tag]) ?
           $cleanup_options['mailchimp_import_strip_'.$tag] : TRUE,
       );
     }
@@ -180,11 +186,11 @@ function mailchimp_import_admin_settings() {
 
   }
   else {
-    // MailChimp account info has not yet been configured.  Provide instructions and a config link with a 
+    // MailChimp account info has not yet been configured.  Provide instructions and a config link with a
     // destination query which will bring us back here.
     $form['message'] = array(
-      '#value' => t('Before you can use MailChimp Import, you must first <a href="@config_path">configure 
-                    MailChimp module</a> with your MailChimp API key.', 
+      '#value' => t('Before you can use MailChimp Import, you must first <a href="@config_path">configure
+                    MailChimp module</a> with your MailChimp API key.',
                     array('@config_path' => url('admin/config/services/mailchimp', array('query' => array(
                       'destination' => 'admin/config/services/mailchimp/import'))))),
     );
@@ -194,28 +200,30 @@ function mailchimp_import_admin_settings() {
 
 
 /**
- * Submit handler for the Import Campaigns button; imports MailChimp messages according to 
- * the configured MailChimp Import settings.  This is the Main function of this module, 
+ * Submit handler for the Import Campaigns button; imports MailChimp messages according to
+ * the configured MailChimp Import settings.  This is the Main function of this module,
  * that does all the work of importing campaigns and saving them as nodes.
  */
 function mailchimp_import_get_campaigns($form = array(), &$form_state = array()) {
-  
+
   // Instantiate a MailChimp API object.
   if ($q = mailchimp_get_api_object()) {
-    
+
     // Process variables.  Try to use the values from the form first; if not set, use the saved variables.
-    $lists        = count($form['mailchimp_import_lists']['#value']) ? $form['mailchimp_import_lists']['#value'] : 
+    $lists         = count($form['mailchimp_import_lists']['#value']) ? $form['mailchimp_import_lists']['#value'] :
                       variable_get('mailchimp_import_lists', array());
-    $status       = count($form['mailchimp_import_campaign_status']['#value']) ? $form['mailchimp_import_campaign_status']['#value'] : 
+    $status        = count($form['mailchimp_import_campaign_status']['#value']) ? $form['mailchimp_import_campaign_status']['#value'] :
                       variable_get('mailchimp_import_campaign_status', array('sent' => 'sent'));
-    $input_format = is_numeric($form['mailchimp_import_input_format']['#value']) ? 
-                      $form['mailchimp_import_input_format']['#value'] : 
+    $input_format  = is_numeric($form['mailchimp_import_input_format']['#value']) ?
+                      $form['mailchimp_import_input_format']['#value'] :
                       variable_get('mailchimp_import_input_format', 1);
-    $nodetype     = $form['mailchimp_import_nodetype']['#value'] ? $form['mailchimp_import_nodetype']['#value'] : 
+    $nodetype      = $form['mailchimp_import_nodetype']['#value'] ? $form['mailchimp_import_nodetype']['#value'] :
                       variable_get('mailchimp_import_nodetype', 1);
+    $add_menu_link = $form['mailchimp_import_menu']['#value'] ? $form['mailchimp_import_menu']['#value'] :
+                      variable_get('mailchimp_import_menu', FALSE);
 
     if (count($lists)) {
-      
+
       // Get an array of campaigns we've already imported.
       $already_imported_campaigns = mailchimp_import_get_imported_campaigns();
 
@@ -226,49 +234,49 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
       foreach ($lists as $list) {
         // Get all campaigns in the current list.
         $campaigns = $q->campaigns(array('list_id' => $list));
-        
+
         if (is_array($campaigns['data']) && count($campaigns['data'])) {
-          
+
           // Loop through the campaigns we imported from MailChimp.
           foreach ($campaigns['data'] as $campaignKey => $campaign) {
-            
+
             // Only import campaigns that have the right status.
             if (array_key_exists($campaign['status'], variable_get('mailchimp_import_campaign_status', array('sent' => 'Sent')))) {
-              
+
               // Check if this campaign has already been imported.
               if (!in_array($campaign['id'], $already_imported_campaigns)) {
-                
+
                 // Get this campaign's HTML content.
-                $campaign_content = $q->campaignContent($campaign['id']);                
+                $campaign_content = $q->campaignContent($campaign['id']);
                 $campaign_html = $campaign_content['html'];
 
                 // Set default value for title
                 $node_title = $campaign['subject'];
-                
+
                 // Check if title should be extracted
                 if (variable_get('mailchimp_import_extract_title', FALSE)){
-                  $title = _mailchimp_import_extract_title($campaign_html, 
+                  $title = _mailchimp_import_extract_title($campaign_html,
                       variable_get('mailchimp_import_title_id', 'mailchimp-import-title'));
                   if ($title != NULL){
                     dpm('Found title : ' . $title);
                     $node_title = $title;
                   }
                 }
-                
+
                 // Check if only selected divs should be included
                 if (variable_get('mailchimp_import_only_selected', FALSE)){
-                  $campaign_html = _mailchimp_import_get_selected($campaign_html, 
+                  $campaign_html = _mailchimp_import_get_selected($campaign_html,
                       variable_get('mailchimp_import_content_id', 'mailchimp-import'));
                 }
-                
+
                 if ($campaign_html != NULL){
-                                    
+
                   // Strip out the HTML.
                   $campaign_html = mailchimp_import_strip_html($campaign_html, $input_format);
-                                    
+
                   // Get the user object to assign as the author.
                   global $user;
-  
+
                   // Create a node for this campaign.
                   $node = new stdClass();
                   $node->type = $nodetype;
@@ -278,12 +286,16 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                   $node->body[$node->language][0]['value']   = $campaign_html;
                   $node->body[$node->language][0]['format']  = $input_format;;
                   $node->created = strtotime($campaign['send_time']); // The created date of the node will be set to the sent date of the campaign.
+                  if ($add_menu_link){
+                    $node->menu =_get_main_menu_link($node);
+                  }
+
                   node_save($node);
-  
+
                   // If there's a nid now, then we saved it.
                   if ($node->nid) {
                     // Insert a record into the MailChimp Import table.
-                    db_query('INSERT INTO {mailchimp_import} (cid, nid) VALUES (:cid, :nid)', 
+                    db_query('INSERT INTO {mailchimp_import} (cid, nid) VALUES (:cid, :nid)',
                         array(':cid' => $campaign['id'], ':nid' => $node->nid));
                     $counter++;
                     drupal_set_message(t('Imported campaign <a href="@imported_campaign_path">%imported_campaign_title</a>.', array('@imported_campaign_path' => url('node/' . $node->nid), '%imported_campaign_title' => $node_title)));
@@ -317,12 +329,38 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
 }
 
 /**
+ * Helper function. Adds menu link.
+ */
+function _get_main_menu_link($node){
+  $parent = variable_get('menu_parent_' . $node->type, 'main-menu:0');
+  $parent_array = explode(':', $parent);
+  $plid = $parent_array[1];
+  return array(
+      'enabled' => 1,
+      'mlid' => 0,
+      'module' => 'menu',
+      'hidden' => 0,
+      'has_children' => 0,
+      'customized' => 0,
+      'options' => array(),
+      'expanded' => 0,
+      'parent_depth_limit' => 8,
+      'link_title' => $node->title,
+      'description' => '',
+      'parent' => $parent,
+      'plid' => $plid,
+      'weight' => 0,
+      'menu_name' => 'main-menu'
+   );
+}
+
+/**
  * Helper function.  Get an array of campaign IDs of the campaigns we've already imported.
  */
 function mailchimp_import_get_imported_campaigns() {
   $campaigns = array();
   $result = db_query('SELECT * FROM {mailchimp_import};');
-  
+
   foreach($result as $import){
     $campaigns[$import['nid']] = $import['cid'];
   }
@@ -351,7 +389,7 @@ function _mailchimp_import_extract_title(&$html, $title_id) {
     drupal_set_message(t('Could not find title element with id ' . $title_id));
     return NULL;
   }
-  
+
   $title = $title_element->nodeValue;
   $title_element->parentNode->removeChild($title_element);
   $html = $dom->saveXML();
@@ -378,7 +416,7 @@ function _mailchimp_import_get_selected($html, $content_id) {
     drupal_set_message(t('Could not find div with id "' . $content_id . '"'));
     return NULL;
   }
-  
+
   return $dom->saveXML($selected_element);
 }
 
@@ -388,17 +426,17 @@ function _mailchimp_import_get_selected($html, $content_id) {
  * Add line breaks around block-level tags to prevent word joining after tag removal.
  */
 function mailchimp_import_strip_html($text, $input_format) {
-  
+
   // Check if only selected divs should be imported
   $import_only_selected = variable_get('mailchimp_import_only_selected', FALSE);
   if ($import_only_selected){
-    
+
     // Need to create a DOM document of the HTML
     $dom=new domDocument;
     $dom->preserveWhiteSpace = false;
     $dom->validateOnParse = true;
     $dom->loadHTML($text);
-    
+
     // Find the selected div
     $selected = $dom->getElementById("mailchimp-import");
     if ($selected == NULL){
@@ -406,15 +444,15 @@ function mailchimp_import_strip_html($text, $input_format) {
       return NULL;
     }
   }
-  
+
   // Get the cleanup options.
   $cleanup_options = variable_get('mailchimp_import_cleanup_html', array());
-  
+
   // Make an array of tags to strip along with their content.
   $strip_invisible = array();
   // Make an array of emptiness to replace these tags with.
   $replace_with = array();
-  
+
   // Loop through possible tags to hide, adding the selected ones to the $strip_invisible array.
   $invisible_tags = array('head', 'object', 'embed', 'applet', 'noframes', 'noscript', 'noembed', 'style', 'script');
   foreach ($invisible_tags as $tag) {
@@ -424,15 +462,15 @@ function mailchimp_import_strip_html($text, $input_format) {
       $replace_with[] = ' ';
     }
   }
-  
+
   // Process the !DOCTYPE tag specially.
   if (!isset($cleanup_options['mailchimp_import_strip_!DOCTYPE']) || $cleanup_options['mailchimp_import_strip_!DOCTYPE']) {
     $strip_invisible[] = '@<!DOCTYPE[^>]*?>.*?>@siu';
     $replace_with[] = ' ';
   }
-  
+
   // Process the text.
   $text = preg_replace($strip_invisible, $replace_with, $text);
-  
+
   return $text;
 }
