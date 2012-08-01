@@ -19,9 +19,23 @@ ul.secondary {
   *zoom: 1;
   border-bottom: 1px solid #bbbbbb;
   list-style: none;
-  margin: 1em 0 1.5em;
+  margin: 1em 226px 1.5em;
   padding: 12px 2px 0;
+  width: 533px;
   white-space: nowrap;
+}
+
+.page-user ul.primary, .page-user ul.secondary{
+  margin: 1em 100px 1.5em;
+  width: 658px;
+}
+
+/*
+ * Invites have to be full width
+ */
+.page-user-invites ul.primary, .page-user-invites ul.secondary{
+  margin: 1em 0px 1.5em;
+  width: auto;
 }
 
 ul.primary li,
