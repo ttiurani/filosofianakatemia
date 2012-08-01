@@ -301,9 +301,19 @@ span.field-label { /* The inline field label used by the Fences module */
   padding-top:7px;
 }
 
+.view{
+  padding-top:12px;
+}
+
+
 
 .node-title, .title{
   display:none;
+}
+
+#page-title{
+  margin-left: 228px;
+  padding-top: 7px;
 }
 
 /**

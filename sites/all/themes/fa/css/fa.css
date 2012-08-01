@@ -144,5 +144,13 @@ b.fa-title{
  * Settings for blog texts
  */
 .node-mailchimp-campaign .node-title {
-	display:inherit;
+  display:inherit;
+}
+
+.node-type-mailchimp-campaign #page-title {
+  display:inherit;
+}
+
+.node-mailchimp-campaign {
+  padding-left: 5em;
 }
