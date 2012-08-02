@@ -1308,12 +1308,10 @@ function invite_form_submit($form, &$form_state) {
     // Create or load the invite object.
     if (!empty($form_state['values']['reg_code'])) {
       $invite = invite_load($form_state['values']['reg_code']);
-
       $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
     }
     else {
       $invite = invite_create();
-
       $invite->email = $email;
     }
 
@@ -1342,8 +1340,6 @@ function invite_form_submit($form, &$form_state) {
     else {
       $failed_emails[] = $email;
     }
-
-
   }
 
   // Store failed e-mails for re-display.

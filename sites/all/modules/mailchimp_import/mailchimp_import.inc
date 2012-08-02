@@ -106,7 +106,7 @@ function mailchimp_import_admin_settings() {
         '#type'           => 'checkbox',
         '#title'          => t('Extract node title from content'),
         '#description'    => t('If checked, node title will be extracted and then removed from the
-            content. Title is identified with Title Id below.'),
+            content.'),
         '#default_value'  => variable_get('mailchimp_import_extract_title', FALSE)
     );
 
@@ -115,23 +115,32 @@ function mailchimp_import_admin_settings() {
         '#title'          => t('Title Id'),
         '#description'    => t('Id of the title portion in the campaign. Typically id
             of a div.'),
-        '#default_value'  => variable_get('mailchimp_import_title_id', 'mailchimp-import-title')
+        '#default_value'  => variable_get('mailchimp_import_title_id', 'mailchimp-import-title'),
+        '#states' => array(
+            'visible' => array(
+                ':input[name=mailchimp_import_extract_title]' => array('checked' => TRUE),
+            ),
+        ),
     );
 
     $form['mailchimp_import_only_selected'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Import only selected portion of campaign'),
         '#description'    => t('If checked, MailChimp Import will import only selected portion
-            from the campaign identified with Content Id below.'),
+            from the campaign.'),
         '#default_value'  => variable_get('mailchimp_import_only_selected', FALSE)
     );
 
     $form['mailchimp_import_content_id'] = array(
         '#type'           => 'textfield',
         '#title'          => t('Content Id'),
-        '#description'    => t('Id of the content portion in the campaign. Typically id
-            of a div.'),
-        '#default_value'  => variable_get('mailchimp_import_content_id', 'mailchimp-import')
+        '#description'    => t('Id of the content portion in the campaign. Typically id of a div.'),
+        '#default_value'  => variable_get('mailchimp_import_content_id', 'mailchimp-import'),
+        '#states' => array(
+            'visible' => array(
+                ':input[name=mailchimp_import_only_selected]' => array('checked' => TRUE),
+            ),
+        ),
     );
 
     $form['mailchimp_import_cleanup_html'] = array(

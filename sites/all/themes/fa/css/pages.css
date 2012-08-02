@@ -317,9 +317,9 @@ span.field-label { /* The inline field label used by the Fences module */
 }
 
 /**
- * User pages
+ * User pages and webforms
  */
-.profile, #user-profile-form, #user-login, #user-register-form {
+.profile, #user-profile-form, #user-login, #user-register-form{
   margin-left: 100px;
 }
 

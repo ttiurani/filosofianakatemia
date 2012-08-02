@@ -39,7 +39,7 @@ function invite_user_overview($page, $account) {
       $query->leftJoin('role', 'r', 'ir.rid = r.rid');
       $query->fields('u', array('uid', 'status'));
       $query->condition('i.joined', 0, '<>');
-      $query->orderBy('u.uid', 'DESC');
+      $query->orderBy('i.joined', 'DESC');
       //$sql = "SELECT i.*, u.uid AS account FROM {invite} i LEFT JOIN {users} u ON u.uid = i.invitee AND u.uid <> 0 WHERE i.uid = %d AND i.joined <> 0 AND canceled = 0 ORDER BY u.uid DESC";
       break;
     case 'pending':
@@ -59,8 +59,6 @@ function invite_user_overview($page, $account) {
       //$sql = "SELECT * FROM {invite} WHERE uid = %d AND joined = 0 AND canceled = 0 AND expiry < %d ORDER BY expiry DESC";
       break;
   }
-
-  $query->orderBy('i.iid', 'DESC');
 
   //$result = pager_query($sql, 50, 0, NULL, $user->uid, REQUEST_TIME);
   $result = $query->execute()->fetchAll();

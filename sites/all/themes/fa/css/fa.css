@@ -154,3 +154,19 @@ b.fa-title{
 .node-mailchimp-campaign {
   padding-left: 5em;
 }
+
+/**
+ * Need a special important to get this to override
+ * the setting for .node in fixed-width.css
+ */
+.node-preliminary-assignment, .node-webform {
+  margin-left: 100px !important;
+}
+
+/*
+ * Settings for the FA course block
+ */
+#fa-course {
+  margin-left: 160px !important;
+  padding-left: 5em !important;
+}

@@ -25,7 +25,9 @@ ul.secondary {
   white-space: nowrap;
 }
 
-.page-user ul.primary, .page-user ul.secondary{
+.page-user ul.primary, .page-user ul.secondary,
+.node-type-preliminary-assignment ul.primary, .node-type-preliminary-assignment ul.secondary,
+.node-type-webform ul.primary, .node-type-webform ul.secondary{
   margin: 1em 100px 1.5em;
   width: 658px;
 }

@@ -244,7 +244,8 @@ function invite_admin_overview() {
   $result->orderByHeader($header);
   $result = $result->execute()->fetchAll();
 
-  $output = render(drupal_get_form('invite_admin_filter_form'));
+  $admin_filter_form = drupal_get_form('invite_admin_filter_form');
+  $output = render($admin_filter_form);
 
   $rows = array();
   foreach ($result as $row) {
