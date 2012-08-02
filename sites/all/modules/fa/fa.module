@@ -119,6 +119,10 @@ function fa_block_info() {
       'info' => t('Filosofian Akatemia Up One'), //The name that will appear in the block list.
       'cache' => DRUPAL_CACHE_PER_ROLE, //Default
   );
+  $blocks['fa-course'] = array(
+      'info' => t('Filosofian Akatemia Invite Course'), //The name that will appear in the block list.
+      'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+  );
   return $blocks;
 }
 
@@ -178,6 +182,10 @@ function fa_block_view($delta = '') {
         }
       }
       break;
+    case 'fa-course':
+      $course_form = _generate_course_form();
+      $block['content'] = '<div id="fa-course">' . drupal_render($course_form) . '</div>';
+      break;
   }
   return $block;
 }
@@ -211,4 +219,20 @@ function _find_parent_of_active($parentnodes) {
 		}
 	}
 	return $parentofactive;
+}
+
+
+/**
+ * Course specific stuff
+ */
+function _generate_course_form(){
+  firep('HEP');
+  return $form['foo'] = array(
+    '#type' => 'textfield',
+    '#title' => t('bar'),
+    '#default_value' => t('foo'),
+    '#size' => 60,
+    '#maxlength' => 64,
+    '#description' => t('baz'),
+  );
 }

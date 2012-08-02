@@ -41,6 +41,7 @@ function mailchimp_import_uninstall() {
   variable_del('mailchimp_import_campaign_status');
   variable_del('mailchimp_import_input_format');
   variable_del('mailchimp_import_nodetype');
+  variable_del('mailchimp_import_language');
   variable_del('mailchimp_import_menu');
   variable_del('mailchimp_import_cron');
   variable_del('mailchimp_import_extract_title');

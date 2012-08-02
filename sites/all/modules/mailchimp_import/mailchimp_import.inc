@@ -60,6 +60,12 @@ function mailchimp_import_admin_settings() {
       '#description'    => t('Select the node type to create the imported campaigns as.'),
     );
 
+    if (module_exists('i18n')){
+      $form['mailchimp_import_language'] = i18n_element_language_select(
+          variable_get('mailchimp_import_language', LANGUAGE_NONE));
+      $form['mailchimp_import_language']['#description'] = t('Select the language for the created node.');
+    }
+
     $form['mailchimp_import_menu'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Add main menu link with default parent.'),
@@ -219,6 +225,8 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                       variable_get('mailchimp_import_input_format', 1);
     $nodetype      = $form['mailchimp_import_nodetype']['#value'] ? $form['mailchimp_import_nodetype']['#value'] :
                       variable_get('mailchimp_import_nodetype', 1);
+    $language      = $form['mailchimp_import_language']['#value'] ? $form['mailchimp_import_language']['#value'] :
+                      variable_get('mailchimp_import_language', LANGUAGE_NONE);
     $add_menu_link = $form['mailchimp_import_menu']['#value'] ? $form['mailchimp_import_menu']['#value'] :
                       variable_get('mailchimp_import_menu', FALSE);
 
@@ -282,7 +290,7 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                   $node->type = $nodetype;
                   $node->uid = $user->uid;
                   $node->title = $node_title;
-                  $node->language = LANGUAGE_NONE;
+                  $node->language = $language;
                   $node->body[$node->language][0]['value']   = $campaign_html;
                   $node->body[$node->language][0]['format']  = $input_format;;
                   $node->created = strtotime($campaign['send_time']); // The created date of the node will be set to the sent date of the campaign.
