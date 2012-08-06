@@ -355,8 +355,8 @@ function fa_course_form_submit($form, &$form_state) {
 
   // Search for a preliminary assignment
   $preliminary_assignment_url = db_query("SELECT ua.alias from node n INNER JOIN url_alias ua ON ua.source = CONCAT('node/', n.nid) "
-                                       . "WHERE n.type = 'preliminary_assignment' AND n.title = :title",
-                                        array(':title' => substr($product_role->name, 2, (strlen($product_role->name)-3)))
+                                       . "WHERE n.type = 'preliminary_assignment' AND n.title LIKE :title",
+                                        array(':title' => substr($product_role->name, 2, (strlen($product_role->name)-3)) . '%')
                                         )->fetchField();
   if (!empty($preliminary_assignment_url)){
     // Change the [invite:join-link] to contain the destination
