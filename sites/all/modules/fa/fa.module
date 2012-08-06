@@ -104,6 +104,8 @@ function fa_block_view_user_login_alter(&$data, $block) {
         '#markup' => $facebook_output,
         '#weight' => 101, // One over the "Log in" button
         );
+    // Change user name hint to email
+    $data['content']['name']['#title'] = t('Email address');
   }
 }
 
@@ -270,7 +272,7 @@ function fa_course_form($form, &$form_state) {
       '#multiple'       => FALSE,
       '#title'          => t('Select Product'),
       '#options'        => $product_options,
-      '#description'    => t('Select the course.'),
+      '#description'    => t('Select the product.'),
   );
   $form['fa_course_product'] = array(
       '#type'           => 'textfield',
