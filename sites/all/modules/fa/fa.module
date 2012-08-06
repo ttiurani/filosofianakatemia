@@ -153,7 +153,7 @@ function fa_block_view($delta = '') {
         			$bgdivid .= $menutext;
         		}
         		$block['content'] =
-        			'<div id="' . $bgdivid . '" class="fa-bg"><img src="sites/all/themes/fa/images/menu-background-'
+        			'<div id="' . $bgdivid . '" class="fa-bg"><img src="' . base_path() . 'sites/all/themes/fa/images/menu-background-'
         			. $menutext
         			. '.png"/></div>';
             }
@@ -177,7 +177,7 @@ function fa_block_view($delta = '') {
                 'html' => TRUE,
             );
             $block['content'] = l(
-                '<img src="sites/all/themes/fa/images/menu-up.png" />',
+                '<img src="' . base_path() . 'sites/all/themes/fa/images/menu-up.png" />',
                 $parentofactive['#href'],
                 $options);
           }
