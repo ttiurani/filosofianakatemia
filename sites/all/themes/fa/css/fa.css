@@ -122,8 +122,12 @@ b.fa-title{
   color: #00abe5;
 }
 
-.fa-separator {
+.fa-separator, .fa-separator-thin {
   text-align: center;
+  margin-top: -10px;
+  margin-bottom: -20px;
+}
+.fa-separator-thin {
   margin-top: -20px;
   margin-bottom: -20px; 
 }
@@ -139,7 +143,7 @@ b.fa-title{
 }
 
 .front .node{
-  padding-top: 20px;
+  padding-top: 1.5em;
 }
 
 /*
@@ -153,9 +157,6 @@ b.fa-title{
   display:inherit;
 }
 
-.node-mailchimp-campaign {
-  padding-left: 5em;
-}
 
 /**
  * Need a special important to get this to override
@@ -169,8 +170,7 @@ b.fa-title{
  * Settings for the FA course block
  */
 #fa-course {
-  margin-left: 160px !important;
-  padding-left: 5em !important;
+  padding-left: 13.5em !important;
 }
 
 /**

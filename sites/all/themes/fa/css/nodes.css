@@ -46,8 +46,16 @@
  * receive a "node-my-custom-type" class.
  */
 
+.front .node-page { /* Page content node */
+  padding-left: 7em;
+}
+
 .node-page { /* Page content node */
-  padding-left: 5em;
+  padding-left: 13.5em;
+}
+
+.node-mailchimp-campaign {
+  padding-left: 13.5em;
 }
 
 .node-article { /* Article content node */
