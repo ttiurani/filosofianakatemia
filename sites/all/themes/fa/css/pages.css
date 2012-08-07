@@ -30,7 +30,7 @@ body {
 
 #page-wrapper {
   height: auto !important;
-  margin: 0 auto -194px;
+  margin: 0 auto -157px;
   min-height: 100%;
 }
 
@@ -254,15 +254,16 @@ span.field-label { /* The inline field label used by the Fences module */
 .region-bottom { /* Wrapper for any blocks placed in the page bottom region */
   border-top: 1px dotted #00abe5;
   border-bottom: 1px dotted #00abe5;
-  height: 182px;
+  height: 145px;
+  line-height: 125%;
 }
 
 .sticky-footer{
-  height: 194px;
+  height: 157px;
 }
 
 .push {
-  height: 194px;
+  height: 157px;
 }
 
 /**
@@ -270,15 +271,17 @@ span.field-label { /* The inline field label used by the Fences module */
  */
 .menu{
   text-transform: uppercase;
-  font-family:Gotham;  
+  font-family:Gotham;   
 }
 
+.menu a, .menu a.active, .menu a.active-trail{
+  color: #008bbb;	
+}
 
 .menu a.active , .menu a.active-trail {
-  font-family: Gotham;
+  font-family: 'Gotham Book';
   font-weight: bold;
-  font-size: 30px;
-  color: #00c3ff;
+  font-size: 27px;
 }
 
 #block-menu-block-1 .menu, #block-menu-block-1 .leaf {

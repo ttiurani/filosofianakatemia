@@ -13,18 +13,20 @@
   font-size: 12px;
   float: left;
   padding-left: 170px;
+  margin-top: -5px;
 }
 
-#fa-some {
+#fa-some, #fa-some a {
   font-family:Gotham;
+  color: #008bbb;
 }
 
 #fa-front-heading {
   padding-top: 30px;
-  font-family:Gotham;
+  font-family:'Gotham Book';
   font-weight:bold;
-  font-size: 20px;
-  color: #00abe5;
+  font-size: 18px;
+  color: #008bbb;
 }
 
 #fa-front-action {
@@ -169,4 +171,11 @@ b.fa-title{
 #fa-course {
   margin-left: 160px !important;
   padding-left: 5em !important;
+}
+
+/**
+ * Logo
+ */
+#logo {
+  width:238px;
 }
