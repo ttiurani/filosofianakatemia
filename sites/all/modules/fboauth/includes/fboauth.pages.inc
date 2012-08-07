@@ -9,7 +9,6 @@
  * Menu callback; Display the settings form for Facebook OAuth.
  */
 function fboauth_settings_form($form, &$form_state) {
-  firep($form);
   module_load_include('inc', 'fboauth', 'includes/fboauth.fboauth');
 
   $form['fboauth_id'] = array(
