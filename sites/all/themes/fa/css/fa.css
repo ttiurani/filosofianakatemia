@@ -13,7 +13,11 @@
   font-size: 12px;
   float: left;
   padding-left: 170px;
-  margin-top: -5px;
+  /*margin-top: -5px;*/
+}
+
+#fa-customers-img {
+  *margin-top: -5px;
 }
 
 #fa-some, #fa-some a {
@@ -26,7 +30,7 @@
   font-family:'Gotham Book';
   font-weight:bold;
   font-size: 18px;
-  color: #008bbb;
+  color: #00abe5;
 }
 
 #fa-front-action {
@@ -39,6 +43,10 @@
   margin-left: -62px;
 }
 
+.fa-bg {
+  /* This is needed for menu bg to work with Chrome when there is an admin bar */
+  width: 467px;
+}
 
 #fa-bg-blogi-menu {
   position:absolute;
@@ -179,4 +187,19 @@ b.fa-title{
  */
 #logo {
   width:238px;
+}
+
+/**
+ * User menu
+ */
+ 
+#block-system-user-menu .block-title {
+	display:none;
+}
+
+#block-system-user-menu .menu, #block-system-user-menu .leaf {
+  list-style-image: none;
+  list-style-type: none;
+  margin-left: 0;
+  padding-left: 0;
 }

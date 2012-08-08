@@ -30,7 +30,10 @@ function fboauth_action_page($action) {
   }
   elseif (isset($_REQUEST['error'])) {
     $link = fboauth_action_link_properties($action_name, $app_id);
-    watchdog('fboauth', 'A user refused to allow access to the necessary Facebook information (@permissions) to login to the site.', array('@permissions' => $link['query']['scope']));
+    if (isset($link['query']['scope']))
+      watchdog('fboauth', 'A user refused to allow access to the necessary Facebook information (@permissions) to login to the site.', array('@permissions' => $link['query']['scope']));
+    else
+      watchdog('fboauth', 'A user refused to allow access to the necessary Facebook information to login to the site.');
     $error_message = t('This site requires access to information in order to log you into the site. If you like you can <a href="!facebook">sign in with Facebook again</a> or <a href="!register">register normally</a>.', array('!facebook' => url($link['href'], array('query' => $link['query'])), '!register' => url('user/register')));
   }
   elseif (!isset($_REQUEST['code'])) {

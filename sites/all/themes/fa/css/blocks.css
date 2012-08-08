@@ -85,6 +85,17 @@ h2.block-title { /* Block title */
 
 #block-system-user-menu { /* "User menu" block for Drupal user menu */
 }
+ 
+#block-system-user-menu .block-title {
+    display:none;
+}
+
+#block-system-user-menu .menu, #block-system-user-menu .leaf {
+  list-style-image: none;
+  list-style-type: none;
+  margin-left: 0;
+  padding-left: 0;
+}
 
 #block-system-help { /* "System help" block */
 }
