@@ -104,8 +104,16 @@ function fa_block_view_user_login_alter(&$data, $block) {
         '#markup' => $facebook_output,
         '#weight' => 101, // One over the "Log in" button
         );
+
     // Change user name hint to email
-    $data['content']['name']['#title'] = t('Email address');
+    $data['content']['name']['#title'] = t('Email address:');
+
+    // Add : after password as well
+    $data['content']['pass']['#title'] = t('Password:');
+
+    // Move hints down
+    $data['content']['links']['#weight'] = 102;
+    firep($data);
   }
 }
 

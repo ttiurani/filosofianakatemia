@@ -130,14 +130,10 @@ b.fa-title{
   color: #00abe5;
 }
 
-.fa-separator, .fa-separator-thin {
+.fa-separator {
   text-align: center;
-  margin-top: -10px;
-  margin-bottom: -20px;
-}
-.fa-separator-thin {
-  margin-top: -20px;
-  margin-bottom: -20px; 
+  margin-top: -5px;
+  margin-bottom: -5px;
 }
 
 /*
@@ -148,24 +144,11 @@ b.fa-title{
   background-image: url('../images/front-background.png');
   background-repeat: no-repeat;
   background-position: 0px -17px;
-  width: 100%;
 }
 
 .front .node{
   padding-top: 1.5em;
 }
-
-/*
- * Settings for blog texts
- */
-.node-mailchimp-campaign .node-title {
-  display:inherit;
-}
-
-.node-type-mailchimp-campaign #page-title {
-  display:inherit;
-}
-
 
 /**
  * Need a special important to get this to override
@@ -189,17 +172,6 @@ b.fa-title{
   width:238px;
 }
 
-/**
- * User menu
- */
- 
-#block-system-user-menu .block-title {
-	display:none;
-}
-
-#block-system-user-menu .menu, #block-system-user-menu .leaf {
-  list-style-image: none;
-  list-style-type: none;
-  margin-left: 0;
-  padding-left: 0;
+.mailchimp-lists-user-subscribe-form{
+  padding-left: 7em;
 }

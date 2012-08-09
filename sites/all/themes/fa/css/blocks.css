@@ -107,7 +107,79 @@ h2.block-title { /* Block title */
 }
 
 #block-user-login { /* "User login form" block */
+  margin-left: 288px;
+  font-family:Gotham;
+  color: #00C3FF;
 }
+
+#block-user-login .block-title{
+  display: none;
+}
+
+#block-user-login .form-item{
+  font-size: 16px;
+}
+
+#block-user-login .form-item-name label{
+  float: left;
+  padding-right: 20px;
+}
+
+#block-user-login .form-item-name #edit-name,
+#block-user-login .form-item-pass #edit-pass{
+  font-size: 12px;
+  width: 250px;
+}
+
+
+#block-user-login .form-item-pass label{
+  float: left;
+  padding-right: 97px;
+}
+
+#block-user-login .item-list{
+  clear: both;
+}
+
+#block-user-login #edit-actions, #block-user-login #fboauth-login{
+  margin-top: 0;
+  padding-top: 0 !important;
+}
+
+#block-user-login #edit-actions input{
+  overflow:visible;
+  font-family:Gotham Book; 
+  font-size:16px;
+  font-weight:bold;
+  text-transform: uppercase;
+  display:inline;  
+  margin:0; 
+  padding:0 !important; 
+  border:0; 
+  color: #00C3FF; 
+  cursor:pointer;
+  background-color: transparent;
+}
+
+#block-user-login .item-list {
+  font-style: italic;	
+}
+
+#block-user-login .item-list ul{
+  list-style-image: none;
+  list-style-type: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+
+
+#block-user-login .form-item .form-required{
+  display: none;
+}
+
+
+
 
 #block-user-new { /* "Who's new" block for a list of the newest users */
 }

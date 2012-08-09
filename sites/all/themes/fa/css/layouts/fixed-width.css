@@ -93,7 +93,7 @@
 .sidebar-first #content {
   /* Span 4 columns, starting in 2nd column from left. */
   float: left;
-  width: 764px;
+  width: 774px;
   margin-left: 196px;
   margin-right: -980px;
 }
@@ -109,7 +109,7 @@
 }
 
 .sidebar-first .node {
-  margin-left: 160px;
+  margin-left: 100px;
   padding-right: 40px;
 }
 

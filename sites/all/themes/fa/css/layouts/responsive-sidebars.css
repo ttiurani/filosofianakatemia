@@ -20,7 +20,6 @@
   margin-left: auto;
   margin-right: auto;
   max-width: 1008px;
-  min-width: 1008px;
 }
 
 /*
@@ -208,8 +207,10 @@
     float: left;
     width: 80%;
     margin-left: 24.5%;
+    /* This causes a horizontal scroll bar for some reason */
     margin-right: -100%;
     padding-right: 14%;
+    overflow: hidden;
   }
   .sidebar-first .region-sidebar-first { /* Span 1 column, starting in 1st column from left. */
     float: left;

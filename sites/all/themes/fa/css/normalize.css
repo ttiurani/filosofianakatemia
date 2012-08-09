@@ -268,7 +268,7 @@ a:active {
  */
 
 h1 {
-  font-size: 2em;
+  font-size: 1.5em;
   /* Sets the line height to 2 units of vertical rhythm */
   line-height: 1.5em; /* 3rem / 2em = 1.5em */
   /* Sets 1 unit of vertical rhythm on the top and bottom margins. */
@@ -277,7 +277,7 @@ h1 {
 }
 
 h2 {
-  font-size: 1.5em;
+  font-size: 1.3em;
   line-height: 2em; /* 3rem / 1.5em = 2em */
   margin-top: 1em; /* 1.5rem / 1.5em = 1em */
   margin-bottom: 1em;

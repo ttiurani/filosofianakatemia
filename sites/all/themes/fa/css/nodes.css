@@ -54,9 +54,25 @@
   padding-left: 13.5em;
 }
 
+/*
+ * Settings for blog texts
+ */
 .node-mailchimp-campaign {
   padding-left: 13.5em;
 }
+
+.node-mailchimp-campaign .node-title {
+  display:inherit;
+}
+
+.node-mailchimp-campaign p.submitted {
+  margin-bottom:-7px;
+}
+
+.node-type-mailchimp-campaign #page-title {
+  display:inherit;
+}
+
 
 .node-article { /* Article content node */
 }
