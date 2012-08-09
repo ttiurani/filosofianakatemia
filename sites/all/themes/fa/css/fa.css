@@ -24,6 +24,11 @@
   color: #00abe5;
 }
 
+.fa-person, .fa-product, .fa-research{
+  font-family: 'Gotham';
+  font-weight: bold;
+}
+
 #fa-front-heading {
   padding-top: 30px;
   font-family:'Gotham Book';
