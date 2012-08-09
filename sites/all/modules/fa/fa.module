@@ -52,6 +52,9 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
 function fa_menu_alter(&$items) {
   // Hide all tabs on the registration page
   $items['user/register']['type'] = MENU_CALLBACK;
+  // Hide all tabs on the login and forgot password pages
+  $items['user/login']['type'] = MENU_CALLBACK;
+  $items['user/password']['type'] = MENU_CALLBACK;
 }
 
 function fa_form_alter(&$form, &$form_state, $form_id){
@@ -73,15 +76,26 @@ function fa_form_alter(&$form, &$form_state, $form_id){
       $form['name']['#default_value'] = $_SESSION[INVITE_SESSION_EMAIL];
       // Disable editing of the username field
       $form['name']['#disabled'] = TRUE;
-
-
     }
+
     // Add Facebook Connect button to the login form
     $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
     $form['facebook'] = array(
      '#markup' => $facebook_output,
         '#weight' => 101,
     );
+
+    // Change user name hint to email
+    $form['name']['#title'] = t('Email address:');
+
+    // Add : after password as well
+    $form['pass']['#title'] = t('Password:');
+
+    // Add links and move them down
+    $user_login_block = array();
+    $user_login_block = user_login_block($user_login_block);
+    $form['links'] = $user_login_block['links'];
+    $form['links']['#weight'] = 102;
 
   }else if ($form_id == 'user_login_block'){
     if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
@@ -95,7 +109,7 @@ function fa_form_alter(&$form, &$form_state, $form_id){
 }
 
 /**
- * Alter login block to include Facebook login
+ * Alter login block
  */
 function fa_block_view_user_login_alter(&$data, $block) {
   if (isset($data) && !empty($data) ){
@@ -111,7 +125,7 @@ function fa_block_view_user_login_alter(&$data, $block) {
     // Add : after password as well
     $data['content']['pass']['#title'] = t('Password:');
 
-    // Move hints down
+    // Move links down
     $data['content']['links']['#weight'] = 102;
   }
 }

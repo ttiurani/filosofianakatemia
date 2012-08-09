@@ -103,6 +103,10 @@ html.js #user-login-form li.openid-link,
   margin: 1.5em 0;
 }
 
+#user-login {
+  padding-top: 20px;
+}
+
 /*
  * Need to float Facebook Connect and login side by side
  */

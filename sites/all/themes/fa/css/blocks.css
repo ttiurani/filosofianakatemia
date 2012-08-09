@@ -141,38 +141,51 @@ h2.block-title { /* Block title */
 #block-system-powered-by { /* "Powered by Drupal" block */
 }
 
-#block-user-login { /* "User login form" block */
-  margin-left: 288px;
+#block-user-login, #user-login { /* "User login form" block and user/login page */
   font-family:Gotham;
   color: #00C3FF;
+}
+
+#block-user-login{
+  margin-left: 288px;
 }
 
 #block-user-login .block-title{
   display: none;
 }
 
-#block-user-login .form-item{
+#block-user-login .form-item, #user-login .form-item{
   font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+#block-user-login .form-item-pass, #user-login .form-item-pass{
+  padding-bottom: 15px;
 }
 
-#block-user-login .form-item-name label{
+#block-user-login .form-item-name label, #user-login .form-item-name label{
   float: left;
   padding-right: 20px;
 }
 
 #block-user-login .form-item-name #edit-name,
-#block-user-login .form-item-pass #edit-pass{
+#block-user-login .form-item-pass #edit-pass,
+#user-login .form-item-name #edit-name,
+#user-login .form-item-pass #edit-pass{
   font-size: 12px;
   width: 250px;
 }
 
+#user-login .form-item .description {
+  display: none;
+}
 
-#block-user-login .form-item-pass label{
+#block-user-login .form-item-pass label, #user-login .form-item-pass label{
   float: left;
   padding-right: 97px;
 }
 
-#block-user-login .item-list{
+#block-user-login .item-list, #user-login .item-list{
   clear: both;
 }
 
@@ -181,7 +194,7 @@ h2.block-title { /* Block title */
   padding-top: 0 !important;
 }
 
-#block-user-login #edit-actions input{
+#block-user-login #edit-actions input, #user-login #edit-actions input{
   overflow:visible;
   font-family:Gotham Book; 
   font-size:16px;
@@ -196,24 +209,20 @@ h2.block-title { /* Block title */
   background-color: transparent;
 }
 
-#block-user-login .item-list {
+#block-user-login .item-list, #user-login .item-list {
   font-style: italic;	
 }
 
-#block-user-login .item-list ul{
+#block-user-login .item-list ul, #user-login .item-list ul{
   list-style-image: none;
   list-style-type: none;
   padding-left: 0;
   margin-left: 0;
 }
 
-
-
-#block-user-login .form-item .form-required{
+#block-user-login .form-item .form-required, #user-login .form-item .form-required{
   display: none;
 }
-
-
 
 
 #block-user-new { /* "Who's new" block for a list of the newest users */
