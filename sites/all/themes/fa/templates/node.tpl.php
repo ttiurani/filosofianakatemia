@@ -92,7 +92,7 @@
           <?php print $user_picture; ?>
           <?php //print $submitted;
             if ($submitted) {
-              echo date( "j.N.Y",$node->created);
+              echo date( "j.n.Y",$node->created);
             }
           ?>
         </p>

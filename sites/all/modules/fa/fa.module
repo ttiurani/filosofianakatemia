@@ -113,7 +113,6 @@ function fa_block_view_user_login_alter(&$data, $block) {
 
     // Move hints down
     $data['content']['links']['#weight'] = 102;
-    firep($data);
   }
 }
 
@@ -150,14 +149,14 @@ function fa_block_view($delta = '') {
       	$tree = menu_tree_build($config);
 
       	if ($tree != NULL && isset($tree['content']) && isset($tree['content']['#content'])){
-      		$parentofactive = _find_parent_of_active($tree['content']['#content']);
-            if (isset($parentofactive)){
+      		$grandparentofactive = _find_parent_of_active($tree['content']['#content'], TRUE);
+            if (isset($grandparentofactive)){
         		$bgdivid = 'fa-bg-';
-        		if (is_string($parentofactive)){
-        			$menutext = strtolower($parentofactive);
+        		if (is_string($grandparentofactive)){
+        			$menutext = strtolower($grandparentofactive);
         			$bgdivid .= $menutext. '-menu';
         		}else{
-        			$menutext = strtolower($parentofactive['#title']);
+        			$menutext = strtolower($grandparentofactive['#title']);
         			$bgdivid .= $menutext;
         		}
         		$block['content'] =
@@ -205,9 +204,8 @@ function fa_block_view($delta = '') {
  * Recursively finds closest parent of active node
  * from list of parents, returns the title of the active
  * parent as string if parent is itself active.
- * @param unknown_type $parentnodes
  */
-function _find_parent_of_active($parentnodes) {
+function _find_parent_of_active($parentnodes, $get_grand_parent = FALSE) {
 	$parentofactive = NULL;
 	foreach($parentnodes as $parentnode){
 		if (isset($parentnode['#attributes']) &&
@@ -218,12 +216,17 @@ function _find_parent_of_active($parentnodes) {
 					$parentofactive = $parentnode['#title'];
 					break;
 				}else{
-					// Parent is in active trail, but not active, see children
-					$parentofactive = _find_parent_of_active($parentnode['#below']);
-					if (is_string($parentofactive)){
-						// Found a parent of an active node!
-						$parentofactive = $parentnode;
-						break;
+					// Parent is in active trail, but not active
+					if ($get_grand_parent){
+					  $parentofactive = $parentnode;
+					}else{
+				      //see children
+    			      $parentofactive = _find_parent_of_active($parentnode['#below']);
+    				  if (is_string($parentofactive)){
+    				    // Found a parent of an active node!
+    				    $parentofactive = $parentnode;
+    				    break;
+    				  }
 					}
 				}
 			}

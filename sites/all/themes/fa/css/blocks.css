@@ -53,6 +53,41 @@ h2.block-title { /* Block title */
 #block-menu-menu-NAME { /* Custom menu block */
 }
 
+/**
+ * Settings for the menu
+ */
+#block-menu-block-1 .menu, #block-menu-block-1 .leaf,
+#block-menu-block-2 .menu, #block-menu-block-2 .leaf{
+  list-style-type: none;
+  list-style-image: none;
+  margin-left: 0;
+  padding-left: 0;
+} 
+
+.menu{
+  text-transform: uppercase;
+  font-family:Gotham;   
+}
+
+.menu a, .menu a.active, .menu a.active-trail{
+  color: #00abe5;
+}
+
+.menu a.active , .menu a.active-trail {
+  font-family: 'Gotham Book';
+  font-weight: bold;
+  
+}
+
+#block-menu-block-1 .menu a.active , #block-menu-block-1 .menu a.active-trail {
+  font-size: 27px;
+}
+
+#block-menu-block-1 .menu li.active {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
 #block-node-recent { /* "Recent content" block */
 }
 

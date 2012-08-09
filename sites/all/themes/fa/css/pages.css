@@ -266,35 +266,6 @@ span.field-label { /* The inline field label used by the Fences module */
   height: 157px;
 }
 
-/**
- * Settings for the menu
- */
-.menu{
-  text-transform: uppercase;
-  font-family:Gotham;   
-}
-
-.menu a, .menu a.active, .menu a.active-trail{
-  color: #00abe5;
-}
-
-.menu a.active , .menu a.active-trail {
-  font-family: 'Gotham Book';
-  font-weight: bold;
-  font-size: 27px;
-}
-
-#block-menu-block-1 .menu, #block-menu-block-1 .leaf {
-  list-style-type: none;
-  list-style-image: none;
-  margin-left: 0;
-  padding-left: 0;
-} 
-
-.menu li.active {
-  margin-top: 8px;
-  margin-bottom: 8px;
-}
 
 /**
  * Settings for nodes

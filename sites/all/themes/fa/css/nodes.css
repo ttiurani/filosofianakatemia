@@ -73,6 +73,9 @@
   display:inherit;
 }
 
+.view-mailchimp-campaign-view .item-list {
+  margin-left: 258px;
+}
 
 .node-article { /* Article content node */
 }

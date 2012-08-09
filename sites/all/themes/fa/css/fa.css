@@ -13,7 +13,6 @@
   font-size: 12px;
   float: left;
   padding-left: 170px;
-  /*margin-top: -5px;*/
 }
 
 #fa-customers-img {
@@ -22,7 +21,7 @@
 
 #fa-some, #fa-some a {
   font-family:Gotham;
-  color: #008bbb;
+  color: #00abe5;
 }
 
 #fa-front-heading {
