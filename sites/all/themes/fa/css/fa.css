@@ -125,7 +125,12 @@
 /* 
  * Special classes that can be used in content
  */
-b.fa-title{
+.fa-title{
+  font-family:Gotham;
+  font-weight:bold;
+}
+
+strong{
   font-family:Gotham;
   font-weight:bold;
 }
@@ -167,6 +172,15 @@ b.fa-title{
  */
 #fa-course {
   padding-left: 13.5em !important;
+}
+
+/**
+ * Social buttons
+ */
+
+.fa-social-buttons{
+   float: left;
+   padding-bottom: 10px;
 }
 
 /**
