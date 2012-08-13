@@ -288,8 +288,12 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
 
                 if ($campaign_html != NULL){
 
+                  drupal_set_message('campaign_html size: ' . strlen($campaign_html));
+
                   // Strip out the HTML.
                   $campaign_html = mailchimp_import_strip_html($campaign_html, $input_format);
+
+                  drupal_set_message('campaign_html size after strip: ' . strlen($campaign_html));
 
                   // Get the user object to assign as the author.
                   global $user;
@@ -341,7 +345,7 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
     }
   }
   else {
-    drupal_set_message(t('Couldn\'t connect to MailChimp!'));
+    drupal_set_message(t('Couldn\'t connect to MailChimp!'), 'warning');
   }
 }
 
@@ -379,7 +383,7 @@ function mailchimp_import_get_imported_campaigns() {
   $result = db_query('SELECT * FROM {mailchimp_import};');
 
   foreach($result as $import){
-    $campaigns[$import['nid']] = $import['cid'];
+    $campaigns[$import->nid] = $import->cid;
   }
 
   return $campaigns;
@@ -403,7 +407,7 @@ function _mailchimp_import_extract_title(&$html, $title_id) {
   // Try to find the title
   $title_element = $dom->getElementById($title_id);
   if ($title_element == NULL){
-    drupal_set_message(t('Could not find title element with id ' . $title_id));
+    drupal_set_message(t('Could not find title element with id "' . $title_id . '"'), 'warning');
     return NULL;
   }
 
@@ -430,7 +434,7 @@ function _mailchimp_import_get_selected($html, $content_id) {
   // Find the selected div
   $selected_element = $dom->getElementById($content_id);
   if ($selected_element == NULL){
-    drupal_set_message(t('Could not find div with id "' . $content_id . '"'));
+    drupal_set_message(t('Could not find div with id "' . $content_id . '"'), 'warning');
     return NULL;
   }
 
