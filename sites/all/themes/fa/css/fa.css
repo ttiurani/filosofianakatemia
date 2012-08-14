@@ -4,12 +4,14 @@
  */
 
 #fa-address {
+  font-family:Gotham;
   font-size: 12px;
   float:left;
   padding-left: 52px;
 }
 
 #fa-customers {
+  font-family:Gotham;
   font-size: 12px;
   float: left;
   padding-left: 170px;
@@ -32,7 +34,7 @@
 #fa-front-heading {
   padding-top: 30px;
   font-family:'Gotham Book';
-  font-weight:bold;
+  font-weight:normal;
   font-size: 18px;
   color: #00abe5;
 }
