@@ -70,13 +70,11 @@ h2.block-title { /* Block title */
 }
 
 .menu a, .menu a.active, .menu a.active-trail{
-  color: #00abe5;
+  color: #00C3FF;
 }
 
 .menu a.active , .menu a.active-trail {
   font-family: 'Gotham Book';
-  font-weight: bold;
-  
 }
 
 #block-menu-block-1 .menu a.active , #block-menu-block-1 .menu a.active-trail {
