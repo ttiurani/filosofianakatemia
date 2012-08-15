@@ -16,7 +16,7 @@
 
 .form-item label { /* The label for a form element */
   display: block;
-  font-weight: bold;
+  font-weight: normal;
 }
 
 .form-item label.option { /* The label for a radio button or checkbox */
@@ -118,7 +118,6 @@ html.js #user-login-form li.openid-link,
 #user-login #fboauth-login, #user-login-form #fboauth-login,
 #user-register-form #fboauth-login {
   padding-top: 14px;
-  padding-left: 9px;
 }
 
 /*

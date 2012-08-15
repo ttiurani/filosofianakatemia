@@ -27,6 +27,10 @@ function fa_help($path, $arg) {
  */
 function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
 
+  // Hide the username field
+  $form['account']['name']['#access'] = FALSE;
+
+  // Invited users have need to use the email address where the invite was sent
   if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS]) &&
       $_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
     if (isset($_SESSION[INVITE_SESSION_DESTINATION])){
@@ -35,18 +39,38 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
     }
     // Disable editing of the email field
     $form['account']['mail']['#disabled'] = TRUE;
-    // Set email as the value of the username
-    $form['account']['name']['#default_value'] = $form['account']['mail']['#default_value'];
-    // Hide the username field
-    $form['account']['name']['#access'] = FALSE;
-
-    // Add Facebook Connect button to the login form
-    $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
-    $form['facebook'] = array(
-        '#markup' => $facebook_output,
-        '#weight' => 101,
-    );
   }
+
+  // Add : to email
+  $form['account']['mail']['#title'] = t('Email address:');
+
+  // Add : after First name and last name
+  $form['field_first_name']['und'][0]['value']['#title'] = t('First Name:');
+  $form['field_last_name']['und'][0]['value']['#title'] = t('Last Name:');
+
+  // Edit the description for the newsletter signup
+  if (isset($form['mailchimp_lists']) && isset($form['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter'])){
+    $form['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#title'] =
+          t('Newsletter:');
+    $form['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#description'] =
+          t('Check this if you want to have the Filosofian Akatemia newsletter sent to your email address.');
+  }
+
+  // Add Facebook Connect button to the login form
+  $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+  $form['facebook'] = array(
+      '#markup' => $facebook_output,
+      '#weight' => 101,
+  );
+
+  // Add my own validation handler where email can be set as the username
+  $form['#validate'][0] = 'fa_user_register_validate';
+}
+
+function fa_user_register_validate($form, &$form_state){
+  $form['account']['name']['#value'] = $form['account']['mail']['#value'];
+  $form_state['values']['name'] = $form_state['values']['mail'];
+  user_register_validate($form, $form_state);
 }
 
 function fa_menu_alter(&$items) {
