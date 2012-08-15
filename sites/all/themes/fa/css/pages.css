@@ -284,17 +284,9 @@ span.field-label { /* The inline field label used by the Fences module */
 }
 
 #page-title{
-  margin-left: 288px;
+  margin-left: 60px;
+  padding-left: 120px;
   padding-top: 7px;
-}
-
-/**
- * User pages and webforms
- */
-
-
-.profile, #user-profile-form, #user-login{
-  margin-left: 100px;
 }
 
 /**
@@ -308,3 +300,8 @@ a {text-decoration:none}
   padding-top: 0px;
 }
 
+.profile {
+  clear: both;
+  margin: 1em 60px 1.5em;
+  padding-left: 120px;
+}

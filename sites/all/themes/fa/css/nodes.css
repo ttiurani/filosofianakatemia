@@ -47,19 +47,15 @@
  * receive a "node-my-custom-type" class.
  */
 
-.front .node-page { /* Page content node */
-  padding-left: 7em;
-}
-
 .node-page { /* Page content node */
-  padding-left: 13.5em;
+  padding-left: 120px;
 }
 
 /*
  * Settings for blog texts
  */
 .node-mailchimp-campaign {
-  padding-left: 13.5em;
+  padding-left: 120px;
 }
 
 .node-mailchimp-campaign .node-title {
@@ -75,7 +71,7 @@
 }
 
 .view-mailchimp-campaign-view .item-list {
-  margin-left: 258px;
+  padding-left: 120px;
 }
 
 .node-article { /* Article content node */

@@ -19,7 +19,7 @@ ul.secondary {
   *zoom: 1;
   border-bottom: 1px solid #bbbbbb;
   list-style: none;
-  margin: 1em 288px 1.5em;
+  margin: 1em 180px 1.5em;
   padding: 12px 0 0 0;
   width: 533px;
   white-space: nowrap;
@@ -28,15 +28,16 @@ ul.secondary {
 .page-user ul.primary, .page-user ul.secondary,
 .node-type-preliminary-assignment ul.primary, .node-type-preliminary-assignment ul.secondary,
 .node-type-webform ul.primary, .node-type-webform ul.secondary{
-  margin: 1em 100px 1.5em;
-  width: 658px;
+  margin: 1em 180px 1.5em;
+  width: 588px;
 }
 
 /*
  * Invites have to be full width
  */
-.page-user-invites ul.primary, .page-user-invites ul.secondary{
-  margin: 1em 0px 1.5em;
+.page-user-invites ul.primary, .page-user-invites ul.secondary,
+.page-user-mailchimp ul.primary, .page-user-mailchimp ul.secondary{
+  margin: 1em 50px 1.5em;
   width: auto;
 }
 

@@ -150,7 +150,6 @@ h2.block-title { /* Block title */
 
 .page-user-register #page-title{
   display:inherit;
-  margin-left: 288px;
   padding-top: 28px;
   font-size: 15px;
   text-transform:uppercase;
@@ -162,8 +161,12 @@ h2.block-title { /* Block title */
   display: none;
 }
 
-#block-user-login, #user-register-form{
-  margin-left: 288px;
+#block-user-login, #user-login, #user-register-form{
+  margin-left: 60px;	
+}
+
+#user-login, #block-user-login, #user-register-form{
+  padding-left: 120px;
 }
 
 #block-user-login .form-item, #user-login .form-item, #user-register-form .form-item{

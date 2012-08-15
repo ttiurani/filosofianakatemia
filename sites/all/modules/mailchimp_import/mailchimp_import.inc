@@ -304,8 +304,8 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                   $node->uid = $user->uid;
                   $node->title = $node_title;
                   $node->language = $language;
-                  $node->body[$node->language][0]['value']   = $campaign_html;
-                  $node->body[$node->language][0]['format']  = $input_format;;
+                  $node->body[LANGUAGE_NONE][0]['value']   = $campaign_html;
+                  $node->body[LANGUAGE_NONE][0]['format']  = $input_format;;
                   $node->created = strtotime($campaign['send_time']); // The created date of the node will be set to the sent date of the campaign.
                   if ($add_menu_link){
                     $node->menu =_get_main_menu_link($node);

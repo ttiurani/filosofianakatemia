@@ -109,12 +109,8 @@
 }
 
 .sidebar-first .node {
-  margin-left: 100px;
+  margin-left: 60px;
   padding-right: 40px;
-}
-
-.front.sidebar-first .node {
-  margin-left: 60px;  
 }
 
 /*
