@@ -74,6 +74,14 @@
   padding-left: 120px;
 }
 
+/**
+ * Preliminary assignments
+ */
+.node-preliminary-assignment, .node-webform {
+  margin-left: 60px;
+  padding-left: 120px;
+}
+
 .node-article { /* Article content node */
 }
 

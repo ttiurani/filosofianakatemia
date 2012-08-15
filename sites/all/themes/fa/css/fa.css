@@ -14,7 +14,8 @@
   font-family:Gotham;
   font-size: 12px;
   float: left;
-  padding-left: 170px;
+  padding-left: 120px;
+  margin-left: 60px;
 }
 
 #fa-customers-img {
@@ -132,11 +133,6 @@
   font-weight:bold;
 }
 
-strong{
-  font-family:Gotham;
-  font-weight:bold;
-}
-
 .fa-blue{
   color: #00abe5;
 }
@@ -145,28 +141,6 @@ strong{
   text-align: center;
   margin-top: -5px;
   margin-bottom: -5px;
-}
-
-/*
- * Front Page
- */
-
-.front #page{
-  background-image: url('../images/front-background.png');
-  background-repeat: no-repeat;
-  background-position: 0px -17px;
-}
-
-.front .node{
-  padding-top: 1.5em;
-}
-
-/**
- * Need a special important to get this to override
- * the setting for .node in fixed-width.css
- */
-.node-preliminary-assignment, .node-webform {
-  margin-left: 100px !important;
 }
 
 /*
@@ -183,11 +157,4 @@ strong{
 .fa-social-buttons{
    float: left;
    padding-bottom: 10px;
-}
-
-/**
- * Logo
- */
-#logo {
-  width:238px;
 }

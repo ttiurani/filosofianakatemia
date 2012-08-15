@@ -35,6 +35,20 @@ body {
 }
 
 /*
+ * Front Page
+ */
+
+.front #page{
+  background-image: url('../images/front-background.png');
+  background-repeat: no-repeat;
+  background-position: 0px -17px;
+}
+
+.front .node{
+  padding-top: 1.5em;
+}
+
+/*
  * The skip-link link will be completely hidden until a user tabs to the link.
  * See the element-focusable rule in system.base.css.
  */
@@ -70,6 +84,7 @@ a {
   float: left; /* LTR */
   margin-top: 0;
   padding: 0;
+  width:238px;
 }
 #logo img {
   vertical-align: bottom;
@@ -304,4 +319,9 @@ a {text-decoration:none}
   clear: both;
   margin: 1em 60px 1.5em;
   padding-left: 120px;
+}
+
+strong{
+  font-family:Gotham;
+  font-weight:bold;
 }
