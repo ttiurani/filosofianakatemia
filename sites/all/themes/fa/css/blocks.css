@@ -193,10 +193,6 @@ h2.block-title { /* Block title */
   clear: left;
 }
 
-#user-register-form .description{
-  color: #606060;
-}
-
 #block-user-login .form-item-name #edit-name,
 #block-user-login .form-item-pass #edit-pass,
 #user-login .form-item-name #edit-name,
@@ -208,7 +204,7 @@ h2.block-title { /* Block title */
 #user-register-form .form-type-password #edit-pass-pass2
 {
   font-size: 12px;
-  width: 250px;
+  width: 300px;
 }
 
 #user-register-form .form-item-field-last-name-und-0-value,
@@ -277,6 +273,9 @@ h2.block-title { /* Block title */
   margin-left: 0;
   margin-top: 11px;
   font-size: 12px;
+  color: #606060;
+  font-family: 'ITC Slimbach Std';
+  width: 500px;
 }
 
 #edit-mailchimp-lists legend{
