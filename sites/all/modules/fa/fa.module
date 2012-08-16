@@ -129,6 +129,10 @@ function fa_form_alter(&$form, &$form_state, $form_id){
       // to give the role to someone else
       $form['#access'] = FALSE;
     }
+  }else if ($form_id == 'mailchimp_lists_user_subscribe_form_filosofian_akatemia_newsletterff'
+            || $form_id == 'mailchimp_lists_user_subscribe_form_filosofian_akatemia_newsletter'){
+    // Redirect to the front page
+    $_GET['destination'] = '<front>';
   }
 }
 
@@ -184,7 +188,7 @@ function fa_block_view_mailchimp_lists_filosofian_akatemia_newsletter_alter(&$da
           t('Newsletter:');
     $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#description'] =
           t('Check this if you want to have the Filosofian Akatemia newsletter sent to your email address.');
-    $data['content']['submit']['#value'] = t('Subscribe to newsletter');
+    $data['content']['submit']['#value'] = t('Save');
   }
 }
 
