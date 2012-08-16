@@ -22,7 +22,7 @@ html, body{
 body {
   font-family: 'ITC Slimbach Std';
   font-size: 14px;
-  color: #606060;
+  color: #808080;
 }
 
 #page {	
@@ -157,11 +157,15 @@ h3.title { /* Comment title */
 }
 
 tr.even { /* Some tables have rows marked even or odd. */
-  /* background-color: #eee; */ /* Drupal core uses a #eee background */
+  background-color: transparent;
+  border-bottom: none;
+  padding: 0.1em 0.6em;
 }
 
 tr.odd {
-  /* background-color: #eee; */ /* Drupal core uses a #eee background */
+  background-color: transparent;
+  border-bottom: none;
+  padding: 0.1em 0.6em;
 }
 
 div.messages { /* Important messages (status, warning, and error) for the user. See also the declarations in messages.css. */

@@ -4,6 +4,9 @@
 * A menu_block module extension for the Filosofian Akatemia theme.
 */
 
+define('NEWSLETTER_CHECK_TITLE', t('Newsletter:'));
+define('NEWSLETTER_CHECK_DESCRIPTION', t('Check this if you want to have the Filosofian Akatemia newsletter sent to your email address.'));
+
 /**
 * Implements hook_help.
 *
@@ -51,9 +54,9 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
   // Edit the description for the newsletter signup
   if (isset($form['mailchimp_lists']) && isset($form['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter'])){
     $form['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#title'] =
-          t('Newsletter:');
+          NEWSLETTER_CHECK_TITLE;
     $form['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#description'] =
-          t('Check this if you want to have the Filosofian Akatemia newsletter sent to your email address.');
+          NEWSLETTER_CHECK_DESCRIPTION;
   }
 
   // Add Facebook Connect button to the login form
@@ -153,6 +156,41 @@ function fa_block_view_user_login_alter(&$data, $block) {
     $data['content']['links']['#weight'] = 102;
   }
 }
+
+/**
+ * Alter Mailchimp blocks
+ */
+function fa_block_view_mailchimp_lists_filosofian_akatemia_newsletterff_alter(&$data, $block) {
+  if (!empty($data)){
+    $data['subject'] = '<none>';
+
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['title']['#markup'] =
+        t('Order here the Filosofian Akatemia newsletter.');
+    unset($data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['title']['#description']);
+
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['mergevars']['EMAIL']['#title'] =
+        t('Email:');
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['mergevars']['FNAME']['#required'] = TRUE;
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['mergevars']['FNAME']['#title'] =
+        t('First Name:');
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['mergevars']['LNAME']['#required'] = TRUE;
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletterff']['mergevars']['LNAME']['#title'] =
+        t('Last Name:');
+    $data['content']['submit']['#value'] = t('Subscribe to newsletter');
+  }
+}
+
+function fa_block_view_mailchimp_lists_filosofian_akatemia_newsletter_alter(&$data, $block) {
+  if (!empty($data)){
+    $data['subject'] = '<none>';
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#title'] =
+          NEWSLETTER_CHECK_TITLE;
+    $data['content']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#description'] =
+          NEWSLETTER_CHECK_DESCRIPTION;
+    $data['content']['submit']['#value'] = t('Subscribe to newsletter');
+  }
+}
+
 
 /**
  * Implements hook_block_info().
@@ -444,4 +482,31 @@ function _fa_course_get_selected_role($form_state, $role_type){
     $selected_role->name = $roles[$selected_role->rid];
   }
   return $selected_role;
+}
+
+/**
+ * Replacement for theme_webform_element() to enable descriptions to come BEFORE the field to be filled out.
+ */
+function fa_webform_element($variables) {
+
+  $element = $variables['element'];
+  $value = $variables['element']['#children'];
+
+  $wrapper_classes = array(
+      'form-item',
+  );
+  $output = '<div class="' . implode(' ', $wrapper_classes) . '" id="' . $element['#id'] . '-wrapper">' . "\n";
+  $required = !empty($element['#required']) ? '<span class="form-required" title="' . t('This field is required.') . '">*</span>' : '';
+
+  if (!empty($element['#title'])) {
+    $title = $element['#title'];
+    $output .= ' <label for="' . $element['#id'] . '">' . t('!title !required', array('!title' => filter_xss_admin($title), '!required' => $required)) . "</label>\n";
+  }
+  if (!empty($element['#description'])) {
+    $output .= ' <div class="description">' . $element['#description'] . "</div>\n";
+  }
+  $output .= '<div id="' . $element['#id'] . '">' . $value . '</div>' . "\n";
+  $output .= "</div>\n";
+
+  return $output;
 }

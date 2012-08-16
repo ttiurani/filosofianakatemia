@@ -128,13 +128,14 @@ html.js #user-login-form li.openid-link,
  */
 
 form th {
-  text-align: left; /* LTR */
-  padding-right: 1em; /* LTR */
+  text-align: center; /* LTR */
+  padding-left: 5px; /* LTR */
+  padding-right: 5px; /* LTR */
   border-bottom: 3px solid #ccc;
 }
 
 form tbody {
-  border-top: 1px solid #ccc;
+  border-top: none;
 }
 
 form tr.even {

@@ -82,6 +82,37 @@
   padding-left: 120px;
 }
 
+.webform-client-form .form-item label {
+  font-family:Gotham;
+  font-weight: bold;
+  color: #00C3FF;
+  padding-top: 20px;
+}
+
+.webform-client-form #edit-actions {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.webform-grid {
+  margin-top: 5px;
+}
+
+.webform-grid thead, .webform-grid tr, .webform-grid th{
+  border-bottom: none;
+}
+.webform-grid th {
+  color: #00C3FF;
+}
+
+.webform-grid tr th.webform-grid-question,
+.webform-grid tr td.webform-grid-question {
+  display: block;
+  float: left;
+  padding-right: 50px;
+}
+
+
 .node-article { /* Article content node */
 }
 

@@ -128,9 +128,26 @@
 /* 
  * Special classes that can be used in content
  */
+.fa-page-title{
+  color: #00C3FF;
+  font-family: 'Gotham Book';
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/**
+ * Same as <strong>
+ */
 .fa-title{
   font-family:Gotham;
   font-weight:bold;
+}
+
+.fa-small-title{
+  font-family:Gotham;
+  font-weight:bold;
+  font-size:14px;
+  color: #00C3FF;
 }
 
 .fa-blue{
@@ -155,6 +172,15 @@
  */
 
 .fa-social-buttons{
-   float: left;
-   padding-bottom: 10px;
+  float: left;
+  padding-bottom: 10px;
+}
+
+
+/**
+ * Text "Ennakkotehtävä" visible in
+ * under lykeion/[course]/ennakkotehtävä
+ */
+#fa-text-preliminary-assignment{
+  margin-top: -20px;
 }
