@@ -293,6 +293,11 @@ h2.block-title { /* Block title */
   width: 500px;
 }
 
+#edit-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-title {
+  margin-top: -10px !important;
+  padding-bottom: 20px;
+}
+
 #edit-mailchimp-lists legend{
   display: none;
 }
