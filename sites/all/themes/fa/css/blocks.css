@@ -139,16 +139,18 @@ h2.block-title { /* Block title */
 #block-system-powered-by { /* "Powered by Drupal" block */
 }
 
-/* "User login form" block, user/login page, user/register page, newsletter pages */
+/* "User login form" block, user/login page, user/register page, newsletter pages,
+   and forgot your password page */
 
 #block-user-login, #user-login, #user-register-form, #user-login-form,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter { 
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
+#user-pass { 
   font-family:Gotham;
   color: #00C3FF;
 }
 
-.page-user-register #page-title{
+.page-user-register #page-title, .page-user-password #page-title{
   display:inherit;
   padding-top: 28px;
   font-size: 15px;
@@ -163,13 +165,15 @@ h2.block-title { /* Block title */
 
 #block-user-login, #user-login, #user-register-form, 
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter{
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
+#user-pass{
   margin-left: 60px;	
 }
 
 #user-login, #block-user-login, #user-register-form,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter{
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
+#user-pass{
   padding-left: 120px;
 }
 
@@ -186,7 +190,8 @@ h2.block-title { /* Block title */
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff 
   .form-item-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-mergevars-LNAME,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter
-  .form-item-mailchimp-lists-mailchimp-filosofian-akatemia-newsletter-subscribe{
+  .form-item-mailchimp-lists-mailchimp-filosofian-akatemia-newsletter-subscribe,
+#user-pass .form-item-name{
   padding-bottom: 15px;
 }
 
@@ -194,7 +199,8 @@ h2.block-title { /* Block title */
 #user-login label,
 #user-register-form label,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff label,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter label
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter label,
+#user-pass label
 {
   float: left;
   clear: left;
@@ -210,7 +216,8 @@ h2.block-title { /* Block title */
 #block-user-login input.form-text,
 #user-login input.form-text,
 #user-register-form input.form-text,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff input.form-text
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff input.form-text,
+#user-pass input.form-text
 {
   font-size: 12px;
   width: 300px;
@@ -235,7 +242,8 @@ h2.block-title { /* Block title */
 #user-register-form #edit-actions input,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff #edit-submit,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter #edit-submit,
-.webform-client-form #edit-actions input{
+.webform-client-form #edit-actions input,
+#user-pass #edit-actions input{
   overflow:visible;
   font-family:Gotham Book; 
   font-size:14px;
@@ -271,7 +279,8 @@ h2.block-title { /* Block title */
 }
 
 #block-user-login .form-item .form-required, #user-login .form-item .form-required, #user-register-form .form-item .form-required,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff .form-item .form-required{
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff .form-item .form-required,
+#user-pass .form-item .form-required{
   display: none;
 }
 

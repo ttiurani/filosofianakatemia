@@ -133,6 +133,9 @@ function fa_form_alter(&$form, &$form_state, $form_id){
             || $form_id == 'mailchimp_lists_user_subscribe_form_filosofian_akatemia_newsletter'){
     // Redirect to the front page
     $_GET['destination'] = '<front>';
+
+  }else if ($form_id == 'user_pass'){
+    $form['name']['#title'] = t('Email address:');
   }
 }
 

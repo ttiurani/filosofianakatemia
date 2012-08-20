@@ -27,6 +27,11 @@
   color: #00abe5;
 }
 
+.fa-lykeion {
+  padding-left: 120px;
+  margin-left: 60px;
+}
+
 .fa-person, .fa-product, .fa-research{
   font-family: 'Gotham';
   font-weight: bold;
