@@ -40,6 +40,9 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
     // Disable editing of the email field
     $form['account']['mail']['#disabled'] = TRUE;
   }
+  if (empty($_GET['destination'])){
+    $_GET['destination'] = 'lykeion';
+  }
 
   // Add : to email
   $form['account']['mail']['#title'] = t('Email address:');
@@ -79,6 +82,12 @@ function fa_menu_alter(&$items) {
   // Hide all tabs on the login and forgot password pages
   $items['user/login']['type'] = MENU_CALLBACK;
   $items['user/password']['type'] = MENU_CALLBACK;
+  // Hide all normal user tabs on the profile page
+  /*
+  $items['user/%/edit']['type'] = MENU_CALLBACK;
+  $items['user/%/view']['type'] = MENU_CALLBACK;
+  $items['user/%/mailchimp']['type'] = MENU_CALLBACK;
+*/
 }
 
 function fa_form_alter(&$form, &$form_state, $form_id){
@@ -513,4 +522,69 @@ function fa_webform_element($variables) {
   $output .= "</div>\n";
 
   return $output;
+}
+
+/**
+ * Custom user profile
+ */
+function fa_page_build(&$page){
+  if (isset($page['content']) &&
+      isset($page['content']['system_main']) &&
+      isset($page['content']['system_main']['#entity_type']) &&
+      $page['content']['system_main']['#entity_type'] == 'user'){
+    global $user;
+    // Hide the useless summary and show instead the editable form
+    $page['content']['system_main']['summary']['#access'] = FALSE;
+    $page['content']['system_main']['field_first_name']['#access'] = FALSE;
+    $page['content']['system_main']['field_last_name']['#access'] = FALSE;
+    $page['content']['system_main']['profile'] = drupal_get_form('user_profile_form', $user, 'account');
+  }
+}
+
+function fa_form_user_profile_form_alter(&$form, &$form_state, $form_id){
+  global $user;
+  $list = mailchimp_lists_load('filosofian_akatemia_newsletter');
+  $form['account']['mailchimp_lists'] =  array(
+      '#type' => 'fieldset',
+      '#title' => t('Newsletters'),
+      '#tree' => TRUE
+  );
+  mailchimp_lists_auth_newsletter_form($form['account']['mailchimp_lists'], $list, $form['#user']);
+
+  $user_fields = user_load($user->uid);
+
+  if (!empty($user_fields->field_first_name)){
+    $form['field_first_name']['und']['0']['value']['#default_value']
+      = $user_fields->field_first_name['und']['0']['value'];
+  }
+
+  if (!empty($user_fields->field_last_name)){
+    $form['field_last_name']['und']['0']['value']['#default_value']
+    = $user_fields->field_last_name['und']['0']['value'];
+  }
+
+  $form['account']['name']['#access'] = FALSE;
+  $form['account']['current_pass']['#title'] = t('Current password:');
+  $form['account']['current_pass']['#weight'] = 100;
+  $form['account']['current_pass']['#description'] = t('Give your current password if you want to change the fields <em class="placeholder">Email address</em> or <em class="placeholder">Password</em>.');
+  $form['account']['pass']['#title'] = t('Change password:');
+  unset($form['account']['pass']['#description']);
+  $form['account']['pass']['#weight'] = 50;
+  $form['account']['status']['#access'] = FALSE;
+  $form['account']['roles']['#access'] = FALSE;
+  $form['inviter']['#access'] = FALSE;
+  $form['locale']['#access'] = FALSE;
+  $form['timezone']['#access'] = FALSE;
+  $form['overlay_control']['#access'] = FALSE;
+  $form['picture']['#access'] = FALSE;
+  $form['actions']['cancel']['#access'] = FALSE;
+
+  // Add my own validation handler where email can be set as the username
+  $form['#validate'][0] = 'fa_form_user_profile_form_validate';
+}
+
+function fa_form_user_profile_form_validate(&$form, &$form_state){
+  $form['account']['name']['#value'] = $form['account']['mail']['#value'];
+  $form_state['values']['name'] = $form_state['values']['mail'];
+  user_register_validate($form, $form_state);
 }
