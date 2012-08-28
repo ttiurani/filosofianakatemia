@@ -85,6 +85,7 @@ a {
   margin-top: 0;
   padding: 0;
   width:238px;
+  margin-left: 10px;
 }
 #logo img {
   vertical-align: bottom;
@@ -328,4 +329,8 @@ a {text-decoration:none}
 strong{
   font-family:Gotham;
   font-weight:bold;
+}
+
+select{
+  background: transparent;
 }

@@ -1735,7 +1735,7 @@ function invite_invoke_all($hook, &$a1, &$a2, &$a3) {
 
 /**
  * Implements hook_form_FORM_ID_alter().
- */
+
 function invite_form_user_profile_form_alter(&$form, &$form_state){
   $account = $form['#user'];
 
@@ -1767,6 +1767,7 @@ function invite_form_user_profile_form_alter(&$form, &$form_state){
   }
   $form['#submit'] = array('invite_user_form_submit');
 }
+*/
 
 /**
  * Implements the validate function associated with user_profile_form.
