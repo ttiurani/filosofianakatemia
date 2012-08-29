@@ -60,7 +60,7 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
   }
 
   // Add Facebook Connect button to the login form
-  $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect', 'lykeion') . '</div>';
+  $facebook_output = _get_fboauth_div();
   $form['facebook'] = array(
       '#markup' => $facebook_output,
       '#weight' => 101,
@@ -110,7 +110,7 @@ function fa_form_alter(&$form, &$form_state, $form_id){
     }
 
     // Add Facebook Connect button to the login form
-    $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+    $facebook_output = _get_fboauth_div();
     $form['facebook'] = array(
      '#markup' => $facebook_output,
         '#weight' => 101,
@@ -151,7 +151,7 @@ function fa_form_alter(&$form, &$form_state, $form_id){
  */
 function fa_block_view_user_login_alter(&$data, $block) {
   if (isset($data) && !empty($data) ){
-    $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+    $facebook_output = _get_fboauth_div();
     $data['content']['facebook'] = array(
         '#markup' => $facebook_output,
         '#weight' => 101, // One over the "Log in" button
@@ -611,4 +611,8 @@ function fa_form_user_profile_form_submit(&$form, &$form_state){
   }
   $form_state['values']['account'] = $form['#user'];
   mailchimp_lists_user_subscribe_form_submit($form, $form_state);
+}
+
+function _get_fboauth_div(){
+  return '<div id="fboauth-login">' . fboauth_action_display('connect', 'lykeion') . '</div>';
 }
