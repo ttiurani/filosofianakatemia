@@ -60,7 +60,7 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
   }
 
   // Add Facebook Connect button to the login form
-  $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+  $facebook_output = '<div id="fboauth-login">' . fboauth_action_display('connect', 'lykeion') . '</div>';
   $form['facebook'] = array(
       '#markup' => $facebook_output,
       '#weight' => 101,
