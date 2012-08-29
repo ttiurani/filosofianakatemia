@@ -47,17 +47,19 @@
  * receive a "node-my-custom-type" class.
  */
 
-.node-page { /* Page content node */
+/* Padding settings */
+.node-page, 
+.node-mailchimp-campaign, 
+.view-mailchimp-campaign-view .item-list,
+.node-preliminary-assignment, .node-webform,
+.node-authenticated-user-page,
+.node-academicians-page{ 
   padding-left: 120px;
 }
 
 /*
  * Settings for blog texts
  */
-.node-mailchimp-campaign {
-  padding-left: 120px;
-}
-
 .node-mailchimp-campaign .node-title {
   display:inherit;
 }
@@ -70,16 +72,11 @@
   display:inherit;
 }
 
-.view-mailchimp-campaign-view .item-list {
-  padding-left: 120px;
-}
-
 /**
  * Preliminary assignments
  */
 .node-preliminary-assignment, .node-webform {
   margin-left: 60px;
-  padding-left: 120px;
 }
 
 .webform-client-form .form-item label {
