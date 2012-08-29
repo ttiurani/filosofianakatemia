@@ -2,6 +2,5 @@ name = Filosofian Akatemia Module
 description = Provides services for the Filosofian Akatemia web site
 core = 7.x
 dependencies[] = menu_block
-dependencies[] = profile
 
 files[] = fa.module
