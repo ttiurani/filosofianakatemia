@@ -553,6 +553,9 @@ function fa_form_user_profile_form_alter(&$form, &$form_state, $form_id){
     );
     mailchimp_lists_auth_newsletter_form($form['account']['mailchimp_lists'], $list, $form['#user']);
 
+    $form['account']['mailchimp_lists']['mailchimp_filosofian_akatemia_newsletter']['subscribe']['#title'] =
+        t('Newsletter:');
+
     $user_fields = user_load($user->uid);
 
     if (!empty($user_fields->field_first_name)){

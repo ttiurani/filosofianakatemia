@@ -344,7 +344,8 @@ h2.block-title { /* Block title */
   display: none;
 }
 
-#user-register-form #edit-actions, #user-register-form #fboauth-login{
+#user-register-form #edit-actions, #user-register-form #fboauth-login, 
+#user-profile-form #edit-actions, #user-profile-form .form-item-current-pass{
   padding-bottom: 15px;
 }
 
