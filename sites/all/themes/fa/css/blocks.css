@@ -140,12 +140,12 @@ h2.block-title { /* Block title */
 }
 
 /* "User login form" block, user/login page, user/register page, newsletter pages,
-   and forgot your password page */
+   forgot your password page, and user profile page */
 
 #block-user-login, #user-login, #user-register-form, #user-login-form,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
-#user-pass { 
+#user-pass, #user-profile-form { 
   font-family:Gotham;
   color: #00C3FF;
 }
@@ -179,7 +179,8 @@ h2.block-title { /* Block title */
 
 #block-user-login .form-item, #user-login .form-item, #user-register-form .form-item,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff .form-item,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .form-item
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .form-item,
+#user-profile-form
 {
   font-size: 14px;
   margin-top: 10px;
@@ -191,8 +192,13 @@ h2.block-title { /* Block title */
   .form-item-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-mergevars-LNAME,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter
   .form-item-mailchimp-lists-mailchimp-filosofian-akatemia-newsletter-subscribe,
-#user-pass .form-item-name{
+#user-pass .form-item-name,
+#user-profile-form .form-item-pass-pass2{
   padding-bottom: 15px;
+}
+
+#user-profile-form .form-item-mailchimp-lists-mailchimp-filosofian-akatemia-newsletter-subscribe{
+  margin: 0;
 }
 
 #block-user-login label,
@@ -200,13 +206,30 @@ h2.block-title { /* Block title */
 #user-register-form label,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff label,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter label,
-#user-pass label
+#user-pass label,
+#user-profile-form label
 {
   float: left;
   clear: left;
   display: block;
   width: 184px;
 }
+
+#user-profile-form .form-type-password-confirm label{
+  display: inherit;
+  width: inherit;
+  clear: none;
+  float: none;
+}
+
+#user-profile-form .form-item-pass-pass1 label, 
+#user-profile-form .form-item-pass-pass2 label{
+  float: left;
+  clear: left;
+  display: block;
+  width: 184px;
+  padding-left: 50px;
+} 
 
 #block-user-login .item-list,
 #user-login .item-list{
@@ -217,10 +240,16 @@ h2.block-title { /* Block title */
 #user-login input.form-text,
 #user-register-form input.form-text,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff input.form-text,
-#user-pass input.form-text
+#user-pass input.form-text,
+#user-profile-form input.form-text
 {
   font-size: 12px;
   width: 300px;
+}
+
+#user-profile-form .form-item-pass-pass1 input.form-text, 
+#user-profile-form .form-item-pass-pass2 input.form-text{
+  width: 250px;
 }
 
 #user-register-form .form-item-field-last-name-und-0-value,
@@ -243,7 +272,8 @@ h2.block-title { /* Block title */
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff #edit-submit,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter #edit-submit,
 .webform-client-form #edit-actions input,
-#user-pass #edit-actions input{
+#user-pass #edit-actions input,
+#user-profile-form #edit-actions input{
   overflow:visible;
   font-family:Gotham Book; 
   font-size:14px;
@@ -280,7 +310,8 @@ h2.block-title { /* Block title */
 
 #block-user-login .form-item .form-required, #user-login .form-item .form-required, #user-register-form .form-item .form-required,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff .form-item .form-required,
-#user-pass .form-item .form-required{
+#user-pass .form-item .form-required,
+#user-profile-form .form-required{
   display: none;
 }
 
@@ -292,7 +323,9 @@ h2.block-title { /* Block title */
 
 #user-register-form .description,
 #edit-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-title,
-#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .description {
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .description,
+#user-profile-form .description
+{
   padding-left: 0;
   margin-left: 0;
   margin-top: 11px;

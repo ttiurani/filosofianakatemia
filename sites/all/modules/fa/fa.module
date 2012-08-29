@@ -529,7 +529,8 @@ function fa_page_build(&$page){
   if (isset($page['content']) &&
       isset($page['content']['system_main']) &&
       isset($page['content']['system_main']['#entity_type']) &&
-      $page['content']['system_main']['#entity_type'] == 'user'){
+      $page['content']['system_main']['#entity_type'] == 'user' &&
+      preg_match('/^user\/([0-9]+)$/', current_path())){
     global $user;
     // Hide the useless summary and show instead the editable form
     $page['content']['system_main']['summary']['#access'] = FALSE;
@@ -540,47 +541,54 @@ function fa_page_build(&$page){
 }
 
 function fa_form_user_profile_form_alter(&$form, &$form_state, $form_id){
-  global $user;
-  $list = mailchimp_lists_load('filosofian_akatemia_newsletter');
-  $form['account']['mailchimp_lists'] =  array(
-      '#type' => 'fieldset',
-      '#title' => t('Newsletters'),
-      '#tree' => TRUE
-  );
-  mailchimp_lists_auth_newsletter_form($form['account']['mailchimp_lists'], $list, $form['#user']);
 
-  $user_fields = user_load($user->uid);
+  // Match only user profile page, not register page
+  if (preg_match('/^user\/([0-9]+)$/', current_path())){
+    global $user;
+    $list = mailchimp_lists_load('filosofian_akatemia_newsletter');
+    $form['account']['mailchimp_lists'] =  array(
+        '#type' => 'fieldset',
+        '#title' => t('Newsletters'),
+        '#tree' => TRUE
+    );
+    mailchimp_lists_auth_newsletter_form($form['account']['mailchimp_lists'], $list, $form['#user']);
 
-  if (!empty($user_fields->field_first_name)){
-    $form['field_first_name']['und']['0']['value']['#default_value']
-      = $user_fields->field_first_name['und']['0']['value'];
+    $user_fields = user_load($user->uid);
+
+    if (!empty($user_fields->field_first_name)){
+      $form['field_first_name']['und']['0']['value']['#default_value']
+        = $user_fields->field_first_name['und']['0']['value'];
+    }
+
+    if (!empty($user_fields->field_last_name)){
+      $form['field_last_name']['und']['0']['value']['#default_value']
+      = $user_fields->field_last_name['und']['0']['value'];
+    }
+
+    $form['account']['name']['#access'] = FALSE;
+    $form['field_first_name']['und'][0]['value']['#title'] = t('First Name:');
+    $form['field_last_name']['und'][0]['value']['#title'] = t('Last Name:');
+    $form['account']['mail']['#title'] = t('Email address:');
+    $form['account']['current_pass']['#title'] = t('Current password:');
+    $form['account']['current_pass']['#weight'] = 100;
+    $form['account']['current_pass']['#description'] = t('Give your current password if you want to change the fields <em class="placeholder">Email address</em> or <em class="placeholder">Password</em>.');
+    $form['account']['pass']['#title'] = t('Change password:');
+    unset($form['account']['pass']['#description']);
+    $form['account']['pass']['#weight'] = 50;
+    $form['account']['status']['#access'] = FALSE;
+    $form['account']['roles']['#access'] = FALSE;
+    $form['inviter']['#access'] = FALSE;
+    $form['locale']['#access'] = FALSE;
+    $form['timezone']['#access'] = FALSE;
+    $form['overlay_control']['#access'] = FALSE;
+    $form['picture']['#access'] = FALSE;
+    $form['actions']['cancel']['#access'] = FALSE;
+
+    // Add custom validation handler first where email can be set as the username
+    array_unshift($form['#validate'], 'fa_form_user_profile_form_validate');
+    // Add custom mailchimp subscription submitter to get mailing list to work right
+    array_push($form['#submit'], 'fa_form_user_profile_form_submit');
   }
-
-  if (!empty($user_fields->field_last_name)){
-    $form['field_last_name']['und']['0']['value']['#default_value']
-    = $user_fields->field_last_name['und']['0']['value'];
-  }
-
-  $form['account']['name']['#access'] = FALSE;
-  $form['account']['current_pass']['#title'] = t('Current password:');
-  $form['account']['current_pass']['#weight'] = 100;
-  $form['account']['current_pass']['#description'] = t('Give your current password if you want to change the fields <em class="placeholder">Email address</em> or <em class="placeholder">Password</em>.');
-  $form['account']['pass']['#title'] = t('Change password:');
-  unset($form['account']['pass']['#description']);
-  $form['account']['pass']['#weight'] = 50;
-  $form['account']['status']['#access'] = FALSE;
-  $form['account']['roles']['#access'] = FALSE;
-  $form['inviter']['#access'] = FALSE;
-  $form['locale']['#access'] = FALSE;
-  $form['timezone']['#access'] = FALSE;
-  $form['overlay_control']['#access'] = FALSE;
-  $form['picture']['#access'] = FALSE;
-  $form['actions']['cancel']['#access'] = FALSE;
-
-  // Add custom validation handler first where email can be set as the username
-  array_unshift($form['#validate'], 'fa_form_user_profile_form_validate');
-  // Add custom mailchimp subscription submitter to get mailing list to work right
-  array_push($form['#submit'], 'fa_form_user_profile_form_submit');
 }
 
 function fa_form_user_profile_form_validate(&$form, &$form_state){
