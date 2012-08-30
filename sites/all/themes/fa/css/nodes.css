@@ -14,7 +14,8 @@
 }
 
 .node .node-title { /* Node title */
-  font-family: 'Gotham Book';
+  font-family: 'Gotham';
+  font-weight: normal;
 }
 
 .node .user-picture { /* The picture of the node author */
