@@ -272,8 +272,8 @@ span.field-label { /* The inline field label used by the Fences module */
  */
 
 .region-bottom { /* Wrapper for any blocks placed in the page bottom region */
-  border-top: 1px dotted #00abe5;
-  border-bottom: 1px dotted #00abe5;
+  border-top: 1px dotted #139ade;
+  border-bottom: 1px dotted #139ade;
   height: 145px;
   line-height: 125%;
 }
