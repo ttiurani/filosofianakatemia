@@ -9,5 +9,6 @@ sites/*/private
 sites/*/modules/devel
 sites/*/modules/drupalforfirebug
 
-# Ignore old site
+# Ignore old site and download folder
 a
+download
