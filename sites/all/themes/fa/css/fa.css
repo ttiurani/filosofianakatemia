@@ -24,7 +24,6 @@
 
 #fa-some, #fa-some a {
   font-family:Gotham;
-  color: ##139ade;
 }
 
 .fa-lykeion {
@@ -42,7 +41,7 @@
   font-family:'Gotham Book';
   font-weight:normal;
   font-size: 18px;
-  color: #139ade;
+  color: #00C3FF;
 }
 
 #fa-front-action {
@@ -144,6 +143,7 @@
  * Same as <strong>
  */
 .fa-title{
+  color: #00C3FF;
   font-family:Gotham;
   font-weight:normal;
 }
@@ -156,7 +156,7 @@
 }
 
 .fa-blue{
-  color: #139ade;
+  color: #00C3FF;
 }
 
 .fa-separator {
