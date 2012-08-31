@@ -41,7 +41,7 @@
   font-family:'Gotham Book';
   font-weight:normal;
   font-size: 18px;
-  color: #00C3FF;
+  color: #139ADE;
 }
 
 #fa-front-action {
@@ -133,7 +133,7 @@
  * Special classes that can be used in content
  */
 .fa-page-title{
-  color: #00C3FF;
+  color: #139ADE;
   font-family: 'Gotham Book';
   font-size: 15px;
   font-weight: bold;
@@ -143,7 +143,7 @@
  * Same as <strong>
  */
 .fa-title{
-  color: #00C3FF;
+  color: #139ADE;
   font-family:Gotham;
   font-weight:normal;
 }
@@ -152,11 +152,11 @@
   font-family:Gotham;
   font-weight:bold;
   font-size:14px;
-  color: #00C3FF;
+  color: #139ADE;
 }
 
 .fa-blue{
-  color: #00C3FF;
+  color: #139ADE;
 }
 
 .fa-separator {

@@ -84,7 +84,7 @@
 .webform-client-form .form-item label {
   font-family:Gotham;
   font-weight: bold;
-  color: #00C3FF;
+  color: #139ADE;
   padding-top: 20px;
 }
 
@@ -101,7 +101,7 @@
   border-bottom: none;
 }
 .webform-grid th {
-  color: #00C3FF;
+  color: #139ADE;
 }
 
 .webform-grid tr th.webform-grid-question,

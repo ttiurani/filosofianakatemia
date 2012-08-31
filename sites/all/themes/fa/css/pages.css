@@ -22,7 +22,7 @@ html, body{
 body {
   font-family: 'ITC Slimbach Std';
   font-size: 14px;
-  color: #808080;
+  color: #232323;
 }
 
 #page {	
@@ -68,7 +68,7 @@ body {
 }
 
 a {
-  color: #00c3ff;
+  color: #139ADE;
 }
 
 
@@ -272,8 +272,8 @@ span.field-label { /* The inline field label used by the Fences module */
  */
 
 .region-bottom { /* Wrapper for any blocks placed in the page bottom region */
-  border-top: 1px dotted #00C3FF;
-  border-bottom: 1px dotted #00C3FF;
+  border-top: 1px dotted #139ADE;
+  border-bottom: 1px dotted #139ADE;
   height: 145px;
   line-height: 125%;
 }
