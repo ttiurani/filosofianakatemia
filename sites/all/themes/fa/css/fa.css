@@ -186,6 +186,7 @@
  * Text "Ennakkotehtävä" visible in
  * under lykeion/[course]/ennakkotehtävä
  */
-#fa-text-preliminary-assignment{
+#fa-text-preliminary-assignment, .fa-nudge{
   margin-top: -20px;
 }
+
