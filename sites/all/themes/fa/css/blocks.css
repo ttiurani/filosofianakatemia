@@ -66,15 +66,10 @@ h2.block-title { /* Block title */
 
 .menu{
   text-transform: uppercase;
-  font-family:Gotham;   
 }
 
 .menu a, .menu a.active, .menu a.active-trail{
   color: #139ADE;
-}
-
-.menu a.active , .menu a.active-trail {
-  font-family: 'Gotham Book';
 }
 
 #block-menu-block-1 .menu a.active , #block-menu-block-1 .menu a.active-trail {
@@ -146,7 +141,6 @@ h2.block-title { /* Block title */
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
 #user-pass, #user-profile-form { 
-  font-family:Gotham;
   color: #139ADE;
 }
 
@@ -285,7 +279,6 @@ h2.block-title { /* Block title */
 #user-profile-form #edit-actions input,
 .facebook-action-deauth{
   overflow:visible;
-  font-family:Gotham Book; 
   font-size:14px;
   font-weight:bold;
   letter-spacing: 0em;
@@ -342,12 +335,10 @@ h2.block-title { /* Block title */
   margin-top: 11px;
   font-size: 12px;
   color: #232323;
-  font-family: 'ITC Slimbach Std';
   width: 500px;
 }
 
 #user-profile-form #edit-fboauth label{
-  font-family:Gotham;
   color: #139ADE;
   font-size: 14px;
 }

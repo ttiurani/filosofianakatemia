@@ -14,7 +14,6 @@
 }
 
 .node .node-title { /* Node title */
-  font-family: 'Gotham';
   font-weight: normal;
 }
 
@@ -82,7 +81,6 @@
 }
 
 .webform-client-form .form-item label {
-  font-family:Gotham;
   font-weight: bold;
   color: #139ADE;
   padding-top: 20px;

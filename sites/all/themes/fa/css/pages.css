@@ -20,7 +20,6 @@ html, body{
 }
 
 body {
-  font-family: 'ITC Slimbach Std';
   font-size: 14px;
   color: #232323;
 }
@@ -315,7 +314,6 @@ span.field-label { /* The inline field label used by the Fences module */
 a {text-decoration:none}
 
 .title{
-  font-family:Gotham;
   margin-top: 0px;
   padding-top: 0px;
 }
@@ -327,7 +325,6 @@ a {text-decoration:none}
 }
 
 strong{
-  font-family:Gotham;
   font-weight:bold;
 }
 

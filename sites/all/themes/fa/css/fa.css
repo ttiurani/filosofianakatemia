@@ -4,14 +4,12 @@
  */
 
 #fa-address {
-  font-family:Gotham;
   font-size: 12px;
   float:left;
   padding-left: 70px;
 }
 
 #fa-customers {
-  font-family:Gotham;
   font-size: 12px;
   float: left;
   padding-left: 100px;
@@ -22,23 +20,17 @@
   *margin-top: -5px;
 }
 
-#fa-some, #fa-some a {
-  font-family:Gotham;
-}
-
 .fa-lykeion {
   padding-left: 120px;
   margin-left: 60px;
 }
 
 .fa-person, .fa-product, .fa-research{
-  font-family: 'Gotham';
   font-weight: bold;
 }
 
 #fa-front-heading {
   padding-top: 30px;
-  font-family:'Gotham Book';
   font-weight:normal;
   font-size: 18px;
   color: #139ADE;
@@ -134,7 +126,6 @@
  */
 .fa-page-title{
   color: #139ADE;
-  font-family: 'Gotham Book';
   font-size: 15px;
   font-weight: bold;
 }
@@ -144,12 +135,10 @@
  */
 .fa-title{
   color: #139ADE;
-  font-family:Gotham;
   font-weight:normal;
 }
 
 .fa-small-title{
-  font-family:Gotham;
   font-weight:bold;
   font-size:14px;
   color: #139ADE;
@@ -190,3 +179,92 @@
   margin-top: -20px;
 }
 
+/**
+ * Font settings, all in one place to make
+ * it possible to disable them in windows
+ */
+body, #user-register-form .description,
+#edit-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-title,
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .description,
+#user-profile-form .description,
+#user-profile-form #edit-fboauth{
+  font-family: 'ITC Slimbach Std';
+}
+
+body.win, 
+.win #user-register-form .description,
+.win #edit-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-title,
+.win #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .description,
+.win #user-profile-form .description,
+.win #user-profile-form #edit-fboauth{
+  font-family: 'Georgia', 'Times';
+}
+
+#fa-some, #fa-some a,
+.fa-person, .fa-product, .fa-research,
+.node .node-title,
+#fa-address, #fa-customers,
+.fa-title, .fa-small-title,
+strong,.title, .menu,
+#user-pass, #user-profile-form,
+#user-profile-form #edit-fboauth label,
+.webform-client-form .form-item label
+{
+  font-family: 'Gotham';
+}
+
+.win #fa-some, 
+.win #fa-some a,
+.win .fa-person, 
+.win .fa-product, 
+.win .fa-research,
+.win .node .node-title,
+.win #fa-address, 
+.win #fa-customers,
+.win .fa-title, 
+.win .fa-small-title,
+.win strong, 
+.win .title, 
+.win .menu,
+.win #user-pass, 
+.win #user-profile-form,
+.win #user-profile-form #edit-fboauth label,
+.win .webform-client-form .form-item label
+{
+  font-family: 'Trebuchet MS', 'Helvetica';
+}
+
+#fa-front-heading,
+.fa-page-title,
+.menu a.active , .menu a.active-trail,
+.page-user-register #page-title, .page-user-password #page-title,
+#block-user-login #edit-actions input, #user-login #edit-actions input,
+#user-register-form #edit-actions input,
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff #edit-submit,
+#mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter #edit-submit,
+.webform-client-form #edit-actions input,
+#user-pass #edit-actions input,
+#user-profile-form #edit-actions input,
+.facebook-action-deauth
+{
+  font-family:'Gotham Book';
+}
+
+.win #fa-front-heading,
+.win .fa-page-title,
+.win .menu a.active , 
+.win .menu a.active-trail,
+.win .page-user-register #page-title, 
+.win .page-user-password #page-title,
+.win #block-user-login #edit-actions input,
+.win #user-login #edit-actions input,
+.win #user-register-form #edit-actions input,
+.win #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff #edit-submit,
+.win #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter #edit-submit,
+.win .webform-client-form #edit-actions input,
+.win #user-pass #edit-actions input,
+.win #user-profile-form #edit-actions input,
+.win .facebook-action-deauth
+{
+  font-family:'Helvetica';
+}
