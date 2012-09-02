@@ -217,8 +217,7 @@ strong,.title, .menu,
 .webform-client-form #edit-actions input,
 #user-pass #edit-actions input,
 #user-profile-form #edit-actions input,
-.facebook-action-deauth,
-.page-node #content a
+.facebook-action-deauth
 {
   font-family:"Arial";
   font-weight:bold;
