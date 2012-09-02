@@ -614,8 +614,5 @@ function fa_form_user_profile_form_submit(&$form, &$form_state){
 }
 
 function _get_fboauth_div(){
-  if (empty($_GET['destination']))
-    return '<div id="fboauth-login">' . fboauth_action_display('connect', 'lykeion') . '</div>';
-  else
-    return '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+  return '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
 }
