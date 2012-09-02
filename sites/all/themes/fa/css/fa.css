@@ -184,8 +184,7 @@ body, #user-register-form .description,
 #edit-mailchimp-lists-mailchimp-filosofian-akatemia-newsletterff-title,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter .description,
 #user-profile-form .description,
-#user-profile-form #edit-fboauth,
-.page-node #content a{
+#user-profile-form #edit-fboauth{
   font-family: "Georgia";
 }
 
@@ -204,6 +203,7 @@ strong,.title, .menu,
 }
 
 .page-node #content a {
+  font-family: "Georgia";
   font-weight: bold;
 }
 
