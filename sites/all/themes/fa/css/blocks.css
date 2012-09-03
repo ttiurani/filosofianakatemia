@@ -162,7 +162,9 @@ h2.block-title { /* Block title */
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
 #user-pass,
 .page-user-fboauth #content p,
-.page-user-fboauth #content div{
+.page-user-fboauth #content div,
+.page-node-done #content .webform-confirmation,
+.page-node-done #content .links{
   margin-left: 60px;
 }
 
@@ -171,13 +173,19 @@ h2.block-title { /* Block title */
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter,
 #user-pass,
 .page-user-fboauth #content p,
-.page-user-fboauth #content div{
+.page-user-fboauth #content div,
+.page-node-done #content .webform-confirmation,
+.page-node-done #content .links{
   padding-left: 120px;
 }
 
 .page-user-fboauth #content button{
   margin-left: 180px;
   padding-left: 120px;
+}
+
+.page-node-done #content .webform-confirmation{
+  padding-top: 10px;
 }
 
 #block-user-login .form-item, #user-login .form-item, #user-register-form .form-item,
