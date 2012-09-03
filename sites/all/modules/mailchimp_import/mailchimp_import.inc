@@ -275,7 +275,6 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
                   $title = _mailchimp_import_extract_title($campaign_html,
                       variable_get('mailchimp_import_title_id', 'mailchimp-import-title'));
                   if ($title != NULL){
-                    dpm('Found title : ' . $title);
                     $node_title = $title;
                   }
                 }
