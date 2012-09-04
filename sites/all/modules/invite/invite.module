@@ -1255,7 +1255,7 @@ function invite_form_validate($form, &$form_state) {
 
   $emails = _invite_get_emails($form_state['values']['email']);
 
-  if (!$form_state['values']['reg_code']) {
+  if (isset($form_state['values']) && !$form_state['values']['reg_code']) {
     if (count($emails) > 0) {
       // Filter out already registered users, but pass validation.
       $registered_emails = _invite_filter_registered_emails($emails);

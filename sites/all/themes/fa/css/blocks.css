@@ -164,7 +164,9 @@ h2.block-title { /* Block title */
 .page-user-fboauth #content p,
 .page-user-fboauth #content div,
 .page-node-done #content .webform-confirmation,
-.page-node-done #content .links{
+.page-node-done #content .links,
+#user-pass-reset,
+.page-user-edit #user-profile-form{
   margin-left: 60px;
 }
 
@@ -175,7 +177,9 @@ h2.block-title { /* Block title */
 .page-user-fboauth #content p,
 .page-user-fboauth #content div,
 .page-node-done #content .webform-confirmation,
-.page-node-done #content .links{
+.page-node-done #content .links,
+#user-pass-reset,
+.page-user-edit #user-profile-form{
   padding-left: 120px;
 }
 
@@ -184,8 +188,17 @@ h2.block-title { /* Block title */
   padding-left: 120px;
 }
 
-.page-node-done #content .webform-confirmation{
+.page-user-edit #user-profile-form{
+  padding-top: 1px;
+}
+
+.page-node-done #content .webform-confirmation,
+#user-pass-reset{
   padding-top: 10px;
+}
+
+.page-user-edit .form-type-password label{
+  margin-left: -50px;
 }
 
 #block-user-login .form-item, #user-login .form-item, #user-register-form .form-item,
@@ -285,7 +298,8 @@ h2.block-title { /* Block title */
 .webform-client-form #edit-actions input,
 #user-pass #edit-actions input,
 #user-profile-form #edit-actions input,
-.facebook-action-deauth{
+.facebook-action-deauth,
+#user-pass-reset input{
   overflow:visible;
   font-size:14px;
   font-weight:bold;

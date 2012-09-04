@@ -67,13 +67,12 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
   );
 
   // Add my own validation handler where email can be set as the username
-  $form['#validate'][0] = 'fa_user_register_validate';
+  array_unshift($form['#validate'], 'fa_user_register_validate');
 }
 
 function fa_user_register_validate($form, &$form_state){
   $form['account']['name']['#value'] = $form['account']['mail']['#value'];
   $form_state['values']['name'] = $form_state['values']['mail'];
-  user_register_validate($form, $form_state);
 }
 
 function fa_menu_alter(&$items) {
@@ -82,8 +81,8 @@ function fa_menu_alter(&$items) {
   // Hide all tabs on the login and forgot password pages
   $items['user/login']['type'] = MENU_CALLBACK;
   $items['user/password']['type'] = MENU_CALLBACK;
-  // Hide all normal user tabs on the profile page
-  $items['user/%/edit']['type'] = MENU_CALLBACK;
+  // Hide all normal user tabs on the profile page except edit
+  // which is needed for forgot password
   $items['user/%/view']['type'] = MENU_CALLBACK;
   $items['user/%/mailchimp']['type'] = MENU_CALLBACK;
 }
@@ -526,13 +525,14 @@ function fa_webform_element($variables) {
  * Custom user profile
  */
 function fa_page_build(&$page){
+  global $user;
   if (isset($page['content']) &&
       isset($page['content']['system_main']) &&
       isset($page['content']['system_main']['#entity_type']) &&
       $page['content']['system_main']['#entity_type'] == 'user' &&
-      preg_match('/^user\/([0-9]+)$/', current_path())){
-    global $user;
-    // Hide the useless summary and show instead the editable form
+      preg_match('/^user\/'. $user->uid . '/', current_path()) &&
+      empty($_GET['pass-reset-token'])){
+    // Hide the useless summary on users own page and show instead the editable form
     $page['content']['system_main']['summary']['#access'] = FALSE;
     $page['content']['system_main']['field_first_name']['#access'] = FALSE;
     $page['content']['system_main']['field_last_name']['#access'] = FALSE;
@@ -543,8 +543,8 @@ function fa_page_build(&$page){
 function fa_form_user_profile_form_alter(&$form, &$form_state, $form_id){
 
   // Match only user profile page, not register page
-  if (preg_match('/^user\/([0-9]+)$/', current_path())){
-    global $user;
+  global $user;
+  if (preg_match('/^user\/'. $user->uid . '/', current_path()) && empty($_GET['pass-reset-token'])){
     $list = mailchimp_lists_load('filosofian_akatemia_newsletter');
     $form['account']['mailchimp_lists'] =  array(
         '#type' => 'fieldset',
@@ -591,6 +591,22 @@ function fa_form_user_profile_form_alter(&$form, &$form_state, $form_id){
     array_unshift($form['#validate'], 'fa_form_user_profile_form_validate');
     // Add custom mailchimp subscription submitter to get mailing list to work right
     array_push($form['#submit'], 'fa_form_user_profile_form_submit');
+  }
+
+  if (preg_match('/^user\/'. $user->uid . '/', current_path()) && !empty($_GET['pass-reset-token'])){
+    // Forgot password page, hide everything except password change
+    $form['account']['name']['#access'] = FALSE;
+    $form['account']['fboauth']['#access'] = FALSE;
+    $form['field_first_name']['#access'] = FALSE;
+    $form['account']['mail']['#access'] = FALSE;
+    $form['field_last_name']['#access'] = FALSE;
+    $form['fboauth']['#access'] = FALSE;
+    $form['locale']['#access'] = FALSE;
+    $form['timezone']['#access'] = FALSE;
+    $form['overlay_control']['#access'] = FALSE;
+    $form['picture']['#access'] = FALSE;
+    $form['actions']['cancel']['#access'] = FALSE;
+    $_GET['destination'] = 'user';
   }
 }
 
