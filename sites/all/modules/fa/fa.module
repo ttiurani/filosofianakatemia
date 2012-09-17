@@ -530,7 +530,7 @@ function fa_page_build(&$page){
       isset($page['content']['system_main']) &&
       isset($page['content']['system_main']['#entity_type']) &&
       $page['content']['system_main']['#entity_type'] == 'user' &&
-      preg_match('/^user\/'. $user->uid . '/', current_path()) &&
+      current_path() == 'user/' . $user->uid &&
       empty($_GET['pass-reset-token'])){
     // Hide the useless summary on users own page and show instead the editable form
     $page['content']['system_main']['summary']['#access'] = FALSE;
@@ -544,7 +544,8 @@ function fa_form_user_profile_form_alter(&$form, &$form_state, $form_id){
 
   // Match only user profile page, not register page
   global $user;
-  if (preg_match('/^user\/'. $user->uid . '/', current_path()) && empty($_GET['pass-reset-token'])){
+  if (current_path() == 'user/' . $user->uid &&
+      empty($_GET['pass-reset-token'])){
     $list = mailchimp_lists_load('filosofian_akatemia_newsletter');
     $form['account']['mailchimp_lists'] =  array(
         '#type' => 'fieldset',
