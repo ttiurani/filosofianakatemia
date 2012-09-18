@@ -109,6 +109,9 @@
   padding-right: 50px;
 }
 
+.webform-grid tr.even{
+  background-color: #F8F8FF;
+}
 
 .node-article { /* Article content node */
 }
