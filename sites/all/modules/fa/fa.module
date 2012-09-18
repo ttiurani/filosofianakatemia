@@ -633,3 +633,11 @@ function fa_form_user_profile_form_submit(&$form, &$form_state){
 function _get_fboauth_div(){
   return '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
 }
+
+/**
+ * Implements hook_mail_alter() to set
+ * Return-Path address to the same address as the sender.
+ */
+function invite_mail_alter(&$message) {
+  $message['headers']['Return-Path'] = 'bounce@filosofianakatemia.fi';
+}
