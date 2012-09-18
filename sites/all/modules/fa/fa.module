@@ -428,6 +428,14 @@ function fa_course_form_validate($form, &$form_state) {
   $roles = user_roles(TRUE);
 
   foreach($roles as $role_name){
+    if (!isset($organization_role->rid) && $role_name == $organization_role->name){
+      form_set_error('fa_course_organization', t('Role name with given organization already exists'));
+      return;
+    }
+    if (!isset($product_role->rid) && $role_name == $product_role->name){
+      form_set_error('fa_course_product', t('Role name with given product already exists'));
+      return;
+    }
     if ($role_name == $class_role->name){
       form_set_error('fa_course_appendix', t('Role name with given organization/product/date already exists, set appropriate appendix'));
       return;
@@ -446,7 +454,7 @@ function fa_course_form_submit($form, &$form_state) {
 
   // Product role
   $product_role = _fa_course_get_selected_role($form_state, 'product');
-  if (!isset($organization_role->rid)){
+  if (!isset($product_role->rid)){
     // Product role needs to be saved
     user_role_save($product_role);
   }
@@ -530,7 +538,11 @@ function _fa_course_get_selected_role($form_state, $role_type){
   $selected_role = new stdClass();
   if (!empty($form_state['values']['fa_course_' . $role_type])){
     // Role needs to be created
-    $selected_role->name = '#' . $form_state['values']['fa_course_' . $role_type] . '#';
+    $selected_role->name = '';
+    if ($role_type == 'product'){
+      $selected_role->name .= '#';
+    }
+    $selected_role->name .= '#' . $form_state['values']['fa_course_' . $role_type] . '#';
   }else{
     $roles = user_roles(TRUE);
     $selected_role->rid = $form_state['values']['fa_course_' . $role_type . '_select'];
