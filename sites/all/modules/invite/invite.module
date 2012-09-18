@@ -592,7 +592,14 @@ function invite_send($invite, $send = TRUE) {
       $from = variable_get('invite_manual_from', '');
     }
     elseif (!empty($invite->inviter->mail)) {
-      $from = $invite->inviter->mail;
+      $inviter_fields = user_load($invite->inviter->uid);
+      if (!empty($inviter_fields->field_first_name) && !empty($inviter_fields->field_last_name)){
+        $firstname = $inviter_fields->field_first_name['und']['0']['value'];
+        $lastname = $inviter_fields->field_last_name['und']['0']['value'];
+        $from = $firstname . ' ' . $lastname . ' <' . $invite->inviter->mail . '>';
+      }else{
+        $from = $invite->inviter->mail;
+      }
     }
     if (empty($from)) {
       // Never pass an empty string to drupal_mail()
