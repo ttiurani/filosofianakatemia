@@ -403,6 +403,15 @@ function fa_course_form($form, &$form_state) {
   $form['submit']['#access'] = FALSE;
   $form['submit_show']['#access'] = FALSE;
 
+  // Summary
+  $form['fa_course_summary'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Summary addresses'),
+      '#default_value'  => 'info@filosofianakatemia.fi, ' . $form['from']['#markup'],
+      '#required'       => TRUE,
+      '#description'    => t('List of addresses where to send a summary of sent invites, separated by comma.'),
+  );
+
   // Submit
   $form['fa_course_submit'] = array(
       '#type' => 'submit',
@@ -466,6 +475,42 @@ function fa_course_form_submit($form, &$form_state) {
   // Send invites by validating and submitting the form
   invite_form_validate($form, $form_state);
   invite_form_submit($form, $form_state);
+
+  // Send summaries if succeeded
+  if (form_get_errors()) return;
+
+  // Get email addresses
+  $summary_emails = _invite_get_emails($form_state['values']['fa_course_summary']);
+  $user_emails = _invite_get_emails($form_state['values']['email']);
+
+  // Create summary message
+  $summary = array(
+      'subject' => t("SUMMARY: ") . trim($form_state['values']['subject']),
+      'message' => t("An invitation using the following message template was sent to these recipients:" . "\n\n"),
+  );
+
+  foreach ($user_emails as $user_email) {
+    $summary['message'] .= $user_email . "\n";
+  }
+  $summary['message'] .= "\n**********\n\n";
+  $summary['message'] .= trim($form_state['values']['subject']) . "\n\n";
+  $summary['message'] .= $form_state['values']['message'];
+
+  $from = variable_get('invite_manual_from', NULL);
+  global $language;
+  foreach ($summary_emails as $summary_email) {
+    // Send the summary
+    $result = drupal_mail('fa', 'fa', $summary_email, $language, $summary, $from, TRUE);
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function fa_mail($key, &$message, $summary) {
+  global $user;
+  $message['subject'] = $summary['subject'];
+  $message['body'][] = $summary['message'];
 }
 
 function _fa_course_get_class_role($form_state, $organization_role, $product_role){
