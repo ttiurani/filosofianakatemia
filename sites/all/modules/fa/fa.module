@@ -447,9 +447,9 @@ function fa_course_form_validate($form, &$form_state) {
   $user_emails = _invite_get_emails($form_state['values']['email']);
   if (isset($_SESSION['invite_failed_emails'])){
     $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
-    $error_message = t('Invalid email addresses: ');
+    $error_message = t('Invalid email addresses:');
     foreach ($failed_emails as $failed_email) {
-      $error_message .= $failed_email;
+      $error_message .= ' ' . $failed_email;
     }
     form_set_error('email', $error_message);
     unset($_SESSION['invite_failed_emails']);
