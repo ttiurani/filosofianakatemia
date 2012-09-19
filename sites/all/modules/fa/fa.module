@@ -477,7 +477,7 @@ function fa_course_form_submit($form, &$form_state) {
   if (!empty($preliminary_assignment_url)){
     // Change the [invite:join-link] to contain the destination
     $form_state['values']['message'] = str_replace("[invite:join-link]",
-        "[invite:join-link]&destination=" . $preliminary_assignment_url, $form_state['values']['message']);
+        "[invite:join-link]?destination=" . $preliminary_assignment_url, $form_state['values']['message']);
   }
 
   // Send invites by validating and submitting the form
