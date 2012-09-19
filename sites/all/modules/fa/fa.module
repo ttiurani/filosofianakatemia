@@ -417,6 +417,7 @@ function fa_course_form($form, &$form_state) {
       '#type' => 'submit',
       '#value' => t('Send invites'),
   );
+
   return $form;
 }
 
@@ -440,6 +441,30 @@ function fa_course_form_validate($form, &$form_state) {
       form_set_error('fa_course_appendix', t('Role name with given organization/product/date already exists, set appropriate appendix'));
       return;
     }
+  }
+
+  // Validate given email addresses
+  $user_emails = _invite_get_emails($form_state['values']['email']);
+  if (isset($_SESSION['invite_failed_emails'])){
+    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
+    $error_message = t('Invalid email addresses: ');
+    foreach ($failed_emails as $failed_email) {
+      $error_message .= $failed_email;
+    }
+    form_set_error('email', $error_message);
+    unset($_SESSION['invite_failed_emails']);
+    return;
+  }
+  $summary_emails = _invite_get_emails($form_state['values']['fa_course_summary']);
+  if (isset($_SESSION['invite_failed_emails'])){
+    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
+    $error_message = t('Invalid summary email addresses:');
+    foreach ($failed_emails as $failed_email) {
+      $error_message .=  ' ' . $failed_email;
+    }
+    form_set_error('fa_course_summary', $error_message);
+    unset($_SESSION['invite_failed_emails']);
+    return;
   }
 }
 
