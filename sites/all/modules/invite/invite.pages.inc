@@ -140,6 +140,14 @@ function invite_accept($invite) {
   $status = invite_validate($invite);
 
   if ($status == INVITE_VALID || $status == INVITE_USED) {
+    // Programmatically logs out the current user if
+    // logged in to avoid problems with setting roles
+    if ($user->uid != 0){
+      $tmp = NULL;
+      session_destroy();
+      user_module_invoke('logout', $tmp, $user);
+    }
+
     if (isset($_GET['destination'])){
       $_SESSION[INVITE_SESSION_DESTINATION] = $_GET['destination'];
       unset($_GET['destination']);
