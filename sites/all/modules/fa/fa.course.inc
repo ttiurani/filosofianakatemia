@@ -150,6 +150,7 @@ function fa_course_form($form, &$form_state) {
       '#type'           => 'select',
       '#multiple'       => FALSE,
       '#title'          => t('Select class to remind'),
+      '#description'    => t('Reminder will be sent to only those recipients who have not yet registered.'),
       '#options'        => $class_options,
       '#states' => array(
           'visible' => array(   // action to take.
@@ -392,7 +393,8 @@ function fa_course_form_submit($form, &$form_state) {
     }
   }else if ($form_state['values']['fa_course_action'] == COURSE_REMIND){
     foreach ($form_state['values']['remind_invites'] as $remind_invite){
-      $remind_prefix = t('Reminder:');
+      // For some reason this is not translatable, so it has to be in Finnish here
+      $remind_prefix = t('Muistutus:');
       if (substr($remind_invite->data['subject'], 0, strlen($remind_prefix)) != $remind_prefix){
         $remind_invite->data['subject'] = $remind_prefix . " " . $remind_invite->data['subject'];
       }
