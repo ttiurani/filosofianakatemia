@@ -433,6 +433,7 @@ function fa_course_form_submit($form, &$form_state) {
     $summary['message'] .= "\n**********\n\n";
     $summary['message'] .= trim($form_state['values']['invite_data']['subject']) . "\n\n";
     $summary['message'] .= $form_state['values']['invite_data']['message'];
+    drupal_set_message(t('Email address fixed and summary sent'), 'status');
   }else if ($form_state['values']['fa_course_action'] == COURSE_REMIND){
     $summary = array(
         'subject' => t("REMINDED:"),
@@ -443,13 +444,14 @@ function fa_course_form_submit($form, &$form_state) {
       if (!isset($remind_invite_subject) && !isset($remind_invite_message)){
         $remind_invite_subject = $remind_invite->data['subject'];
         $remind_invite_message = str_replace($remind_invite->reg_code, '[invite:reg_code]', $remind_invite->data['message']);
-        $summary['subject'] .= ' ' . $remind_invite_message;
+        $summary['subject'] .= ' ' . $remind_invite_subject;
       }
       $summary['message'] .= $remind_invite->email . "\n";
     }
     $summary['message'] .= "\n**********\n\n";
     $summary['message'] .= trim($remind_invite_subject) . "\n\n";
     $summary['message'] .=  $remind_invite_message;
+    drupal_set_message('Sent ' . count($form_state['values']['remind_invites']) . ' reminders.', 'status');
   }
 
   $from = variable_get('invite_manual_from', NULL);
