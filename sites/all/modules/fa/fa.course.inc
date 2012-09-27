@@ -435,7 +435,7 @@ function fa_course_form_submit($form, &$form_state) {
     $summary['message'] .= $form_state['values']['invite_data']['message'];
   }else if ($form_state['values']['fa_course_action'] == COURSE_REMIND){
     $summary = array(
-        'subject' => t("REMINDED: ") . trim($form_state['values']['subject']),
+        'subject' => t("REMINDED:"),
         'message' => t("Message like the following was sent to these recipients:" . "\n\n"),
     );
 
@@ -443,6 +443,7 @@ function fa_course_form_submit($form, &$form_state) {
       if (!isset($remind_invite_subject) && !isset($remind_invite_message)){
         $remind_invite_subject = $remind_invite->data['subject'];
         $remind_invite_message = str_replace($remind_invite->reg_code, '[invite:reg_code]', $remind_invite->data['message']);
+        $summary['subject'] .= ' ' . $remind_invite_message;
       }
       $summary['message'] .= $remind_invite->email . "\n";
     }
