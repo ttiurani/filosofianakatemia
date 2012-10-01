@@ -34,6 +34,7 @@ function fa_course_form($form, &$form_state) {
 
   // Prepare role options
   $roles = user_roles(TRUE);
+  $class_options = array();
   foreach($roles as $rid => $role){
     $role_array = explode('#', $role);
     if (count($role_array) == 3){
@@ -316,6 +317,10 @@ function fa_course_form_validate($form, &$form_state) {
     }
 
   }else if ($form_state['values']['fa_course_action'] == COURSE_REMIND){
+    if (empty($form_state['values']['fa_class_select'])){
+      form_set_error('fa_class_select', t('There is no pending class to remind.'));
+      return;
+    }
     $query = db_select('invite', 'i')
                ->fields('i')
                ->condition('canceled', 0)
@@ -386,6 +391,7 @@ function fa_course_form_submit($form, &$form_state) {
     invite_form_submit($form, $form_state);
   }else if ($form_state['values']['fa_course_action'] == COURSE_FIX){
     $form_state['values']['invite']->email = $form_state['values']['correct_email'];
+    // Store unserialized data for reference in summary
     $form_state['values']['invite_data'] = $form_state['values']['invite']->data;
     if (invite_send($form_state['values']['invite']) == FALSE){
       form_set_error('fa_correct_mail', 'Error while sending email to correct address');
@@ -393,8 +399,7 @@ function fa_course_form_submit($form, &$form_state) {
     }
   }else if ($form_state['values']['fa_course_action'] == COURSE_REMIND){
     foreach ($form_state['values']['remind_invites'] as $remind_invite){
-      // For some reason this is not translatable, so it has to be in Finnish here
-      $remind_prefix = t('Muistutus:');
+      $remind_prefix = t('Reminder:');
       if (substr($remind_invite->data['subject'], 0, strlen($remind_prefix)) != $remind_prefix){
         $remind_invite->data['subject'] = $remind_prefix . " " . $remind_invite->data['subject'];
       }
