@@ -431,7 +431,7 @@ function fa_course_form_submit($form, &$form_state) {
     $summary['message'] .= $form_state['values']['message'];
   }else if ($form_state['values']['fa_course_action'] == COURSE_FIX){
     $summary = array(
-        'subject' => t("FIXED: ") . trim($form_state['values']['subject']),
+        'subject' => t("FIXED: ") . trim($form_state['values']['invite_data']['subject']),
         'message' => t("The following message was sent to the fixed email address:" . "\n\n"),
     );
     $summary['message'] .= $form_state['values']['invalid_email'] . ' => ' . $form_state['values']['correct_email'] . "\n";
