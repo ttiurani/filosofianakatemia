@@ -37,7 +37,7 @@ function invite_settings() {
     '#type' => 'select',
     '#title' => t('Invitation expiry'),
     '#default_value' => variable_get('invite_expiry', 30),
-    '#options' => drupal_map_assoc(array(1, 3, 7, 14, 30, 60)),
+    '#options' => drupal_map_assoc(array(1, 3, 7, 14, 30, 60, 90, 120, 160, 365, 730, 1000)),
     '#description' => t('Set the expiry period for user invitations, in days.'),
     '#multiple' => FALSE,
     '#required' => TRUE,
