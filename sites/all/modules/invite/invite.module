@@ -1335,13 +1335,7 @@ function invite_form_submit($form, &$form_state) {
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
       // Update the role mappings
-      $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array(':iid' => $invite->iid));
-      if (isset($form_state['values']['invite_roles'])) {
-        $active_roles = array_filter($form_state['values']['invite_roles']);
-        foreach($active_roles as $rid => $role) {
-          $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array(':iid' => $invite->iid, ':rid' => $rid));
-        }
-      }
+      update_role_mappings($invite, $form_state['values']['invite_roles']);
       $processed_invites[] = $invite;
     }
     else {
@@ -1374,6 +1368,17 @@ function invite_form_submit($form, &$form_state) {
     $form_state['redirect'] = "user/$user->uid/invites/pending";
   }
 }
+
+function update_role_mappings($invite, $roles){
+  $result = db_query('DELETE FROM {invite_roles} WHERE iid = :iid', array(':iid' => $invite->iid));
+  if (isset($roles)) {
+    $active_roles = array_filter($roles);
+    foreach($active_roles as $rid => $role) {
+      $result = db_query('INSERT INTO {invite_roles} (iid, rid) VALUES (:iid, :rid)', array(':iid' => $invite->iid, ':rid' => $rid));
+    }
+  }
+}
+
 
 /**
  * Extract valid e-mail addresses from a string.

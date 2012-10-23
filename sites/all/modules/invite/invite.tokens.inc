@@ -43,6 +43,11 @@ function invite_tokens($type, $tokens, array $data = array(), array $options = a
           }
           break;
 
+        case 'reg-code':
+          if (!empty($invite->reg_code)) {
+            $replacements[$original] = $invite->reg_code;
+          }
+          break;
       }
     }
   }

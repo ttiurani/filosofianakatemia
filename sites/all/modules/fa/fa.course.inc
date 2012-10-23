@@ -8,20 +8,15 @@
  * Course Action Constants
  */
 define('COURSE_SEND', 0);
-define('COURSE_FIX', 1);
-define('COURSE_REMIND', 2);
-
-/**
- * Reminder constants
- */
-define('DEFAULT_REMIND', 0);
-define('TITLE_REMIND', 1);
-define('FULL_REMIND', 2);
+define('COURSE_ADD', 1);
+define('COURSE_FIX', 2);
+define('COURSE_REMIND', 3);
 
 function fa_course_form($form, &$form_state) {
 
   // Radio button for new/fix/remind
   $actions = array(COURSE_SEND => t('Send Preliminary Assignments'),
+                   COURSE_ADD => t('Add Participants to an Existing Class'),
                    COURSE_FIX => t('Fix Invalid Email Address'),
                    COURSE_REMIND => t('Send Reminders'));
 
@@ -34,7 +29,8 @@ function fa_course_form($form, &$form_state) {
 
   // Prepare role options
   $roles = user_roles(TRUE);
-  $class_options = array();
+  $future_class_options = array();
+  $all_class_options = array();
   foreach($roles as $rid => $role){
     $role_array = explode('#', $role);
     if (count($role_array) == 3){
@@ -45,10 +41,10 @@ function fa_course_form($form, &$form_state) {
       $product_options[$rid] = $role_array[2];
     }else if (count($role_array) > 4){
       // Class
-      // Set only if date of first class is today or after,
-      // no sense sending if the class has already passed
+      $all_class_options[$rid] = $role;
+      // Set future class list only if date of first class is today or after
       if (date('Y-m-d') <= $role_array[3])
-        $class_options[$rid] = $role;
+        $future_class_options[$rid] = $role;
     }
   }
   // Not listed options
@@ -146,19 +142,36 @@ function fa_course_form($form, &$form_state) {
           ),
       ),
   );
-  // Class selector
-  $form['fa_class_select'] = array(
+  // Remind class selector
+  $form['fa_remind_class_select'] = array(
       '#type'           => 'select',
       '#multiple'       => FALSE,
       '#title'          => t('Select class to remind'),
       '#description'    => t('Reminder will be sent to only those recipients who have not yet registered.'),
-      '#options'        => $class_options,
+      '#options'        => $future_class_options,
       '#states' => array(
           'visible' => array(   // action to take.
               ':input[name=fa_course_action]' => array('value' => COURSE_REMIND),
           ),
           'required' => array(
               ':input[name=fa_course_action]' => array('value' => COURSE_REMIND),
+          ),
+      ),
+  );
+
+  // Add class selector
+  $form['fa_add_class_select'] = array(
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
+      '#title'          => t('Select class to add participants to'),
+      '#description'    => t('The preliminary assignment for the selected class will be emailed to the given participants.'),
+      '#options'        => $all_class_options,
+      '#states' => array(
+          'visible' => array(   // action to take.
+              ':input[name=fa_course_action]' => array('value' => COURSE_ADD),
+          ),
+          'required' => array(
+              ':input[name=fa_course_action]' => array('value' => COURSE_ADD),
           ),
       ),
   );
@@ -196,9 +209,21 @@ function fa_course_form($form, &$form_state) {
           ),
       );
 
+  // Add fields for adding people to classes
+  $form['fa_additional_mail'] = array(
+      '#type'           => 'textarea',
+      '#title'          => t('Email addresses to send preliminary assignment for the class. One e-mail address per line or separated by comma.'),
+      '#states' => array(
+          'visible' => array(   // action to take.
+              ':input[name=fa_course_action]' => array('value' => COURSE_ADD),
+          ),
+          'required' => array(
+              ':input[name=fa_course_action]' => array('value' => COURSE_ADD),
+          ),
+      ),
+  );
 
   // Add fields for fixing invalid email addresses
-  // Appendix
   $form['fa_invalid_mail'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Invalid email address'),
@@ -271,6 +296,54 @@ function fa_course_form_validate($form, &$form_state) {
     if (_fa_course_validate_emails('email') == FALSE){
       return;
     }
+  }else if ($form_state['values']['fa_course_action'] == COURSE_ADD){
+    if (empty($form_state['values']['fa_add_class_select'])){
+      form_set_error('fa_add_class_select', t('There is no class to add participants to.'));
+      return;
+    }
+
+    $additional_emails = _invite_get_emails($form_state['values']['fa_additional_mail']);
+    if (_fa_course_validate_emails('fa_additional_mail')){
+      if (count($additional_emails) > 0){
+        // First check that none of the given emails already are in the class
+        $query = db_select('invite', 'i')
+          ->fields('i')
+          ->condition('canceled', 0);
+        $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
+        $query->condition('ir.rid', $form_state['values']['fa_add_class_select']);
+        $query->condition('email', $additional_emails, 'IN');
+        $example_invite = $query->execute()->fetchObject();
+        if ($example_invite){
+          form_set_error('fa_additional_mail', t('Some of the given emails are already in the class.'));
+          return;
+        }
+
+        // Need to send some more invites
+        // Select one invite from the group, prefer resent = 0
+        $query = db_select('invite', 'i')
+              ->fields('i')
+              ->condition('canceled', 0);
+        $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
+        $query->condition('ir.rid', $form_state['values']['fa_add_class_select']);
+        $query->orderBy('resent', 'ASC');
+        $example_invite = $query->execute()->fetchObject();
+
+        if ($example_invite) {
+          $example_invite->data = unserialize($example_invite->data);
+          $form_state['values']['additional_email_class'] = $form_state['values']['fa_add_class_select'];
+          $form_state['values']['additional_emails'] = $additional_emails;
+          $form_state['values']['additional_invite_example'] = $example_invite;
+        }else{
+          form_set_error('fa_add_class_select', t('Could not find any existing non-cancelled emails for that class'));
+          return;
+        }
+      }else{
+        form_set_error('fa_additional_mail', t('No additional mails given.'));
+        return;
+      }
+    }else{
+      return;
+    }
   }else if ($form_state['values']['fa_course_action'] == COURSE_FIX){
     $invalid_emails = _invite_get_emails($form_state['values']['fa_invalid_mail']);
     if (_fa_course_validate_emails('fa_invalid_mail')){
@@ -317,8 +390,8 @@ function fa_course_form_validate($form, &$form_state) {
     }
 
   }else if ($form_state['values']['fa_course_action'] == COURSE_REMIND){
-    if (empty($form_state['values']['fa_class_select'])){
-      form_set_error('fa_class_select', t('There is no pending class to remind.'));
+    if (empty($form_state['values']['fa_remind_class_select'])){
+      form_set_error('fa_remind_class_select', t('There is no pending class to remind.'));
       return;
     }
     $query = db_select('invite', 'i')
@@ -326,11 +399,11 @@ function fa_course_form_validate($form, &$form_state) {
                ->condition('canceled', 0)
                ->condition('joined', 0);
     $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
-    $query->condition('ir.rid', $form_state['values']['fa_class_select']);
+    $query->condition('ir.rid', $form_state['values']['fa_remind_class_select']);
     $remind_invites = $query->execute();
 
     if ($remind_invites->rowCount() == 0){
-      form_set_error('fa_class_select', t('No one to remind in the selected class'));
+      form_set_error('fa_remind_class_select', t('No one to remind in the selected class'));
       return;
     }
 
@@ -389,6 +462,32 @@ function fa_course_form_submit($form, &$form_state) {
     // Send invites by validating and submitting the form
     invite_form_validate($form, $form_state);
     invite_form_submit($form, $form_state);
+  }else if ($form_state['values']['fa_course_action'] == COURSE_ADD){
+    // Create new invites, invite data from an example invite
+    foreach ($form_state['values']['additional_emails'] as $additional_email) {
+      $additional_invite = clone $form_state['values']['additional_invite_example'];
+      unset($additional_invite->iid);
+      $additional_invite->reg_code = invite_generate_code();
+      $additional_invite->data['message'] = str_replace(
+          $form_state['values']['additional_invite_example']->reg_code,
+          $additional_invite->reg_code,
+          $additional_invite->data['message']);
+      $additional_invite->email = $additional_email;
+      $additional_invite->joined = 0;
+      $additional_invite->resent = 0;
+      $additional_invite->is_new = TRUE;
+
+      if (!isset($additional_invite_subject) && !isset($additional_invite_message)){
+        $additional_invite_subject = $additional_invite->data['subject'];
+        $additional_invite_message = str_replace($additional_invite->reg_code, '[invite:reg-code]', $additional_invite->data['message']);
+      }
+
+      if (invite_send($additional_invite) == FALSE){
+        form_set_error('fa_course_action', 'Error while sending email to additional participants');
+        return;
+      }
+      update_role_mappings($additional_invite, _get_roles($form_state['values']['additional_invite_example']));
+    }
   }else if ($form_state['values']['fa_course_action'] == COURSE_FIX){
     $form_state['values']['invite']->email = $form_state['values']['correct_email'];
     // Store unserialized data for reference in summary
@@ -429,6 +528,17 @@ function fa_course_form_submit($form, &$form_state) {
     $summary['message'] .= "\n**********\n\n";
     $summary['message'] .= trim($form_state['values']['subject']) . "\n\n";
     $summary['message'] .= $form_state['values']['message'];
+  }else if ($form_state['values']['fa_course_action'] == COURSE_ADD){
+    $summary = array(
+        'subject' => t("ADDED: ") . $additional_invite_subject,
+        'message' => 'An invitation like following was sent to these additional recipients:' . "\n\n");
+    foreach ($form_state['values']['additional_emails'] as $additional_email) {
+      $summary['message'] .= $additional_email . "\n";
+    }
+    $summary['message'] .= "\n**********\n\n";
+    $summary['message'] .= $additional_invite_subject . "\n\n";
+    $summary['message'] .= $additional_invite_message;
+    drupal_set_message('Sent ' . count($form_state['values']['additional_emails']) . ' additional invites.', 'status');
   }else if ($form_state['values']['fa_course_action'] == COURSE_FIX){
     $summary = array(
         'subject' => t("FIXED: ") . trim($form_state['values']['invite_data']['subject']),
@@ -448,7 +558,7 @@ function fa_course_form_submit($form, &$form_state) {
     foreach ($form_state['values']['remind_invites'] as $remind_invite){
       if (!isset($remind_invite_subject) && !isset($remind_invite_message)){
         $remind_invite_subject = $remind_invite->data['subject'];
-        $remind_invite_message = str_replace($remind_invite->reg_code, '[invite:reg_code]', $remind_invite->data['message']);
+        $remind_invite_message = str_replace($remind_invite->reg_code, '[invite:reg-code]', $remind_invite->data['message']);
         $summary['subject'] .= ' ' . $remind_invite_subject;
       }
       $summary['message'] .= $remind_invite->email . "\n";
@@ -518,4 +628,20 @@ function _fa_course_validate_emails($form_field){
     return FALSE;
   }
   return TRUE;
+}
+
+function _get_roles($invite){
+  // Gets all roles based on given invite
+  $query = db_select('invite', 'i')
+      ->fields('r', array('rid', 'name'))
+      ->condition('i.iid', $invite->iid);
+  $query->leftJoin('invite_roles', 'ir', 'ir.iid = i.iid');
+  $query->leftJoin('role', 'r', 'ir.rid = r.rid');
+  $result = $query->execute()->fetchAll();
+
+  $invite_roles = array();
+  foreach($result as $role_row){
+    $invite_roles[$role_row->rid] = $role_row->name;
+  }
+  return $invite_roles;
 }
