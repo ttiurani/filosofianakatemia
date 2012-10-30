@@ -170,10 +170,10 @@
 }
 
 /**
- * Text "Ennakkotehtävä" visible in
- * under lykeion/[course]/ennakkotehtävä
+ * Text "Ennakkotehtava" or "Kurssipalaute" visible in
+ * under lykeion/[course]/ennakkotehtava or kurssipalaute
  */
-#fa-text-preliminary-assignment, .fa-nudge{
+#fa-text-preliminary-assignment, #fa-text-course-feedback, .fa-nudge{
   margin-top: -20px;
 }
 

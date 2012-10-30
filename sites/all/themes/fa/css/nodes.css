@@ -53,6 +53,7 @@
 .view-mailchimp-campaign-view .item-list,
 .node-preliminary-assignment, .node-webform,
 .node-course-assignment,
+.node-course-feedback,
 .node-authenticated-user-page,
 .node-academicians-page{ 
   padding-left: 120px;
@@ -76,7 +77,7 @@
 /**
  * Preliminary assignments
  */
-.node-preliminary-assignment, .node-webform, .node-course-assignment {
+.node-preliminary-assignment, .node-webform, .node-course-assignment, .node-course-feedback {
   margin-left: 60px;
 }
 
