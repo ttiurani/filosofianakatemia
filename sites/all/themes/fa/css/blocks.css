@@ -308,7 +308,7 @@ h2.block-title { /* Block title */
   display:inline;  
   margin:0; 
   padding:0 !important; 
-  border:0; 
+  border:0;
   color: #139ADE; 
   cursor:pointer;
   background-color: transparent;
@@ -318,8 +318,16 @@ h2.block-title { /* Block title */
 #block-user-login #edit-actions input, #user-login #edit-actions input{
   width: 184px;
 }
+
 #user-register-form #edit-actions input {
-  width: 234px;
+  margin-right: 20px;
+  padding: 10px !important;
+  border: 2px solid #d0f5ff;
+  border-radius: 8px 8px 8px 8px;
+}
+
+#user-register-form #fboauth-login {
+  margin-top: 10px;
 }
 
 #block-user-login .item-list, #user-login .item-list {
