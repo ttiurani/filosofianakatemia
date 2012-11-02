@@ -1,0 +1,235 @@
+<?php
+
+/**
+ * @file
+ * Installation file for Filosofian Akatemia Course Database module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function fa_course_schema() {
+  $schema['fa_course'] = array(
+    'description' => 'The base table for FA courses.',
+    'fields' => array(
+      'facid' => array(
+        'description' => 'The primary identifier for a course.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'product_id' => array(
+        'description' => 'Product role id.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'organization_id' => array(
+        'description' => 'Organization role id.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'city' => array(
+        'description' => 'City where the course is held.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => FALSE,
+        'default' => 'Helsinki',
+        ),
+      'crm_link' => array(
+         'description' => 'CRM hyperlink.',
+         'type' => 'varchar',
+         'length' => 100,
+         'not null' => TRUE,
+        ),
+      'lead_sales_id' => array(
+        'description' => 'Lead sales user id.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'lead_trainer_id' => array(
+        'description' => 'Lead trainer user id.',
+        'type' => 'int',
+        'not null' => FALSE,
+        ),
+      'created' => array(
+        'description' => 'Creation time of the course.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'trainer_handover' => array(
+        'description' => 'Time when the course responsibility was handed to the trainer.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'sales_handover' => array(
+        'description' => 'Time when the course responsibility was handed back to the sales person.',
+        'type' => 'int',
+        'not null' => FALSE,
+        ),
+    ),
+    'primary key' => array('facid'),
+  );
+
+  $schema['fa_course_session'] = array(
+      'description' => 'Stores sessions for a course.',
+      'fields' => array(
+          'facsid' => array(
+              'description' => 'The primary identifier for a course session.',
+              'type' => 'serial',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'facid' => array(
+              'description' => 'Id for the course.',
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'session_type' => array(
+              'description' => 'Session type, 1=lecture, 2=workshop, 3=other',
+              'type' => 'int',
+              'not null' => TRUE,
+          ),
+          'session_start_date' => array(
+              'description' => 'Start time for the session.',
+              'type' => 'int',
+              'not null' => TRUE,
+          ),
+          'session_end_date' => array(
+              'description' => 'End time for the session.',
+              'type' => 'int',
+              'not null' => TRUE,
+          ),
+          'address' => array(
+              'description' => 'Address for the session.',
+              'type' => 'varchar',
+              'length' => 100,
+              'not null' => FALSE,
+          ),
+          'preliminary_assigment_date' => array(
+              'description' => 'Time when preliminary assignment should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'preliminary_assigment_sent' => array(
+              'description' => 'Time when preliminary assignment was sent.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'feedback_date' => array(
+              'description' => 'Time when feedback request should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'feedback_sent' => array(
+              'description' => 'Time when feedback request was sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+      ),
+      'primary key' => array('facsid'),
+      'indexes' => array(
+          'facid' => array('facid')),
+  );
+
+  $schema['fa_sessions_trainers'] = array(
+      'description' => t('Maps sessions to trainers.'),
+      'fields' => array(
+          'facsid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {fa_course_session}.facsid for session.'),
+          ),
+          'uid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {users}.uid for trainer.'),
+          ),
+      ),
+      'primary key' => array('facsid', 'uid'),
+      'indexes' => array(
+          'uid' => array('uid'),
+      ),
+  );
+
+  $schema['fa_course_participant'] = array(
+      'description' => 'Stores participants for a course.',
+      'fields' => array(
+          'facpid' => array(
+              'description' => 'The primary identifier for a course participant.',
+              'type' => 'serial',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'facid' => array(
+              'description' => 'Id for the course.',
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'email' => array(
+            'description' => 'Stores the e-mail the invite has been addressed to.',
+            'type' => 'varchar',
+            'length' => 100,
+            'not null' => TRUE,
+          ),
+          'first_name' => array(
+              'description' => 'First name of the participant.',
+              'type' => 'varchar',
+              'length' => 256,
+              'not null' => FALSE,
+          ),
+          'last_name' => array(
+              'description' => 'Last name of the participant.',
+              'type' => 'varchar',
+              'length' => 256,
+              'not null' => FALSE,
+          ),
+          'iid' => array(
+            'description' => 'Stores the invitation id of the participant.',
+            'type' => 'int',
+            'not null' => FALSE,
+          ),
+      ),
+      'primary key' => array('facpid'),
+      'indexes' => array(
+          'facid' => array('facid')),
+  );
+
+  $schema['fa_sessions_participants'] = array(
+      'description' => t('Maps sessions to participants.'),
+      'fields' => array(
+          'facsid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {fa_course_session}.facsid for session.'),
+          ),
+          'facpid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {fa_course_participant}.facpid for participant.'),
+          ),
+      ),
+      'primary key' => array('facsid', 'facpid'),
+      'indexes' => array(
+          'facsid' => array('facsid'),
+      ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function fa_course_uninstall() {
+}
+
