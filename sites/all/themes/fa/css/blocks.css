@@ -231,7 +231,8 @@ h2.block-title { /* Block title */
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff label,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter label,
 #user-pass label,
-#user-profile-form label
+#user-profile-form label,
+#fb-auth-login-description
 {
   float: left;
   clear: left;
@@ -317,13 +318,6 @@ h2.block-title { /* Block title */
 
 #block-user-login #edit-actions input, #user-login #edit-actions input{
   width: 184px;
-}
-
-#user-register-form #edit-actions input {
-  margin-right: 20px;
-  padding: 10px !important;
-  border: 2px solid #d0f5ff;
-  border-radius: 8px 8px 8px 8px;
 }
 
 #user-register-form #fboauth-login {

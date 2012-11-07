@@ -60,10 +60,10 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
   }
 
   // Add Facebook Connect button to the login form
-  $facebook_output = _get_fboauth_div();
+  $facebook_output = _get_fboauth_div(t('Connect to Facebook:'));
   $form['facebook'] = array(
       '#markup' => $facebook_output,
-      '#weight' => 101,
+      '#weight' => 0,
   );
 
   // Add my own validation handler where email can be set as the username
@@ -459,8 +459,11 @@ function fa_form_user_profile_form_submit(&$form, &$form_state){
   mailchimp_lists_user_subscribe_form_submit($form, $form_state);
 }
 
-function _get_fboauth_div(){
-  return '<div id="fboauth-login">' . fboauth_action_display('connect') . '</div>';
+function _get_fboauth_div($description = NULL){
+  $description_section = '';
+  if ($description != NULL)
+    $description_section = '<div id="fb-auth-login-description">' . $description . '</div>';
+  return '<div id="fboauth-login">' . $description_section . fboauth_action_display('connect') . '</div>';
 }
 
 /**
