@@ -139,7 +139,7 @@ function invite_accept($invite) {
 
   $status = invite_validate($invite);
 
-  if ($status == INVITE_VALID || $status == INVITE_USED) {
+  if ($status == INVITE_VALID || $status == INVITE_USED || $status == INVITE_REUSABLE) {
     // Programmatically logs out the current user if
     // logged in to avoid problems with setting roles
     if ($user->uid != 0){
@@ -152,14 +152,19 @@ function invite_accept($invite) {
       $_SESSION[INVITE_SESSION_DESTINATION] = $_GET['destination'];
       unset($_GET['destination']);
     }
-
-    $_SESSION[INVITE_SESSION_EMAIL] = $invite->email;
+    if ($status == INVITE_REUSABLE){
+      $_SESSION[INVITE_SESSION_EMAIL] = FALSE;
+      db_query("UPDATE {invite} SET reuse = reuse - 1 where iid = :iid", array(':iid' => $invite->iid));
+    }else{
+      $_SESSION[INVITE_SESSION_EMAIL] = $invite->email;
+    }
     $_SESSION[INVITE_SESSION_STATUS] = $status;
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
 
-    if ($status == INVITE_VALID &&
+    if (($status == INVITE_VALID &&
         !db_query("SELECT COUNT(*) FROM {users} WHERE mail = :mail",
-          array(':mail' => $invite->email))->fetchField()){
+          array(':mail' => $invite->email))->fetchField()) ||
+        $status == INVITE_REUSABLE){
       drupal_goto(variable_get('invite_registration_path', 'user/register'));
     }else{
       drupal_goto('user/login');

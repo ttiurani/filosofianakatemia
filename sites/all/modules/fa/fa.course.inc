@@ -208,6 +208,15 @@ function fa_course_form($form, &$form_state) {
               ':input[name=fa_course_action]' => array('value' => COURSE_SEND),
           ),
       );
+    $form['fa_reuse'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Number of times the sent invite link can be reused. Default is zero. NOTE: If this is set to a value higher than 0, you can only give only one recipient as the person who will resend the link!'),
+      '#states' => array(
+          'visible' => array(   // action to take.
+              ':input[name=fa_course_action]' => array('value' => COURSE_SEND),
+          ),
+      ),
+  );
 
   // Add fields for adding people to classes
   $form['fa_additional_mail'] = array(
@@ -295,6 +304,22 @@ function fa_course_form_validate($form, &$form_state) {
     $user_emails = _invite_get_emails($form_state['values']['email']);
     if (_fa_course_validate_emails('email') == FALSE){
       return;
+    }
+    if (!empty($form_state['values']['fa_reuse'])){
+      if (!is_numeric($form_state['values']['fa_reuse']) ){
+        form_set_error('fa_reuse', t('Reuse value must be number'));
+        return;
+      }
+      $form_state['values']['reuse_count'] = intval($form_state['values']['fa_reuse']);
+      if ($form_state['values']['reuse_count'] < 0){
+        form_set_error('fa_reuse', t('Reuse value must be a positive integer'));
+        return;
+
+      }
+      if (count($user_emails)!=1){
+        form_set_error('email', t('You must give exactly one email when sending a reusable invite'));
+        return;
+      }
     }
   }else if ($form_state['values']['fa_course_action'] == COURSE_ADD){
     if (empty($form_state['values']['fa_add_class_select'])){
@@ -519,8 +544,12 @@ function fa_course_form_submit($form, &$form_state) {
   if ($form_state['values']['fa_course_action'] == COURSE_SEND){
     $summary = array(
         'subject' => t("SUMMARY: ") . trim($form_state['values']['subject']),
-        'message' => t("An invitation using the following message template was sent to these recipients:" . "\n\n"),
     );
+    if (isset($form_state['values']['reuse_count'])){
+      $summary['message'] = t("A reusable invitation using the following message template was sent to this recipient:" . "\n\n");
+    }else{
+      $summary['message'] = t("An invitation using the following message template was sent to these recipients:" . "\n\n");
+    }
     $user_emails = _invite_get_emails($form_state['values']['email']);
     foreach ($user_emails as $user_email) {
       $summary['message'] .= $user_email . "\n";

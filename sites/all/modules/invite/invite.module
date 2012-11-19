@@ -27,6 +27,7 @@ define('INVITE_WITHDRAWN', 2);
 define('INVITE_USED', 3);
 define('INVITE_EXPIRED', 4);
 define('INVITE_PROCESSED', 5);
+define('INVITE_REUSABLE', 6);
 
 /**
  * Registration settings form values.
@@ -394,7 +395,9 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
 
       $invite = invite_load_from_context();
 
-      if (!empty($invite) && invite_validate($invite) == INVITE_VALID) {
+
+      $status = invite_validate($invite);
+      if (!empty($invite) && ($status == INVITE_VALID || $status == INVITE_REUSABLE)) {
         // Preset the e-mail field.
         if (isset($form['account'])) {
           $field = &$form['account'];
@@ -403,7 +406,9 @@ function invite_form_alter(&$form, &$form_state, $form_id) {
           $field = &$form;
         }
         if (isset($field['mail'])) {
-          $field['mail']['#default_value'] = $invite->email;
+          if ($status == INVITE_VALID){
+            $field['mail']['#default_value'] = $invite->email;
+          }
         }
 
         // Enable/disable account depending on whether approval is required for invitees.
@@ -521,8 +526,11 @@ function invite_validate($invite) {
   if (!$invite || $invite->canceled != 0) {
     return INVITE_WITHDRAWN;
   }
-  elseif ($invite->joined != 0) {
+  elseif ($invite->joined != 0 && $invite->reuse == 0) {
     return INVITE_USED;
+  }
+  elseif ($invite->reuse > 0) {
+    return INVITE_REUSABLE;
   }
   elseif ($invite->expiry < REQUEST_TIME) {
     return INVITE_EXPIRED;
@@ -1331,6 +1339,10 @@ function invite_form_submit($form, &$form_state) {
       $invite->data['user_message'] = $form_state['values']['message'];
     }
     $invite->data['message'] = token_replace($message, invite_token_data($invite));
+
+    if (isset($form_state['values']['reuse_count'])){
+      $invite->reuse = $form_state['values']['reuse_count'];
+    }
 
     if (invite_send($invite, !$show_only)) {
       $num_succeeded++;
