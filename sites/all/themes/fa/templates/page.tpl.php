@@ -121,7 +121,11 @@
       <?php if ($title): ?>
         <h1 class="title" id="page-title">
           <?php if (arg(0) == 'user' && arg(1) == 'register') : ?>
-            <?php print t('Registration')?>
+            <?php if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS]) && ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE)) : ?>
+                <?php print t('Existing user')?>
+            <?php else : ?>
+              <?php print t('Registration')?>
+            <?php endif ; ?>
           <?php else : ?>
             <?php print $title ?>
           <?php endif ; ?>

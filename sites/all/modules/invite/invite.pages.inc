@@ -152,12 +152,7 @@ function invite_accept($invite) {
       $_SESSION[INVITE_SESSION_DESTINATION] = $_GET['destination'];
       unset($_GET['destination']);
     }
-    if ($status == INVITE_REUSABLE){
-      $_SESSION[INVITE_SESSION_EMAIL] = FALSE;
-      db_query("UPDATE {invite} SET reuse = reuse - 1 where iid = :iid", array(':iid' => $invite->iid));
-    }else{
-      $_SESSION[INVITE_SESSION_EMAIL] = $invite->email;
-    }
+    $_SESSION[INVITE_SESSION_EMAIL] = $invite->email;
     $_SESSION[INVITE_SESSION_STATUS] = $status;
     $_SESSION[INVITE_SESSION] = $invite->reg_code;
 

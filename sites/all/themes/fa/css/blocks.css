@@ -293,6 +293,7 @@ h2.block-title { /* Block title */
 }
 
 #block-user-login #edit-actions input, #user-login #edit-actions input,
+#user-login #edit-actions--2 input,
 #user-register-form #edit-actions input,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletterff #edit-submit,
 #mailchimp-lists-user-subscribe-form-filosofian-akatemia-newsletter #edit-submit,

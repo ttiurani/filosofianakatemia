@@ -31,14 +31,17 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
   $form['account']['name']['#access'] = FALSE;
 
   // Invited users have need to use the email address where the invite was sent
-  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS]) &&
-      $_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])){
     if (isset($_SESSION[INVITE_SESSION_DESTINATION])){
       // Set the GET parameter back from the session variable
       $_GET['destination'] = $_SESSION[INVITE_SESSION_DESTINATION];
     }
-    // Disable editing of the email field
-    $form['account']['mail']['#disabled'] = TRUE;
+    if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
+      // Disable editing of the email field
+      $form['account']['mail']['#disabled'] = TRUE;
+    }elseif($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE){
+      // Add login form at the
+    }
   }
   if (empty($_GET['destination'])){
     $_GET['destination'] = 'lykeion';
@@ -127,14 +130,6 @@ function fa_form_alter(&$form, &$form_state, $form_id){
     $form['links'] = $user_login_block['links'];
     $form['links']['#weight'] = 102;
 
-  }else if ($form_id == 'user_login_block'){
-    if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
-         && ($_SESSION[INVITE_SESSION_STATUS] == INVITE_USED
-            || $_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID)){
-      // Disable the entire block so that it is not possible
-      // to give the role to someone else
-      $form['#access'] = FALSE;
-    }
   }else if ($form_id == 'mailchimp_lists_user_subscribe_form_filosofian_akatemia_newsletterff'
             || $form_id == 'mailchimp_lists_user_subscribe_form_filosofian_akatemia_newsletter'){
     // Redirect to the front page
@@ -366,6 +361,24 @@ function fa_page_build(&$page){
     $page['content']['system_main']['field_first_name']['#access'] = FALSE;
     $page['content']['system_main']['field_last_name']['#access'] = FALSE;
     $page['content']['system_main']['profile'] = drupal_get_form('user_profile_form', $user, 'account');
+  }
+  if (current_path() == 'user/register'){
+    if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
+        && ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE)){
+      $user_login_form = drupal_get_form('user_login_block');
+      $user_login_form['#id'] = 'user-login';
+      fa_form_alter($user_login_form, $user_login_form, 'user_login');
+      $page['content']['#sorted'] = FALSE;
+      $page['content']['login'] = $user_login_form;
+      $page['content']['login']['#weight'] = -10;
+      unset($page['content']['login']['links']);
+      // Add text "REGISTRATION" to the middle of the page
+      $page['content']['system_main']['account']['#title'] = t('Registration');
+      $page['content']['registration'] = array(
+          '#markup' => '<p id="page-title">' . '&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;' . '<br/><br/><br/>' . t('New User') .'</p>',
+          '#weight' => 0,
+      );
+    }
   }
 }
 

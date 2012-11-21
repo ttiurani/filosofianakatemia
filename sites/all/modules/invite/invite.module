@@ -651,19 +651,27 @@ function invite_send($invite, $send = TRUE) {
  * Implements hook_user_insert().
  */
 function invite_user_insert(&$edit, $account, $category) {
-  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
-      && !$_SESSION[INVITE_SESSION_STATUS] == INVITE_PROCESSED){
-    $invite = invite_find_invite($account->mail);
 
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])
+      && $_SESSION[INVITE_SESSION_STATUS] != INVITE_PROCESSED){
+
+    if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE){
+      $invite = invite_find_invite($_SESSION[INVITE_SESSION_EMAIL]);
+    }else{
+      $invite = invite_find_invite($account->mail);
+    }
     if ($invite) {
-      _accept_invite($invite, $account);
+      _accept_invite($invite, $account, TRUE);
     }
   }
 }
 
-function _accept_invite($invite, $account){
+function _accept_invite($invite, $account, $is_new){
   invite_process_invite($invite, $account);
   if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS])){
+    if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE && $is_new == TRUE){
+      db_query("UPDATE {invite} SET reuse = reuse - 1 where iid = :iid", array(':iid' => $invite->iid));
+    }
     $_SESSION[INVITE_SESSION_STATUS] = INVITE_PROCESSED;
   }
 
@@ -695,16 +703,22 @@ function invite_user_presave(&$edit, $account, $category) {
 function invite_user_login(&$edit, $account){
 
   if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION_STATUS]) &&
-      $_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
+      ($_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID || $_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE)){
+
     $invite = _add_user_roles($edit, $account);
     if ($invite){
       // Need to explicitly save roles
+      $new_role_count = 0;
       if (isset($edit['roles'])) {
+        // Get the number of new roles that the user does not yet have
+        $new_role_count = count(array_diff_key($edit['roles'], $account->roles));
+
+        // Save roles
         foreach ($edit['roles'] as $role) {
           user_multiple_role_edit(array($account->uid), 'add_role', $role);
         }
       }
-      _accept_invite($invite, $account);
+      _accept_invite($invite, $account, $new_role_count > 0);
     }
   }
 }
@@ -713,7 +727,11 @@ function invite_user_login(&$edit, $account){
  * Adds user roles to $edit
  */
 function _add_user_roles(&$edit, $account){
-  $invite = invite_find_invite($account->mail);
+  if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE){
+    $invite = invite_find_invite($_SESSION[INVITE_SESSION_EMAIL]);
+  }else{
+    $invite = invite_find_invite($account->mail);
+  }
 
   if ($invite) {
     $roles = invite_target_roles($invite, $edit);
