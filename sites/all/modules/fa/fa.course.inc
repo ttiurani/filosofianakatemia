@@ -210,7 +210,8 @@ function fa_course_form($form, &$form_state) {
       );
     $form['fa_reuse'] = array(
       '#type'           => 'textfield',
-      '#title'          => t('Number of times the sent invite link can be reused. Default is zero. NOTE: If this is set to a value higher than 0, you can only give only one recipient as the person who will resend the link!'),
+      '#title'          => t('Number of times the sent invite link can be reused, default is zero.'),
+      '#description'    => t('NOTE: If this is set to a value higher than 0, you can only give only one recipient as the person who will resend the link!'),
       '#states' => array(
           'visible' => array(   // action to take.
               ':input[name=fa_course_action]' => array('value' => COURSE_SEND),
