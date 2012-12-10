@@ -1,0 +1,50 @@
+<?php
+/**
+* @file
+* A course database module for Filosofian Akatemia.
+*/
+
+/**
+* Implements hook_help.
+*
+* Displays help and module information.
+*
+* @param path
+*   Which path of the site we're using to display help
+* @param arg
+*   Array that holds the current path as returned from arg() function
+*/
+function fa_course_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#fa":
+      return '<p>'.  t("Filosofian Akatemia course database module.") .'</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function fa_course_block_info() {
+  $blocks['fa-course'] = array(
+      'info' => t('Filosofian Akatemia Course Database'), //The name that will appear in the block list.
+      'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+  );
+  return $blocks;
+}
+
+/**
+* Implements hook_block_view().
+*
+* Prepares the contents of the block.
+*/
+function fa_course_block_view($delta = '') {
+  $block = array();
+  switch($delta){
+    case 'fa-course':
+      $block['content'] = '<div id="fa-course">'
+                        .  '</div>';
+      break;
+  }
+  return $block;
+}

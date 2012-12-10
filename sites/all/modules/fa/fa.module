@@ -1,7 +1,7 @@
 <?php
 /**
 * @file
-* A menu_block module extension for the Filosofian Akatemia theme.
+* Filosofian Akatemia module.
 */
 
 /**
@@ -222,7 +222,7 @@ function fa_block_info() {
 * Prepares the contents of the block.
 */
 function fa_block_view($delta = '') {
-  module_load_include('inc', 'fa', 'fa.course');
+  module_load_include('inc', 'fa', 'fa.invite');
   $block = array();
   switch($delta){
     case 'fa-bg':
@@ -273,9 +273,9 @@ function fa_block_view($delta = '') {
         }
       }
       break;
-    case 'fa-course':
-      $course_form = drupal_get_form('fa_course_form');
-      $block['content'] = '<div id="fa-course">'
+    case 'fa-invite':
+      $course_form = drupal_get_form('fa_invite_form');
+      $block['content'] = '<div id="fa-invite">'
                         . drupal_render($course_form) . '</div>';
       break;
   }
