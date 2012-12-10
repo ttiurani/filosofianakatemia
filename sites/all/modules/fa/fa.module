@@ -209,7 +209,7 @@ function fa_block_info() {
       'info' => t('Filosofian Akatemia Up One'), //The name that will appear in the block list.
       'cache' => DRUPAL_CACHE_PER_ROLE, //Default
   );
-  $blocks['fa-course'] = array(
+  $blocks['fa-invite'] = array(
       'info' => t('Filosofian Akatemia Invite Course'), //The name that will appear in the block list.
       'cache' => DRUPAL_CACHE_PER_ROLE, //Default
   );
