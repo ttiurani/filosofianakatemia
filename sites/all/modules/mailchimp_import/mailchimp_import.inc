@@ -155,10 +155,10 @@ function mailchimp_import_admin_settings() {
 
     $form['mailchimp_import_cleanup_html']['mailchimp_import_strip_style'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Strip out embedded CSS in &lt;style&gt; tags.'),
+      '#title'          => t('Strip out embedded CSS in &lt;style&gt; tags and style attributes.'),
       '#description'    => t('If checked, MailChimp Import will strip out any &lt;style&gt; tags and the code
-        between them from the campaign content on import. This is useful, because otherwise embedded CSS from
-        the campaign can mess up page styles.'),
+        between them from the campaign content on import, and also style attributes in other tags. This is useful,
+        because otherwise embedded CSS from the campaign can mess up page styles.'),
       '#default_value'  => isset($cleanup_options['mailchimp_import_strip_style']) ?
         $cleanup_options['mailchimp_import_strip_style'] : TRUE,
     );
@@ -287,12 +287,8 @@ function mailchimp_import_get_campaigns($form = array(), &$form_state = array())
 
                 if ($campaign_html != NULL){
 
-                  drupal_set_message('campaign_html size: ' . strlen($campaign_html));
-
                   // Strip out the HTML.
                   $campaign_html = mailchimp_import_strip_html($campaign_html, $input_format);
-
-                  drupal_set_message('campaign_html size after strip: ' . strlen($campaign_html));
 
                   // Get the user object to assign as the author.
                   global $user;
@@ -447,24 +443,6 @@ function _mailchimp_import_get_selected($html, $content_id) {
  */
 function mailchimp_import_strip_html($text, $input_format) {
 
-  // Check if only selected divs should be imported
-  $import_only_selected = variable_get('mailchimp_import_only_selected', FALSE);
-  if ($import_only_selected){
-
-    // Need to create a DOM document of the HTML
-    $dom=new domDocument;
-    $dom->preserveWhiteSpace = false;
-    $dom->validateOnParse = true;
-    $dom->loadHTML($text);
-
-    // Find the selected div
-    $selected = $dom->getElementById("mailchimp-import");
-    if ($selected == NULL){
-      drupal_set_message(t('Could not find div with id "mailchimp-import"!'));
-      return NULL;
-    }
-  }
-
   // Get the cleanup options.
   $cleanup_options = variable_get('mailchimp_import_cleanup_html', array());
 
@@ -477,9 +455,13 @@ function mailchimp_import_strip_html($text, $input_format) {
   $invisible_tags = array('head', 'object', 'embed', 'applet', 'noframes', 'noscript', 'noembed', 'style', 'script');
   foreach ($invisible_tags as $tag) {
     if (!isset($cleanup_options['mailchimp_import_strip_'.$tag]) || $cleanup_options['mailchimp_import_strip_'.$tag]) {
-      // Add <style> tag to array of tags to remove.
       $strip_invisible[] = '@<' . $tag . '[^>]*?>.*?</' . $tag . '>@siu';
       $replace_with[] = ' ';
+      if ($tag == 'style'){
+        // Need to remove style attribute as well
+        $strip_invisible[] = '/(<[^>]+) style=".*?"/i';
+        $replace_with[] = '$1';
+      }
     }
   }
 
