@@ -28,6 +28,11 @@ function fa_course_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
+      'course_id' => array(
+          'description' => 'Course role id. This is created when the preliminary assignment is sent.',
+          'type' => 'int',
+          'not null' => FALSE,
+      ),
       'city' => array(
         'description' => 'City where the course is held.',
         'type' => 'varchar',
@@ -61,11 +66,21 @@ function fa_course_schema() {
         'type' => 'int',
         'not null' => FALSE,
       ),
+      'trainer_evaluation' => array(
+        'description' => 'Trainer evaluation, stored in a serialized array.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
       'sales_handover' => array(
         'description' => 'Time when the course responsibility was handed back to the sales person.',
         'type' => 'int',
         'not null' => FALSE,
-        ),
+      ),
+      'other_information' => array(
+          'description' => 'Free text column to add other course related information.',
+          'type' => 'text',
+          'not null' => FALSE,
+      ),
     ),
     'primary key' => array('facid'),
   );
@@ -86,16 +101,16 @@ function fa_course_schema() {
               'not null' => TRUE,
           ),
           'session_type' => array(
-              'description' => 'Session type, 1=lecture, 2=workshop, 3=other',
+              'description' => 'Session type, 0=other, 1=lecture, 2=workshop, 3=lecture and workshop, 4=discussion, 5=1on1',
               'type' => 'int',
               'not null' => TRUE,
           ),
-          'session_start_date' => array(
+          'session_start_datetime' => array(
               'description' => 'Start time for the session.',
               'type' => 'int',
               'not null' => TRUE,
           ),
-          'session_end_date' => array(
+          'session_end_datetime' => array(
               'description' => 'End time for the session.',
               'type' => 'int',
               'not null' => TRUE,
@@ -103,10 +118,32 @@ function fa_course_schema() {
           'address' => array(
               'description' => 'Address for the session.',
               'type' => 'varchar',
+              'length' => 500,
+              'not null' => FALSE,
+          ),
+          'material' => array(
+              'description' => 'Material needed for this session, if any.',
+              'type' => 'varchar',
+              'length' => 500,
+              'not null' => FALSE,
+          ),
+          'assistant_email' => array(
+              'description' => 'Stores the e-mail address of the session assistant, if any.',
+              'type' => 'varchar',
               'length' => 100,
               'not null' => FALSE,
           ),
-          'preliminary_assigment_date' => array(
+          'preliminary_assigment_node_id' => array(
+              'description' => 'Node id for the preliminary assignment webform.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'preliminary_assigment_email_template' => array(
+              'description' => 'Text of the preliminary assignment email template, stored in a serialized array.',
+              'type' => 'text',
+              'not null' => FALSE,
+          ),
+          'preliminary_assigment_datetime' => array(
               'description' => 'Time when preliminary assignment should be sent for this session.',
               'type' => 'int',
               'not null' => FALSE,
@@ -116,7 +153,78 @@ function fa_course_schema() {
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'feedback_date' => array(
+          'preliminary_assigment_reminder_datetime' => array(
+              'description' => 'Time when the preliminary assignment reminder should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'preliminary_assigment_reminder_sent' => array(
+              'description' => 'Time when the preliminary assignment reminder was sent.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'course_assigment_node_id' => array(
+              'description' => 'Node id of a course assignment webform.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'course_assigment_email_template' => array(
+              'description' => 'Text of the course assignment email template, stored in a serialized array.',
+              'type' => 'text',
+              'not null' => FALSE,
+          ),
+          'course_assigment_datetime' => array(
+              'description' => 'Time when the course assignment should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'course_assigment_sent' => array(
+              'description' => 'Time when the course assignment was sent.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'course_assigment_reminder_datetime' => array(
+              'description' => 'Time when the course assignment reminder should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'course_assigment_reminder_sent' => array(
+              'description' => 'Time when the course assignment reminder was sent.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'followup_email_template' => array(
+              'description' => 'Text of the followup email template, stored in a serialized array.',
+              'type' => 'text',
+              'not null' => FALSE,
+          ),
+          'followup_email_datetime' => array(
+              'description' => 'Time when the followup email should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'followup_email_sent' => array(
+              'description' => 'Time when the followup email was sent.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'immediate_feedback_address' => array(
+              'description' => 'Address to immediate feedback zip file, or if done electronically, link to used feedback webform.',
+              'type' => 'varchar',
+              'length' => 100,
+              'not null' => FALSE,
+          ),
+          'feedback_node_id' => array(
+              'description' => 'Node id for the feedback webform.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'feedback_email_template' => array(
+              'description' => 'Text of the feedback email template, stored in a serialized array.',
+              'type' => 'text',
+              'not null' => FALSE,
+          ),
+          'feedback_datetime' => array(
               'description' => 'Time when feedback request should be sent for this session.',
               'type' => 'int',
               'not null' => FALSE,
@@ -124,6 +232,21 @@ function fa_course_schema() {
           'feedback_sent' => array(
               'description' => 'Time when feedback request was sent for this session.',
               'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'feedback_reminder_datetime' => array(
+              'description' => 'Time when feedback request reminder should be sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'feedback_reminder_sent' => array(
+              'description' => 'Time when feedback request reminder was sent for this session.',
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'other_information' => array(
+              'description' => 'Free text column to add other session related information.',
+              'type' => 'text',
               'not null' => FALSE,
           ),
       ),
