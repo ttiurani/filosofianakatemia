@@ -214,7 +214,7 @@ function fa_invite_form($form, &$form_state) {
       '#description'    => t('NOTE: If this is set to a value higher than 0, you can only give only one recipient as the person who will resend the link!'),
       '#states' => array(
           'visible' => array(   // action to take.
-              ':input[name=fa_course_action]' => array('value' => COURSE_SEND),
+              ':input[name=fa_invite_action]' => array('value' => COURSE_SEND),
           ),
       ),
   );
@@ -322,7 +322,7 @@ function fa_invite_form_validate($form, &$form_state) {
         return;
       }
     }
-  }else if ($form_state['values']['fa_course_action'] == COURSE_ADD){
+  }else if ($form_state['values']['fa_invite_action'] == COURSE_ADD){
     if (empty($form_state['values']['fa_add_class_select'])){
       form_set_error('fa_add_class_select', t('There is no class to add participants to.'));
       return;
