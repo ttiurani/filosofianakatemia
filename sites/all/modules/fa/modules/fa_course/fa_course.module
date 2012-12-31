@@ -48,3 +48,39 @@ function fa_course_block_view($delta = '') {
   }
   return $block;
 }
+
+/**
+ * Implements invite_accept() from Invite module.
+ * Creates links between invites and course participants.
+ */
+function fa_course_invite_accept($invite, $account) {
+  if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE && $is_new == TRUE){
+    // Reusable invite, first search for the distributor of the course invite
+    $distributor = db_select('fa_course_participant', 'cp')
+                  ->fields('cp')
+                  ->condition('iid', $invite->iid)
+                  ->isNotNull('invite_reuse')
+                  ->execute()
+                  ->fetchObject();
+    if ($distributor){
+      if (empty($distributor->uid)){
+        // This should happen only once
+        $distributor->uid = $invite->invitee;
+        drupal_write_record('fa_course_participant', $distributor, 'facpid');
+      }
+      // Create a new participant
+      db_query("INSERT INTO {fa_course_participant}(facid, email, iid, uid) VALUES(:facid, :email, :iid, :uid)",
+          array(':facid' => $participant->facid,
+                ':email' => $invite->email,
+                ':iid' => $invite->iid,
+                ':uid' => $invite->invitee));
+    }else{
+      // Error, do what?
+    }
+  }else{
+    db_query("UPDATE {fa_course_participant} SET uid = :uid WHERE iid = :iid",
+        array(':facid' => $facid,
+            ':iid' => $invite->iid,
+            ':uid' => $invite->invitee));
+  }
+}
