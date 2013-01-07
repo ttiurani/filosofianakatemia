@@ -37,7 +37,7 @@ function fa_course_schema() {
         'description' => 'City where the course is held.',
         'type' => 'varchar',
         'length' => 100,
-        'not null' => FALSE,
+        'not null' => TRUE,
         'default' => 'Helsinki',
         ),
       'crm_link' => array(
@@ -75,6 +75,11 @@ function fa_course_schema() {
         'description' => 'Time when the course responsibility was handed back to the sales person.',
         'type' => 'int',
         'not null' => FALSE,
+      ),
+      'billing_information' => array(
+          'description' => 'Billing information.',
+          'type' => 'text',
+          'not null' => FALSE,
       ),
       'other_information' => array(
           'description' => 'Free text column to add other course related information.',

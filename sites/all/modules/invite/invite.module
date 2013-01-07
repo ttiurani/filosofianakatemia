@@ -675,7 +675,7 @@ function _accept_invite($invite, $account, $is_new){
     $_SESSION[INVITE_SESSION_STATUS] = INVITE_PROCESSED;
   }
 
-  module_invoke_all('invite_accept', $invite, $account);
+  module_invoke_all('invite_accept', $invite, $account, $is_new);
 
   if (isset($_SESSION)) {
     unset($_SESSION[INVITE_SESSION]);

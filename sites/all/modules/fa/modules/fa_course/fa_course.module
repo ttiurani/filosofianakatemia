@@ -23,64 +23,69 @@ function fa_course_help($path, $arg) {
 }
 
 /**
- * Implements hook_block_info().
+ * Implements hook_menu().
  */
-function fa_course_block_info() {
-  $blocks['fa-course'] = array(
-      'info' => t('Filosofian Akatemia Course Database'), //The name that will appear in the block list.
-      'cache' => DRUPAL_CACHE_PER_ROLE, //Default
+function fa_course_menu() {
+  // Admin menu items
+  $items['admin/people/courses'] = array(
+      'title' => t("Courses"),
+      'page callback' => 'fa_course_admin_overview',
+      'access arguments' => array('administer courses'),
+      'type' => MENU_LOCAL_TASK,
+      'file' => 'fa_course.admin.inc',
   );
-  return $blocks;
+
+  return $items;
 }
 
 /**
-* Implements hook_block_view().
-*
-* Prepares the contents of the block.
-*/
-function fa_course_block_view($delta = '') {
-  $block = array();
-  switch($delta){
-    case 'fa-course':
-      $block['content'] = '<div id="fa-course">'
-                        .  '</div>';
-      break;
-  }
-  return $block;
+ * Implements hook_permission().
+ */
+function fa_course_permission() {
+  return array(
+      'administer courses' => array(
+          'title' => t('Administer courses'),
+          'description' => t('Administer all Filosofian Akatemia courses'),
+      ),
+  );
 }
+
 
 /**
  * Implements invite_accept() from Invite module.
  * Creates links between invites and course participants.
  */
-function fa_course_invite_accept($invite, $account) {
-  if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE && $is_new == TRUE){
-    // Reusable invite, first search for the distributor of the course invite
-    $distributor = db_select('fa_course_participant', 'cp')
-                  ->fields('cp')
-                  ->condition('iid', $invite->iid)
-                  ->isNotNull('invite_reuse')
-                  ->execute()
-                  ->fetchObject();
-    if ($distributor){
-      if (empty($distributor->uid)){
-        // This should happen only once
-        $distributor->uid = $invite->invitee;
-        drupal_write_record('fa_course_participant', $distributor, 'facpid');
+function fa_course_invite_accept($invite, $account, $is_new) {
+  if ($is_new == TRUE){
+    if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE){
+      // Reusable invite, first search for the distributor of the course invite
+      $distributor = db_select('fa_course_participant', 'cp')
+                    ->fields('cp')
+                    ->condition('iid', $invite->iid)
+                    ->isNotNull('invite_reuse')
+                    ->execute()
+                    ->fetchObject();
+      if ($distributor){
+        if (empty($distributor->uid)){
+          // This should happen only once
+          $distributor->uid = $invite->invitee;
+          drupal_write_record('fa_course_participant', $distributor, 'facpid');
+        }
+        // Create a new participant
+        db_query("INSERT INTO {fa_course_participant}(facid, email, iid, uid) VALUES(:facid, :email, :iid, :uid)",
+            array(':facid' => $participant->facid,
+                  ':email' => $invite->email,
+                  ':iid' => $invite->iid,
+                  ':uid' => $invite->invitee));
+      }else{
+        watchdog('fa_course','Could not find distributor participant of invite with id: %iid and email: %email',
+            array('%iid' => $invite->iid, '%email' => $invite->email), WATCHDOG_ERROR);
       }
-      // Create a new participant
-      db_query("INSERT INTO {fa_course_participant}(facid, email, iid, uid) VALUES(:facid, :email, :iid, :uid)",
-          array(':facid' => $participant->facid,
-                ':email' => $invite->email,
-                ':iid' => $invite->iid,
-                ':uid' => $invite->invitee));
     }else{
-      // Error, do what?
+      db_query("UPDATE {fa_course_participant} SET uid = :uid WHERE iid = :iid",
+          array(':facid' => $facid,
+              ':iid' => $invite->iid,
+              ':uid' => $invite->invitee));
     }
-  }else{
-    db_query("UPDATE {fa_course_participant} SET uid = :uid WHERE iid = :iid",
-        array(':facid' => $facid,
-            ':iid' => $invite->iid,
-            ':uid' => $invite->invitee));
   }
 }
