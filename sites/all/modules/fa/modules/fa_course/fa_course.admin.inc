@@ -452,21 +452,24 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $session_type = _get_session_types();
 
   $form['course_session']['session_type'] = array(
-      '#type' => 'radios',
-      '#title' => t('Choose Course Action'),
+      '#type' => 'select',
+      '#title' => t('Session type'),
       '#default_value' => isset($course_session->session_type) ? $course_session->session_type : 1,
       '#options' => _get_session_types(),
   );
 
   // Time of course
+  $format = 'd.m.Y H:i';
+
   $form['course_session']['start_datetime'] = array(
-      '#type'           => 'date',
+      '#type'           => 'date_popup',
       '#title'          => t('Start date and time for the session'),
+      '#date_format'    => $format,
       '#default_value'  => isset($course_session->start_timestamp) ? $course_session->start_timestamp : REQUEST_TIME,
       '#required'       => TRUE,
   );
 
-  // Length of coursed
+  // Length of course
   $form['course_session']['length'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Length of the session in minutes'),

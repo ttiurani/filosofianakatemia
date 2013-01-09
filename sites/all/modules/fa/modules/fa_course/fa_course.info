@@ -3,5 +3,6 @@ description = "Filosofian Akatemia course database module."
 core = 7.x
 package = Filosofian Akatemia
 dependencies[] = fa
+dependencies[] = date
 files[] = fa_course.module
 files[] = fa_course.install
