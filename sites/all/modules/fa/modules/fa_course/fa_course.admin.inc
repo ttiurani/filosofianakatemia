@@ -146,10 +146,26 @@ function _fa_course_get_academians(){
  */
 function fa_course_admin_edit_form($form, &$form_state, $course) {
   global $user;
-  $academians = _fa_course_get_academians();
 
+  $academians = _fa_course_get_academians();
   if (!isset($course->lead_trainer_id))
     $academians[0] = t('-- unknown --');
+
+  // Prepare role options
+  $roles = user_roles(TRUE);
+  foreach($roles as $rid => $role){
+    $role_array = explode('#', $role);
+    if (count($role_array) == 3){
+      // Organization
+      $organization_options[$rid] = $role_array[1];
+    }else if (count($role_array) == 4){
+      // Product
+      $product_options[$rid] = $role_array[2];
+    }
+  }
+  // Not listed options
+  $organization_options[0] = t('--not listed--');
+  $product_options[0] = t('--not listed--');
 
   $form['course'] = array(
       '#type' => 'fieldset',
@@ -161,6 +177,51 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
       '#disabled' => TRUE,
       '#value' => isset($course->facid) ? $course->facid : 'N/A',
   );
+
+  // Organization select
+  $form['course']['organization_select'] = array(
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
+      '#title'          => t('Select Organization'),
+      '#options'        => $organization_options,
+      '#description'    => t('Select the organization/company where the course will be kept.'),
+  );
+  $form['course']['organization'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('New Organization'),
+      '#description'    => t('Type the name of the new organization here.'),
+      '#states' => array(
+          'visible' => array(   // action to take.
+              ':input[name=organization_select]' => array('value' => 0),
+          ),
+          'required' => array(
+              ':input[name=organization_select]' => array('value' => 0),
+          ),
+      ),
+  );
+
+  // Product select
+  $form['course']['product_select'] = array(
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
+      '#title'          => t('Select Product'),
+      '#options'        => $product_options,
+      '#description'    => t('Select the product.'),
+  );
+  $form['course']['product'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Custom product'),
+      '#description'    => t('Type the name of the custom product here.'),
+      '#states' => array(
+          'visible' => array(   // action to take.
+              ':input[name=product_select]' => array('value' => 0),
+          ),
+          'required' => array(
+              ':input[name=product_select]' => array('value' => 0),
+          ),
+      ),
+  );
+
   $form['course']['city'] = array(
       '#type' => 'textfield',
       '#title' => t('City'),
@@ -188,7 +249,6 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
       '#options'        => $academians,
       '#default_value'  => isset($course->lead_trainer_id) ? $course->lead_trainer_id : 0,
   );
-
   $form['course']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
@@ -198,7 +258,40 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
   return $form;
 }
 
+function _fa_course_get_selected_role($form_state, $role_type){
+  $selected_role = new stdClass();
+  if (!empty($form_state['values']['fa_invite_' . $role_type])){
+    // Role needs to be created
+    $selected_role->name = '';
+    if ($role_type == 'product'){
+      $selected_role->name .= '#';
+    }
+    $selected_role->name .= '#' . $form_state['values'][$role_type] . '#';
+  }else{
+    $roles = user_roles(TRUE);
+    $selected_role->rid = $form_state['values'][$role_type . '_select'];
+    $selected_role->name = $roles[$selected_role->rid];
+  }
+  return $selected_role;
+}
+
 function fa_course_admin_edit_form_validate($form, &$form_state) {
+  $organization_role = _fa_course_get_selected_role($form_state, 'organization');
+  $product_role = _fa_course_get_selected_role($form_state, 'product');
+  // Check that a role with given class name does not yet exist
+  $roles = user_roles(TRUE);
+
+  foreach($roles as $role_name){
+    if (!isset($organization_role->rid) && $role_name == $organization_role->name){
+      form_set_error('fa_invite_organization', t('Role name with given organization already exists'));
+      return;
+    }
+    if (!isset($product_role->rid) && $role_name == $product_role->name){
+      form_set_error('fa_invite_product', t('Role name with given product already exists'));
+      return;
+    }
+  }
+
   if (!valid_url($form_state['values']['crm_link'], TRUE)){
     form_set_error('crm_link', t('Not a valid URL'));
     return;
@@ -207,12 +300,33 @@ function fa_course_admin_edit_form_validate($form, &$form_state) {
 
 function fa_course_admin_edit_form_submit($form, &$form_state) {
   $course = $form_state['course'];
+
+  // Organization role
+  $organization_role = _fa_course_get_selected_role($form_state, 'organization');
+  if (!isset($organization_role->rid)){
+    // Organization role needs to be saved
+    user_role_save($organization_role);
+  }
+  $course->organization_id = $organization_role->rid;
+
+  // Product role
+  $product_role = _fa_course_get_selected_role($form_state, 'product');
+  if (!isset($product_role->rid)){
+    // Product role needs to be saved
+    user_role_save($product_role);
+  }
+  $course->product_id = $product_role->rid;
+
   $course->city = $form_state['values']['city'];
   $course->crm_link = $form_state['values']['crm_link'];
   $course->lead_sales_id = $form_state['values']['lead_sales'];
   if ($form_state['values']['lead_trainer'] != 0)
     $course->lead_trainer_id = $form_state['values']['lead_trainer'];
-  drupal_write_record('fa_course', $course, 'facid');
+
+  if (isset($course->facid))
+    drupal_write_record('fa_course', $course, 'facid');
+  else
+    drupal_write_record('fa_course', $course);
   drupal_set_message(t('Course @facid saved.', array('@facid' => $course->facid)));
   $form_state['redirect'] = "admin/people/courses";
 }
