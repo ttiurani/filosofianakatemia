@@ -331,6 +331,17 @@ function fa_course_admin_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = "admin/people/courses";
 }
 
+function _get_session_types() {
+  return array(
+      0 => t("Other"),
+      1 => t("Lecture"),
+      2 => t("Workshop"),
+      3 => t("Lecture and Workshop"),
+      4 => t("Discussion"),
+      5 => t("One on One"),
+  );
+}
+
 /**
  * Return a list of all course sessions.
  */
@@ -346,14 +357,7 @@ function fa_course_admin_sessions($facid) {
       t('Actions'),
   );
 
-  $session_type = array(
-      0 => t("Other"),
-      1 => t("Lecture"),
-      2 => t("Workshop"),
-      3 => t("Lecture and Workshop"),
-      4 => t("Discussion"),
-      5 => t("One on One"),
-  );
+  $session_type = _get_session_types();
 
   $result = db_select('fa_course_session', 's')
     ->fields('s', array('facid', 'facsid', 'session_type', 'session_start_datetime', 'session_end_datetime', 'address', 'material', 'assistant_email'))
@@ -403,8 +407,82 @@ function fa_course_admin_sessions_edit($facid, $facsid){
   $links = '<p>' . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
   $output = render($links);
   $output .= t('TODO: edit course ' . $facid . ' session ' . $facsid);
+
+  if ($facsid != 'new'){
+    $course_session = db_select('fa_course_session', 's')
+    ->fields('s')
+    ->condition('s.facsid', $facsid)
+    ->condition('s.facid', $facid)
+    ->execute()->fetchObject();
+
+  }else {
+    $course_session = (object) array(
+        'facid'  => $facid,
+    );
+  }
+
+  $edit_form = drupal_get_form('fa_course_admin_session_edit_form', $course_session);
+  $output .= render($edit_form);
   return $output;
 }
+
+/**
+ * Form for creating/editing a course session.
+ */
+function fa_course_admin_session_edit_form($form, &$form_state, $course_session) {
+  global $user;
+
+  $form['course_session'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Edit session'),
+  );
+  $form['course_session']['id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Session Id'),
+      '#disabled' => TRUE,
+      '#value' => isset($course_session->facsid) ? $course->facsid : 'N/A',
+  );
+  $form['course_session']['facid'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Course Id'),
+      '#disabled' => TRUE,
+      '#value' => $course_session->facid,
+  );
+
+  $session_type = _get_session_types();
+
+  $form['course_session']['session_type'] = array(
+      '#type' => 'radios',
+      '#title' => t('Choose Course Action'),
+      '#default_value' => isset($course_session->session_type) ? $course_session->session_type : 1,
+      '#options' => _get_session_types(),
+  );
+
+  // Time of course
+  $form['course_session']['start_datetime'] = array(
+      '#type'           => 'date',
+      '#title'          => t('Start date and time for the session'),
+      '#default_value'  => isset($course_session->start_timestamp) ? $course_session->start_timestamp : REQUEST_TIME,
+      '#required'       => TRUE,
+  );
+
+  // Length of coursed
+  $form['course_session']['length'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Length of the session in minutes'),
+      '#default_value'  => isset($course_session->end_timestamp) ? ($course_session->end_timestamp - $course_session->start_timestamp) / 1000 / 60: 180,
+      '#required'       => TRUE,
+  );
+
+  $form['course_session']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+  );
+
+  $form_state['course_session'] = $course_session;
+  return $form;
+}
+
 
 /**
  * Return a list of all course participants.
