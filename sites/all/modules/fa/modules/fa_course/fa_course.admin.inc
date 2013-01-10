@@ -34,9 +34,15 @@ function fa_course_admin_overview() {
   $result->innerJoin('role', 'rp', 'rp.rid = fac.product_id');
   $result->addField('rp', 'name', 'product');
   $result->innerJoin('users', 'us', 'us.uid = fac.lead_sales_id');
-  $result->addField('us', 'name', 'sales');
+  $result->innerJoin('field_data_field_first_name', 'us_fn', 'us_fn.entity_id = us.uid');
+  $result->addField('us_fn', 'field_first_name_value', 'sales_first_name');
+  $result->innerJoin('field_data_field_last_name', 'us_ln', 'us_ln.entity_id = us.uid');
+  $result->addField('us_ln', 'field_last_name_value', 'sales_last_name');
   $result->leftJoin('users', 'ut', 'ut.uid = fac.lead_trainer_id');
-  $result->addField('ut', 'name', 'trainer');
+  $result->leftJoin('field_data_field_first_name', 'ut_fn', 'ut_fn.entity_id = ut.uid');
+  $result->addField('ut_fn', 'field_first_name_value', 'trainer_first_name');
+  $result->leftJoin('field_data_field_last_name', 'ut_ln', 'ut_ln.entity_id = ut.uid');
+  $result->addField('ut_ln', 'field_last_name_value', 'trainer_last_name');
   $result->leftJoin('role', 'rc', 'rc.rid = fac.course_id');
   $result->addField('rc', 'name', 'course_role');
   $result->leftJoin('fa_course_session', 's', 's.facid = fac.facid');
@@ -54,11 +60,11 @@ function fa_course_admin_overview() {
   foreach ($result as $row) {
     $cells = array();
     $cells[] = $row->facid;
-    $cells[] = isset($row->first_session) ? format_date($row->first_session, 'short') : t('Not set');
+    $cells[] = isset($row->first_session) ? format_date($row->first_session, 'custom', 'D d.m.Y H:i') : t('Not set');
     $cells[] = str_replace('#', '', $row->organization);
     $cells[] = str_replace('#', '', $row->product);
-    $cells[] = l($row->sales, "user/" . $row->lead_sales_id);
-    $cells[] = isset($row->trainer) ? l($row->trainer, "user/" . $row->lead_trainer_id) : t('Not set');
+    $cells[] = l($row->sales_first_name . " " . $row->sales_last_name, "user/" . $row->lead_sales_id);
+    $cells[] = isset($row->trainer_first_name) ? l($row->trainer_first_name . " " . $row->trainer_last_name, "user/" . $row->lead_trainer_id) : t('Not set');
     $cells[] = $row->city;
     $cells[] = $row->course_role == NULL ? t('Not set') : $row->course_role;
     $cells[] = l(t("View CRM"), $row->crm_link, array('attributes' => array('target'=>'_blank')));
@@ -347,6 +353,7 @@ function _get_session_types() {
  */
 function fa_course_admin_sessions($facid) {
   $header = array(
+      array('data' => t('Session Id'), 'field' => 'facsid'),
       t('Session type'),
       array('data' => t('Start time'), 'field' => 'session_start_datetime', 'sort' => 'asc'),
       t('End Time'),
@@ -377,9 +384,10 @@ function fa_course_admin_sessions($facid) {
   $rows = array();
   foreach ($result as $row) {
     $cells = array();
+    $cells[] = $row->facsid;
     $cells[] = $session_type[$row->session_type];
-    $cells[] = format_date($row->session_start_datetime, 'short');
-    $cells[] = format_date($row->session_end_datetime, 'short');
+    $cells[] = format_date($row->session_start_datetime, 'custom', 'D d.m.Y H:i');
+    $cells[] = format_date($row->session_end_datetime, 'custom', 'D d.m.Y H:i');
     $cells[] = $row->address;
     $cells[] = $row->material;
     $cells[] = $row->assistant_email;
@@ -406,7 +414,6 @@ function fa_course_admin_sessions($facid) {
 function fa_course_admin_sessions_edit($facid, $facsid){
   $links = '<p>' . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
   $output = render($links);
-  $output .= t('TODO: edit course ' . $facid . ' session ' . $facsid);
 
   if ($facsid != 'new'){
     $course_session = db_select('fa_course_session', 's')
@@ -426,6 +433,18 @@ function fa_course_admin_sessions_edit($facid, $facsid){
   return $output;
 }
 
+function _get_assignment_options($product_name, $node_type){
+  $result = db_query("SELECT n.nid, n.title from node n INNER JOIN url_alias ua ON ua.source = CONCAT('node/', n.nid) "
+      . "WHERE n.type = :type AND ua.alias LIKE :match",
+      array(':type' => $node_type,
+            ':match' => 'lykeion/' . strtolower($product_name) . '%'));
+  $assignment_options = array();
+  foreach($result as $row){
+    $assignment_options[$row->nid] = $row->title;
+  }
+  return $assignment_options;
+}
+
 /**
  * Form for creating/editing a course session.
  */
@@ -440,7 +459,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#type' => 'textfield',
       '#title' => t('Session Id'),
       '#disabled' => TRUE,
-      '#value' => isset($course_session->facsid) ? $course->facsid : 'N/A',
+      '#value' => isset($course_session->facsid) ? $course_session->facsid : 'N/A',
   );
   $form['course_session']['facid'] = array(
       '#type' => 'textfield',
@@ -458,14 +477,14 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#options' => _get_session_types(),
   );
 
-  // Time of course
+  // Start time of course
   $format = 'd.m.Y H:i';
 
   $form['course_session']['start_datetime'] = array(
       '#type'           => 'date_popup',
       '#title'          => t('Start date and time for the session'),
       '#date_format'    => $format,
-      '#default_value'  => isset($course_session->start_timestamp) ? $course_session->start_timestamp : REQUEST_TIME,
+      '#default_value'  => isset($course_session->session_start_datetime) ? date('Y-m-d H:i', $course_session->session_start_datetime) : date('Y-m-d H:i', REQUEST_TIME),
       '#required'       => TRUE,
   );
 
@@ -473,8 +492,183 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $form['course_session']['length'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Length of the session in minutes'),
-      '#default_value'  => isset($course_session->end_timestamp) ? ($course_session->end_timestamp - $course_session->start_timestamp) / 1000 / 60: 180,
+      '#default_value'  => isset($course_session->session_end_datetime) ? ($course_session->session_end_datetime - $course_session->session_start_datetime) / 60: 180,
       '#required'       => TRUE,
+  );
+
+  $form['course_session']['address'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Address of session'),
+      '#description'          => t('Detailed address for the session, should include all information that is
+                                    required for both the participants and the trainer to find their way to the
+                                    right place. E.g. room number and contact phone number might be needed.'),
+      '#default_value'  => isset($course_session->address) ? $course_session->address : NULL,
+  );
+
+  $form['course_session']['material'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Material promised to the session'),
+      '#default_value'  => isset($course_session->material) ? $course_session->material : NULL,
+  );
+
+  $form['course_session']['assistant_email'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Assistant email'),
+      '#default_value'  => isset($course_session->assistant_email) ? $course_session->assistant_email : NULL,
+  );
+
+  $product_name = str_replace('#', '', db_query("SELECT r.name from fa_course fac "
+                  . "INNER JOIN role r ON r.rid = fac.product_id "
+                  . "WHERE fac.facid = :facid",
+                      array(':facid' => $course_session->facid)
+                    )->fetchField());
+
+  // Preliminary assignment
+
+  $preliminary_assignment_options = _get_assignment_options($product_name, 'preliminary_assignment');
+
+  $form['course_session']['preliminary_assignment'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Preliminary assignment'),
+  );
+  $form['course_session']['preliminary_assignment']['pa_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Send preliminary assignment for this session'),
+      '#disabled'       => empty($preliminary_assignment_options),
+      '#default_value'  => isset($course_session->preliminary_assignment_node_id) ? TRUE : FALSE,
+  );
+
+  $form['course_session']['preliminary_assignment']['pa_select'] = array(
+      '#type' => 'select',
+      '#title' => t('Preliminary assignment form'),
+      '#default_value' => isset($course_session->preliminary_assignment_node_id) ? $course_session->preliminary_assignment_node_id : NULL,
+      '#options' => $preliminary_assignment_options,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=pa_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $template = array();
+  if (isset($course_session->preliminary_assignment_email_template))
+    $template = unserialize($course_session->preliminary_assignment_email_template);
+
+  $form['course_session']['preliminary_assignment']['pa_title'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Preliminary assignment email title'),
+      '#default_value'  => !empty($template) ? $template['title'] : $product_name . ' # : ' . t("Preliminary assignment"),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=pa_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form['course_session']['preliminary_assignment']['pa_body'] = array(
+      '#type'           => 'textarea',
+      '#title'          => t('Preliminary assignment email body'),
+      '#default_value'  => !empty($template) ? $template['body'] : '',
+      '#states' => array(
+          'visible' => array(
+              ':input[name=pa_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form['course_session']['preliminary_assignment']['pa_schedule'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Schedule preliminary assignment'),
+      '#default_value'  => isset($course_session->preliminary_assignment_datetime) ?
+                            TRUE : FALSE,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=pa_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form['course_session']['preliminary_assignment']['pa_schedule_datetime'] = array(
+      '#type'           => 'date_popup',
+      '#title'          => t('Date and time when the preliminary assignment should be sent'),
+      '#date_format'    => $format,
+      '#default_value'  => isset($course_session->preliminary_assignment_datetime) ? date('Y-m-d H:i', $course_session->preliminary_assignment_datetime) :
+                                 date('Y-m-d H:i', REQUEST_TIME),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=pa_check]' => array('checked' => TRUE),
+              ':input[name=pa_schedule]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form['course_session']['preliminary_assignment']['pa_sent'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Preliminary assignment sent time'),
+      '#disabled' => TRUE,
+      '#access' => isset($course_session->preliminary_assignment_sent),
+      '#value' => isset($course_session->preliminary_assignment_sent) ?
+      format_date($course_session->preliminary_assignment_sent, 'custom', $format) : NULL,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=pa_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  // Course assignment
+
+  $course_assignment_options = _get_assignment_options($product_name, 'course_assignment');
+
+  $form['course_session']['course_assignment'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Preliminary assignment'),
+  );
+  $form['course_session']['course_assignment']['ca_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Send course assignment for this session'),
+      '#disabled'       => empty($course_assignment_options),
+      '#default_value'  => isset($course_session->course_assignment_node_id) ? TRUE : FALSE,
+  );
+
+  $form['course_session']['course_assignment']['ca_select'] = array(
+      '#type' => 'select',
+      '#title' => t('Course assignment form'),
+      '#default_value' => isset($course_session->course_assignment_node_id) ? $course_session->course_assignment_node_id : NULL,
+      '#options' => $course_assignment_options,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=ca_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+
+  // Feedback
+
+  $course_feedback_options = _get_assignment_options($product_name, 'course_feedback');
+
+  $form['course_session']['course_feedback'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Preliminary assignment'),
+  );
+  $form['course_session']['course_feedback']['cf_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Send feedback questionnaire for this session'),
+      '#disabled'       => empty($course_feedback_options),
+      '#default_value'  => isset($course_session->feedback_node_id) ? TRUE : FALSE,
+  );
+
+  $form['course_session']['course_feedback']['cf_select'] = array(
+      '#type' => 'select',
+      '#title' => t('Course feedback form'),
+      '#default_value' => isset($course_session->feedback_node_id) ? $course_session->feedback_node_id : NULL,
+      '#options' => $course_feedback_options,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=cf_check]' => array('checked' => TRUE),
+          ),
+      ),
   );
 
   $form['course_session']['submit'] = array(
@@ -485,6 +679,51 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $form_state['course_session'] = $course_session;
   return $form;
 }
+
+function fa_course_admin_session_edit_form_validate($form, &$form_state) {
+
+
+
+
+  if (!empty($form_state['values']['assistant_email']) && valid_email_address($form_state['values']['assistant_email'])){
+    form_set_error('assistant_email', t('Not a valid email address'));
+    return;
+  }
+  if (!empty($form_state['values']['length'])){
+    if (!is_numeric($form_state['values']['length']) ){
+      form_set_error('length', t('Length value must be a number'));
+      return;
+    }
+    $length = intval($form_state['values']['length']);
+    if ($length < 0){
+      form_set_error('length', t('Length value must be a positive integer'));
+      return;
+    }
+
+    // Get end timestamp by adding the length to the epoch start timestamp
+    $form_state['values']['start_datetime_epoch'] = strtotime($form_state['values']['start_datetime']);
+    $form_state['values']['end_datetime_epoch'] = $form_state['values']['start_datetime_epoch'] + $length * 60;
+  }
+}
+
+function fa_course_admin_session_edit_form_submit($form, &$form_state) {
+  $course_session = $form_state['course_session'];
+
+  $course_session->session_type = $form_state['values']['session_type'];
+  $course_session->session_start_datetime = $form_state['values']['start_datetime_epoch'];
+  $course_session->session_end_datetime = $form_state['values']['end_datetime_epoch'];
+  $course_session->address = $form_state['values']['address'];
+  $course_session->material = $form_state['values']['material'];
+  $course_session->assistant_email = $form_state['values']['assistant_email'];
+
+  if (isset($course_session->facsid))
+    drupal_write_record('fa_course_session', $course_session, 'facsid');
+  else
+    drupal_write_record('fa_course_session', $course_session);
+  drupal_set_message(t('Course session @facsid saved.', array('@facsid' => $course_session->facsid)));
+  $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid;
+}
+
 
 
 /**
