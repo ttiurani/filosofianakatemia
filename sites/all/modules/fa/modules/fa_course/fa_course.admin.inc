@@ -86,15 +86,18 @@ function fa_course_admin_overview() {
           $phase = $phase_options['finished'];
       }
     }
-    $cells[] = $phase['title'] . (isset($phase['action']) ? " <br/> " . $phase['action'] : "");
-    $cells[] = $row->sessions . "<br/>" . l(t("Edit sessions"), "admin/people/courses/sessions/$row->facid");
-    $cells[] = $row->participants . "<br/>" . l(t("Edit participants"), "admin/people/courses/participants/$row->facid");
-    $cells[] = l(t('Edit'), "admin/people/courses/edit/$row->facid");
+    $cells[] = $phase['title'] . (isset($phase['action']) && user_access('administer courses') ? " <br/> " . $phase['action'] : "");
+    $cells[] = $row->sessions . "<br/>" . l(t("Details"), "admin/people/courses/sessions/$row->facid");
+    $cells[] = $row->participants . "<br/>" . l(t("Details"), "admin/people/courses/participants/$row->facid");
+    $cells[] = l(t('Details'), "admin/people/courses/view/$row->facid") . (user_access('administer courses') ? " <br/> " . l(t('Edit'), "admin/people/courses/edit/$row->facid") : "");
     $rows[] = $cells;
   }
 
-  $add_new = '<p>' . l(t("Add new course"), "admin/people/courses/edit/new") . '</p>';
-  $output = render($add_new);
+  $output = "";
+  if (user_access('administer courses')){
+    $add_new = '<p>' . l(t("Add new course"), "admin/people/courses/edit/new") . '</p>';
+    $output .= render($add_new);
+  }
 
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
   if (!$rows) {
@@ -107,7 +110,10 @@ function fa_course_admin_overview() {
   return $output;
 }
 
-function fa_course_admin_edit($facid){
+function fa_course_admin_details($action, $facid){
+  if ($action == 'view' && $facid == 'new'){
+  	return t('Invalid action');
+  }
   if ($facid != 'new'){
     $course = db_select('fa_course', 'fac')
       ->fields('fac')
@@ -119,10 +125,11 @@ function fa_course_admin_edit($facid){
       'created'  => REQUEST_TIME,
     );
   }
+
   $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '</p>';
   $output = render($links);
 
-  $edit_form = drupal_get_form('fa_course_admin_edit_form', $course);
+  $edit_form = drupal_get_form('fa_course_admin_edit_form', $course, $action);
   $output .= render($edit_form);
 
   return $output;
@@ -150,7 +157,7 @@ function _fa_course_get_academians(){
 /**
  * Form for creating/editing a course.
  */
-function fa_course_admin_edit_form($form, &$form_state, $course) {
+function fa_course_admin_edit_form($form, &$form_state, $course, $action) {
   global $user;
 
   $academians = _fa_course_get_academians();
@@ -190,11 +197,13 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
       '#multiple'       => FALSE,
       '#title'          => t('Select Organization'),
       '#options'        => $organization_options,
+      '#disabled'       => $action == 'view',
       '#description'    => t('Select the organization/company where the course will be kept.'),
   );
   $form['course']['organization'] = array(
       '#type'           => 'textfield',
       '#title'          => t('New Organization'),
+      '#disabled'       => $action == 'view',
       '#description'    => t('Type the name of the new organization here.'),
       '#states' => array(
           'visible' => array(   // action to take.
@@ -211,12 +220,14 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
       '#type'           => 'select',
       '#multiple'       => FALSE,
       '#title'          => t('Select Product'),
+      '#disabled'       => $action == 'view',
       '#options'        => $product_options,
       '#description'    => t('Select the product.'),
   );
   $form['course']['product'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Custom product'),
+      '#disabled'       => $action == 'view',
       '#description'    => t('Type the name of the custom product here.'),
       '#states' => array(
           'visible' => array(   // action to take.
@@ -231,12 +242,14 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
   $form['course']['city'] = array(
       '#type' => 'textfield',
       '#title' => t('City'),
+      '#disabled'       => $action == 'view',
       '#default_value' => isset($course->city) ? $course->city: 'Helsinki',
       '#required' => TRUE,
   );
   $form['course']['crm_link'] = array(
       '#type' => 'textfield',
       '#title' => t('CRM Link'),
+      '#disabled'       => $action == 'view',
       '#default_value' => isset($course->crm_link) ? $course->crm_link: NULL,
       '#required' => TRUE,
   );
@@ -244,6 +257,7 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
       '#type'           => 'select',
       '#multiple'       => FALSE,
       '#title'          => t('Lead Sales'),
+      '#disabled'       => $action == 'view',
       '#options'        => $academians,
       '#default_value'  => isset($course->lead_sales_id) ? $course->lead_sales_id :
                           (isset($academians[$user->uid]) ? $user->uid : NULL),
@@ -252,11 +266,13 @@ function fa_course_admin_edit_form($form, &$form_state, $course) {
       '#type'           => 'select',
       '#multiple'       => FALSE,
       '#title'          => t('Lead Trainer'),
+      '#disabled'       => $action == 'view',
       '#options'        => $academians,
       '#default_value'  => isset($course->lead_trainer_id) ? $course->lead_trainer_id : 0,
   );
   $form['course']['submit'] = array(
       '#type' => 'submit',
+      '#disabled'       => $action == 'view',
       '#value' => t('Save'),
   );
 
