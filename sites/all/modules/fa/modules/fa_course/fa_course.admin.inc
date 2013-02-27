@@ -533,7 +533,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   );
   $form['course_session']['preliminary_assignment']['pa_check'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Send preliminary assignment for this session'),
+      '#title'          => t('Send a preliminary assignment for this session'),
       '#disabled'       => empty($preliminary_assignment_options),
       '#default_value'  => isset($course_session->preliminary_assignment_node_id) ? TRUE : FALSE,
   );
@@ -622,11 +622,11 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
 
   $form['course_session']['course_assignment'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Preliminary assignment'),
+      '#title' => t('Course assignment'),
   );
   $form['course_session']['course_assignment']['ca_check'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Send course assignment for this session'),
+      '#title'          => t('Send a course assignment for this session'),
       '#disabled'       => empty($course_assignment_options),
       '#default_value'  => isset($course_session->course_assignment_node_id) ? TRUE : FALSE,
   );
@@ -643,18 +643,17 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       ),
   );
 
-
   // Feedback
 
   $course_feedback_options = _get_assignment_options($product_name, 'course_feedback');
 
   $form['course_session']['course_feedback'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Preliminary assignment'),
+      '#title' => t('Feedback questionnaire'),
   );
   $form['course_session']['course_feedback']['cf_check'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Send feedback questionnaire for this session'),
+      '#title'          => t('Send a feedback questionnaire for this session'),
       '#disabled'       => empty($course_feedback_options),
       '#default_value'  => isset($course_session->feedback_node_id) ? TRUE : FALSE,
   );
