@@ -527,6 +527,12 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#default_value'  => isset($course_session->material) ? $course_session->material : NULL,
   );
 
+  $form['course_session']['summary_emails'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Summary emails, separated with comma'),
+      '#default_value'  => isset($course_session->summary_emails) ? $course_session->summary_emails : NULL,
+  );
+
   $form['course_session']['assistant_email'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Assistant email'),
@@ -697,9 +703,6 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
 
 function fa_course_admin_session_edit_form_validate($form, &$form_state) {
 
-
-
-
   if (!empty($form_state['values']['assistant_email']) && valid_email_address($form_state['values']['assistant_email'])){
     form_set_error('assistant_email', t('Not a valid email address'));
     return;
@@ -729,6 +732,7 @@ function fa_course_admin_session_edit_form_submit($form, &$form_state) {
   $course_session->session_end_datetime = $form_state['values']['end_datetime_epoch'];
   $course_session->address = $form_state['values']['address'];
   $course_session->material = $form_state['values']['material'];
+  $course_session->summary_emails = $form_state['values']['summary_emails'];
   $course_session->assistant_email = $form_state['values']['assistant_email'];
 
   if (isset($course_session->facsid))

@@ -132,6 +132,12 @@ function fa_course_schema() {
               'length' => 500,
               'not null' => FALSE,
           ),
+          'summary_emails' => array(
+              'description' => 'List of summary emails separated with a comma.',
+              'type' => 'varchar',
+              'length' => 1028,
+              'not null' => TRUE,
+          ),
           'assistant_email' => array(
               'description' => 'Stores the e-mail address of the session assistant, if any.',
               'type' => 'varchar',
