@@ -5,6 +5,13 @@
  * Administration functions for Filosofian Akatemia Course module.
  */
 
+
+/**
+ * Schedule Action Constants
+ */
+define('SCHEDULE', 0);
+define('SEND_NOW', 1);
+
 /**
  * Return a list of all courses.
  */
@@ -547,6 +554,8 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
 
   // Preliminary assignment
 
+  $pa_sent = isset($course_session->preliminary_assignment_sent);
+
   $preliminary_assignment_options = _get_assignment_options($product_name, 'preliminary_assignment');
 
   $form['course_session']['preliminary_assignment'] = array(
@@ -555,8 +564,8 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   );
   $form['course_session']['preliminary_assignment']['pa_check'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Send a preliminary assignment for this session'),
-      '#disabled'       => empty($preliminary_assignment_options),
+      '#title'          => t('This session has a preliminary assignment'),
+      '#disabled'       => $pa_sent || empty($preliminary_assignment_options),
       '#default_value'  => isset($course_session->preliminary_assignment_node_id) ? TRUE : FALSE,
   );
 
@@ -565,6 +574,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#title' => t('Preliminary assignment form'),
       '#default_value' => isset($course_session->preliminary_assignment_node_id) ? $course_session->preliminary_assignment_node_id : NULL,
       '#options' => $preliminary_assignment_options,
+      '#disabled'       => $pa_sent,
       '#states' => array(
           'visible' => array(
               ':input[name=pa_check]' => array('checked' => TRUE),
@@ -580,6 +590,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#type'           => 'textfield',
       '#title'          => t('Preliminary assignment email title'),
       '#default_value'  => !empty($template) ? $template['title'] : $product_name . ' # : ' . t("Preliminary assignment"),
+      '#disabled'       => $pa_sent,
       '#states' => array(
           'visible' => array(
               ':input[name=pa_check]' => array('checked' => TRUE),
@@ -591,6 +602,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#type'           => 'textarea',
       '#title'          => t('Preliminary assignment email body'),
       '#default_value'  => !empty($template) ? $template['body'] : '',
+      '#disabled'       => $pa_sent,
       '#states' => array(
           'visible' => array(
               ':input[name=pa_check]' => array('checked' => TRUE),
@@ -598,11 +610,14 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       ),
   );
 
-  $form['course_session']['preliminary_assignment']['pa_schedule'] = array(
-      '#type'           => 'checkbox',
-      '#title'          => t('Schedule preliminary assignment'),
+  $form['course_session']['preliminary_assignment']['pa_action'] = array(
+      '#type'           => 'radios',
+      '#title'          => t('Action'),
+      '#access'         => !$pa_sent,
+      '#options'        => array(SCHEDULE => t('Schedule preliminary assignment'),
+                                 SEND_NOW => t('Send preliminary assignment now')),
       '#default_value'  => isset($course_session->preliminary_assignment_datetime) ?
-                            TRUE : FALSE,
+                            SCHEDULE : NULL,
       '#states' => array(
           'visible' => array(
               ':input[name=pa_check]' => array('checked' => TRUE),
@@ -613,14 +628,15 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $form['course_session']['preliminary_assignment']['pa_schedule_datetime'] = array(
       '#type'           => 'date_popup',
       '#title'          => t('Date and time when the preliminary assignment should be sent'),
+      '#access'         => !$pa_sent,
       '#date_format'    => $format,
       '#default_value'  => isset($course_session->preliminary_assignment_datetime) ? date('Y-m-d H:i', $course_session->preliminary_assignment_datetime) :
                                  date('Y-m-d H:i', REQUEST_TIME),
       '#states' => array(
           'visible' => array(
               ':input[name=pa_check]' => array('checked' => TRUE),
-              ':input[name=pa_schedule]' => array('checked' => TRUE),
-          ),
+              ':input[name=pa_action]' => array('value' => SCHEDULE),
+              ),
       ),
   );
 
@@ -628,7 +644,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
       '#type' => 'textfield',
       '#title' => t('Preliminary assignment sent time'),
       '#disabled' => TRUE,
-      '#access' => isset($course_session->preliminary_assignment_sent),
+      '#access' => $pa_sent,
       '#value' => isset($course_session->preliminary_assignment_sent) ?
       format_date($course_session->preliminary_assignment_sent, 'custom', $format) : NULL,
       '#states' => array(
@@ -648,7 +664,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   );
   $form['course_session']['course_assignment']['ca_check'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Send a course assignment for this session'),
+      '#title'          => t('This session has a course assignment'),
       '#disabled'       => empty($course_assignment_options),
       '#default_value'  => isset($course_session->course_assignment_node_id) ? TRUE : FALSE,
   );
@@ -675,7 +691,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   );
   $form['course_session']['course_feedback']['cf_check'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Send a feedback questionnaire for this session'),
+      '#title'          => t('This session has a feedback questionnaire'),
       '#disabled'       => empty($course_feedback_options),
       '#default_value'  => isset($course_session->feedback_node_id) ? TRUE : FALSE,
   );

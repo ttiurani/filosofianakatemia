@@ -144,62 +144,62 @@ function fa_course_schema() {
               'length' => 100,
               'not null' => FALSE,
           ),
-          'preliminary_assigment_node_id' => array(
+          'preliminary_assignment_node_id' => array(
               'description' => 'Node id for the preliminary assignment webform.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'preliminary_assigment_email_template' => array(
+          'preliminary_assignment_email_template' => array(
               'description' => 'Text of the preliminary assignment email template, stored in a serialized array.',
               'type' => 'text',
               'not null' => FALSE,
           ),
-          'preliminary_assigment_datetime' => array(
+          'preliminary_assignment_datetime' => array(
               'description' => 'Time when preliminary assignment should be sent for this session.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'preliminary_assigment_sent' => array(
+          'preliminary_assignment_sent' => array(
               'description' => 'Time when preliminary assignment was sent.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'preliminary_assigment_reminder_datetime' => array(
+          'preliminary_assignment_reminder_datetime' => array(
               'description' => 'Time when the preliminary assignment reminder should be sent for this session.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'preliminary_assigment_reminder_sent' => array(
+          'preliminary_assignment_reminder_sent' => array(
               'description' => 'Time when the preliminary assignment reminder was sent.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'course_assigment_node_id' => array(
+          'course_assignment_node_id' => array(
               'description' => 'Node id of a course assignment webform.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'course_assigment_email_template' => array(
+          'course_assignment_email_template' => array(
               'description' => 'Text of the course assignment email template, stored in a serialized array.',
               'type' => 'text',
               'not null' => FALSE,
           ),
-          'course_assigment_datetime' => array(
+          'course_assignment_datetime' => array(
               'description' => 'Time when the course assignment should be sent for this session.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'course_assigment_sent' => array(
+          'course_assignment_sent' => array(
               'description' => 'Time when the course assignment was sent.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'course_assigment_reminder_datetime' => array(
+          'course_assignment_reminder_datetime' => array(
               'description' => 'Time when the course assignment reminder should be sent for this session.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'course_assigment_reminder_sent' => array(
+          'course_assignment_reminder_sent' => array(
               'description' => 'Time when the course assignment reminder was sent.',
               'type' => 'int',
               'not null' => FALSE,
