@@ -537,6 +537,7 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $form['course_session']['summary_emails'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Summary emails, separated with comma'),
+      '#required'       => TRUE,
       '#default_value'  => isset($course_session->summary_emails) ? $course_session->summary_emails : NULL,
   );
 
@@ -738,6 +739,23 @@ function fa_course_admin_session_edit_form_validate($form, &$form_state) {
     $form_state['values']['start_datetime_epoch'] = strtotime($form_state['values']['start_datetime']);
     $form_state['values']['end_datetime_epoch'] = $form_state['values']['start_datetime_epoch'] + $length * 60;
   }
+
+  // Check summary emails
+  $summary_emails = _invite_get_emails($form_state['values']['summary_emails']);
+  if (_fa_course_validate_emails('summary_emails') == FALSE){
+    return;
+  }
+
+  // Check assistant email
+  $assistant_email = _invite_get_emails($form_state['values']['assistant_email']);
+  if (_fa_course_validate_emails('assistant_email') == FALSE){
+    return;
+  }
+
+  // Check that preliminary assignment is scheduled in the future
+  // TODO
+
+
 }
 
 function fa_course_admin_session_edit_form_submit($form, &$form_state) {
@@ -824,4 +842,18 @@ function fa_course_admin_participants_edit($facid, $facpid){
 
   $output .= t('TODO: edit course ' . $facid . ' participant ' . $facpid);
   return $output;
+}
+
+function _fa_course_validate_emails($form_field){
+  if (isset($_SESSION['invite_failed_emails'])){
+    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
+    $error_message = t('Invalid email addresses:');
+    foreach ($failed_emails as $failed_email) {
+      $error_message .= ' ' . $failed_email;
+    }
+    form_set_error($form_field, $error_message);
+    unset($_SESSION['invite_failed_emails']);
+    return FALSE;
+  }
+  return TRUE;
 }
