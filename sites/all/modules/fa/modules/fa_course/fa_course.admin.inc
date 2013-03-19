@@ -9,9 +9,11 @@
 /**
  * Schedule Action Constants
  */
-define('SCHEDULE', 0);
-define('SEND_NOW', 1);
+define('SCHEDULE', 1);
+define('SEND_NOW', 2);
 define('DATE_FORMAT', 'd.m.Y H:i');
+define('SECONDS_IN_DAY', 86400);
+
 
 /**
  * Return a list of all courses.
@@ -537,7 +539,6 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $form['course_session']['summary_emails'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Summary emails, separated with comma'),
-      '#required'       => TRUE,
       '#default_value'  => isset($course_session->summary_emails) ? $course_session->summary_emails : NULL,
   );
 
@@ -555,39 +556,26 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
 
   // Preliminary assignment
 
-  $pa_sent = isset($course_session->preliminary_assignment_sent);
-
   $preliminary_assignment_options = _get_assignment_options($product_name, 'preliminary_assignment');
-
-
-  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session, 
-                                                'pa',
+  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session,
+                                                'preliminary_assignment',
                                                 'preliminary assignment',
-                                                $pa_sent,
                                                 $preliminary_assignment_options,
-                                                $product_name);  
+                                                $product_name);
   // Course assignment
 
-  $ca_sent = isset($course_session->course_assignment_sent);
-  
   $course_assignment_options = _get_assignment_options($product_name, 'course_assignment');
-
-  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session, 
-                                                'ca',
+  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session,
+                                                'course_assignment',
                                                 'course assignment',
-                                                $ca_sent,
                                                 $course_assignment_options,
                                                 $product_name);
   // Feedback
 
-  $feedback_sent = isset($course_session->feedback_sent);
-  
   $feedback_options = _get_assignment_options($product_name, 'course_feedback');
-
-  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session, 
+  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session,
                                                 'feedback',
                                                 'feedback',
-                                                $feedback_sent,
                                                 $feedback_options,
                                                 $product_name);
 
@@ -600,8 +588,11 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   return $form;
 }
 
-function _get_assignment_form($course_session, $assignment_type, $assignment_type_name, $assignment_sent, $assignment_options, $product_name) {
+function _get_assignment_form($course_session, $assignment_type, $assignment_type_name, $assignment_options, $product_name) {
   $form = array();
+
+  $assignment_sent_datetime = $assignment_type . '_sent';
+  $assignment_sent = isset($course_session->$assignment_sent_datetime);
 
   $form[$assignment_type] = array(
       '#type' => 'fieldset',
@@ -613,13 +604,15 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
       '#type'           => 'checkbox',
       '#title'          => t('This session has a ' . $assignment_type_name),
       '#disabled'       => $assignment_sent || empty($assignment_options),
-      '#default_value'  => isset($course_session->{$assignment_type_node_id}) ? TRUE : FALSE,
+      '#default_value'  => isset($course_session->$assignment_type_node_id) ? TRUE : FALSE,
   );
-  
-  $form[$assignment_type]['select'] = array(
+
+  $form[$assignment_type][$assignment_type . '_select'] = array(
       '#type' => 'select',
       '#title' => t(ucfirst($assignment_type_name) . ' form'),
-      '#default_value' => isset($course_session->preliminary_assignment_node_id) ? $course_session->preliminary_assignment_node_id : NULL,
+      '#default_value' => isset($course_session->$assignment_type_node_id) ?
+                                  $course_session->$assignment_type_node_id :
+                                    reset($assignment_options),
       '#options' => $assignment_options,
       '#disabled' => $assignment_sent,
       '#states' => array(
@@ -634,10 +627,10 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
   if (isset($course_session->$assignment_email_template))
     $template = unserialize($course_session->$assignment_email_template);
 
-  $form[$assignment_type]['title'] = array(
+  $form[$assignment_type][$assignment_type . '_subject'] = array(
       '#type'           => 'textfield',
       '#title'          => t(ucfirst($assignment_type_name) . ' email title'),
-      '#default_value'  => !empty($template) ? $template['title'] : $product_name . ' # : ' . ucfirst($assignment_type_name),
+      '#default_value'  => !empty($template) ? $template['subject'] : $product_name . ' # : ' . ucfirst($assignment_type_name),
       '#disabled'       => $assignment_sent,
       '#states' => array(
           'visible' => array(
@@ -646,10 +639,10 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
       ),
   );
 
-  $form[$assignment_type]['body'] = array(
+  $form[$assignment_type][$assignment_type . '_message'] = array(
       '#type'           => 'textarea',
       '#title'          => t(ucfirst($assignment_type_name) . ' email body'),
-      '#default_value'  => !empty($template) ? $template['body'] : '',
+      '#default_value'  => !empty($template) ? $template['message'] : '',
       '#disabled'       => $assignment_sent,
       '#states' => array(
           'visible' => array(
@@ -658,10 +651,10 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
       ),
   );
 
-  $assignment_datetime = $assignment_type + '_datetime';
+  $assignment_datetime = $assignment_type . '_datetime';
   $form[$assignment_type][$assignment_type . '_action'] = array(
       '#type'           => 'radios',
-      '#title'          => t('Action'),
+      '#title'          => t(ucfirst($assignment_type_name) . ' action'),
       '#access'         => !$assignment_sent,
       '#options'        => array(SCHEDULE => t('Schedule ' . $assignment_type_name),
                                  SEND_NOW => t('Send ' . $assignment_type_name . ' now')),
@@ -674,13 +667,18 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
       ),
   );
 
-  $form[$assignment_type]['schedule_datetime'] = array(
+  $default_assignment_datetime = date('Y-m-d H:i', REQUEST_TIME);
+  if (isset($course_session->session_start_datetime)){
+    $default_assignment_datetime = date('Y-m-d H:i', $course_session->session_start_datetime - (SECONDS_IN_DAY * 14));
+  }
+
+  $form[$assignment_type][$assignment_type . '_schedule_datetime'] = array(
       '#type'           => 'date_popup',
       '#title'          => t('Date and time when the ' .  $assignment_type_name . ' should be sent'),
       '#access'         => !$assignment_sent,
       '#date_format'    => DATE_FORMAT,
       '#default_value'  => isset($course_session->$assignment_datetime) ? date('Y-m-d H:i', $course_session->$assignment_datetime) :
-                                 date('Y-m-d H:i', REQUEST_TIME),
+                                 $default_assignment_datetime,
       '#states' => array(
           'visible' => array(
               ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
@@ -689,21 +687,71 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
       ),
   );
 
-  $assignment_sent_datetime = $assignment_type + '_sent';
   $form[$assignment_type]['sent'] = array(
       '#type' => 'textfield',
       '#title' => t(ucfirst($assignment_type_name) . ' sent time'),
       '#disabled' => TRUE,
       '#access' => $assignment_sent,
       '#value' => isset($course_session->$assignment_sent_datetime) ?
-      format_date($course_session->$assignment_sent_datetime, 'custom', DATE_FORMAT) : NULL,
+                      format_date($course_session->$assignment_sent_datetime, 'custom', DATE_FORMAT) : NULL,
       '#states' => array(
           'visible' => array(
               ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
           ),
       ),
-  );  
-  
+  );
+
+  $reminder_sent_datetime = $assignment_type . '_reminder_sent';
+  $assignment_reminder_datetime = $assignment_type . '_reminder_datetime';
+  $form[$assignment_type][$assignment_type . '_reminder_action'] = array(
+      '#type'           => 'radios',
+      '#title'          => t(ucfirst($assignment_type_name) . ' reminder action'),
+      '#access'         => !isset($course_session->$reminder_sent_datetime),
+      '#options'        => array(SCHEDULE => t('Schedule ' . $assignment_type_name . ' reminder'),
+                                 SEND_NOW => t('Send ' . $assignment_type_name . ' reminder now')),
+      '#default_value'  => isset($course_session->$assignment_reminder_datetime) ?
+                            SCHEDULE : NULL,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $default_reminder_datetime = date('Y-m-d H:i', REQUEST_TIME);
+  if (isset($course_session->session_start_datetime)){
+    $default_reminder_datetime = date('Y-m-d H:i', $course_session->session_start_datetime - (SECONDS_IN_DAY * 2));
+  }
+
+  $form[$assignment_type][$assignment_type . '_reminder_schedule_datetime'] = array(
+      '#type'           => 'date_popup',
+      '#title'          => t('Date and time when a reminder for the ' .  $assignment_type_name . ' should be sent'),
+      '#access'         => !isset($course_session->$reminder_sent_datetime),
+      '#date_format'    => DATE_FORMAT,
+      '#default_value'  => isset($course_session->$assignment_datetime) ? date('Y-m-d H:i', $course_session->$assignment_reminder_datetime) :
+                                 $default_reminder_datetime,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+              ':input[name=' . $assignment_type . '_reminder_action]' => array('value' => SCHEDULE),
+              ),
+      ),
+  );
+
+  $form[$assignment_type]['reminder_sent'] = array(
+      '#type' => 'textfield',
+      '#title' => t(ucfirst($assignment_type_name) . ' reminder sent time'),
+      '#disabled' => TRUE,
+      '#access' => isset($course_session->$reminder_sent_datetime),
+      '#value' => isset($course_session->$assignment_reminder_datetime) ?
+                      format_date($course_session->$assignment_reminder_datetime, 'custom', DATE_FORMAT) : NULL,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
   return $form;
 }
 
@@ -719,23 +767,28 @@ function fa_course_admin_session_edit_form_validate($form, &$form_state) {
     if (!is_numeric($form_state['values']['length']) ){
       form_set_error('length', t('Length value must be a number'));
       return;
+    }else{
+      $length = intval($form_state['values']['length']);
+      if ($length < 0){
+        form_set_error('length', t('Length value must be a positive integer'));
+      }else{
+        // Get end timestamp by adding the length to the epoch start timestamp
+        $form_state['values']['start_datetime_epoch'] = strtotime($form_state['values']['start_datetime']);
+        $form_state['values']['end_datetime_epoch'] = $form_state['values']['start_datetime_epoch'] + $length * 60;
+      }
     }
-    $length = intval($form_state['values']['length']);
-    if ($length < 0){
-      form_set_error('length', t('Length value must be a positive integer'));
-      return;
-    }
-
-    // Get end timestamp by adding the length to the epoch start timestamp
-    $form_state['values']['start_datetime_epoch'] = strtotime($form_state['values']['start_datetime']);
-    $form_state['values']['end_datetime_epoch'] = $form_state['values']['start_datetime_epoch'] + $length * 60;
   }
 
   // Check summary emails
-  $summary_emails = _invite_get_emails($form_state['values']['summary_emails']);
-  if (_fa_course_validate_emails('summary_emails') == FALSE){
-    return;
+  if (empty($form_state['values']['summary_emails']) &&
+      ($form_state['values']['preliminary_assignment_check'] ||
+      $form_state['values']['course_assignment_check'] ||
+      $form_state['values']['feedback_check'])){
+    form_set_error('summary_emails', t('Summary emails are mandatory if assignments are sent.'));
   }
+
+  $summary_emails = _invite_get_emails($form_state['values']['summary_emails']);
+  _fa_course_validate_emails('summary_emails');
 
   // Check assistant email
   $assistant_email = _invite_get_emails($form_state['values']['assistant_email']);
@@ -744,8 +797,35 @@ function fa_course_admin_session_edit_form_validate($form, &$form_state) {
   }
 
   // Preliminary assignment
+  _validate_assignment_schedule($form_state, 'preliminary_assignment');
 
+  // Course assignment
+  _validate_assignment_schedule($form_state, 'course_assignment');
 
+  // Feedback
+  _validate_assignment_schedule($form_state, 'feedback');
+
+}
+
+function _validate_assignment_schedule($form_state, $assignment_type){
+  if ($form_state['values'][$assignment_type . '_action'] == SCHEDULE){
+    $assignment_datetime = strtotime($form_state['values'][$assignment_type . '_schedule_datetime']);
+    if ($assignment_datetime < strtotime("now")){
+      form_set_error($assignment_type . '_schedule_datetime', t('Schedule must be in the future.'));
+    }
+  }
+
+  if ($form_state['values'][$assignment_type . '_reminder_action'] == SEND_NOW){
+    form_set_error($assignment_type . '_reminder_action', t('TODO: Check that assignment has been sent!'));
+  }elseif($form_state['values'][$assignment_type . '_reminder_action'] == SCHEDULE){
+    $reminder_datetime = strtotime($form_state['values'][$assignment_type . '_reminder_schedule_datetime']);
+    if ($reminder_datetime < strtotime("now")) {
+      form_set_error($assignment_type . 'reminder_schedule_datetime', t('Schedule must be in the future.'));
+    }
+    if (isset($assignment_datetime) && $reminder_datetime < $assignment_datetime){
+      form_set_error($assignment_type . '_reminder_schedule_datetime', t('Reminder schedule must be after the assignment schedule.'));
+    }
+  }
 }
 
 function fa_course_admin_session_edit_form_submit($form, &$form_state) {
@@ -759,6 +839,10 @@ function fa_course_admin_session_edit_form_submit($form, &$form_state) {
   $course_session->summary_emails = $form_state['values']['summary_emails'];
   $course_session->assistant_email = $form_state['values']['assistant_email'];
 
+  _store_assignment($course_session, $form_state, 'preliminary_assignment');
+  _store_assignment($course_session, $form_state, 'course_assignment');
+  _store_assignment($course_session, $form_state, 'feedback');
+
   if (isset($course_session->facsid))
     drupal_write_record('fa_course_session', $course_session, 'facsid');
   else
@@ -767,7 +851,26 @@ function fa_course_admin_session_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid;
 }
 
-
+function _store_assignment($course_session, $form_state, $assignment_type){
+  // Save assignments only if they haven't been sent already
+  $assignment_sent = $assignment_type . '_sent';
+  if ($form_state['values'][$assignment_type . '_check'] && !isset($course_session->$assignment_sent)){
+    $assignment_node_id = $assignment_type . '_node_id';
+    $course_session->$assignment_node_id = $form_state['values'][$assignment_type . '_select'];
+    $template = array();
+    $template['subject'] = $form_state['values'][$assignment_type . '_subject'];
+    $template['message'] = $form_state['values'][$assignment_type . '_message'];
+    $assignment_email_template = $assignment_type . '_email_template';
+    $course_session->$assignment_email_template = serialize($template);
+    if (isset($form_state['values'][$assignment_type . '_action']))
+      if ($form_state['values'][$assignment_type . '_action'] == SCHEDULE){
+        $assignment_datetime = $assignment_type . '_datetime';
+        $course_session->$assignment_datetime = strtotime($form_state['values'][$assignment_type . '_schedule_datetime']);
+      }else{
+        dpm("Immediate send not implemented!");
+      }
+  }
+}
 
 /**
  * Return a list of all course participants.
