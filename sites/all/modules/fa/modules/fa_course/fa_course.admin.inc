@@ -11,6 +11,7 @@
  */
 define('SCHEDULE', 0);
 define('SEND_NOW', 1);
+define('DATE_FORMAT', 'd.m.Y H:i');
 
 /**
  * Return a list of all courses.
@@ -501,12 +502,11 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   );
 
   // Start time of course
-  $format = 'd.m.Y H:i';
 
   $form['course_session']['start_datetime'] = array(
       '#type'           => 'date_popup',
       '#title'          => t('Start date and time for the session'),
-      '#date_format'    => $format,
+      '#date_format'    => DATE_FORMAT,
       '#default_value'  => isset($course_session->session_start_datetime) ? date('Y-m-d H:i', $course_session->session_start_datetime) : date('Y-m-d H:i', REQUEST_TIME),
       '#required'       => TRUE,
   );
@@ -559,155 +559,37 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
 
   $preliminary_assignment_options = _get_assignment_options($product_name, 'preliminary_assignment');
 
-  $form['course_session']['preliminary_assignment'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Preliminary assignment'),
-  );
-  $form['course_session']['preliminary_assignment']['pa_check'] = array(
-      '#type'           => 'checkbox',
-      '#title'          => t('This session has a preliminary assignment'),
-      '#disabled'       => $pa_sent || empty($preliminary_assignment_options),
-      '#default_value'  => isset($course_session->preliminary_assignment_node_id) ? TRUE : FALSE,
-  );
 
-  $form['course_session']['preliminary_assignment']['pa_select'] = array(
-      '#type' => 'select',
-      '#title' => t('Preliminary assignment form'),
-      '#default_value' => isset($course_session->preliminary_assignment_node_id) ? $course_session->preliminary_assignment_node_id : NULL,
-      '#options' => $preliminary_assignment_options,
-      '#disabled'       => $pa_sent,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=pa_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
-  $template = array();
-  if (isset($course_session->preliminary_assignment_email_template))
-    $template = unserialize($course_session->preliminary_assignment_email_template);
-
-  $form['course_session']['preliminary_assignment']['pa_title'] = array(
-      '#type'           => 'textfield',
-      '#title'          => t('Preliminary assignment email title'),
-      '#default_value'  => !empty($template) ? $template['title'] : $product_name . ' # : ' . t("Preliminary assignment"),
-      '#disabled'       => $pa_sent,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=pa_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
-  $form['course_session']['preliminary_assignment']['pa_body'] = array(
-      '#type'           => 'textarea',
-      '#title'          => t('Preliminary assignment email body'),
-      '#default_value'  => !empty($template) ? $template['body'] : '',
-      '#disabled'       => $pa_sent,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=pa_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
-  $form['course_session']['preliminary_assignment']['pa_action'] = array(
-      '#type'           => 'radios',
-      '#title'          => t('Action'),
-      '#access'         => !$pa_sent,
-      '#options'        => array(SCHEDULE => t('Schedule preliminary assignment'),
-                                 SEND_NOW => t('Send preliminary assignment now')),
-      '#default_value'  => isset($course_session->preliminary_assignment_datetime) ?
-                            SCHEDULE : NULL,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=pa_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
-  $form['course_session']['preliminary_assignment']['pa_schedule_datetime'] = array(
-      '#type'           => 'date_popup',
-      '#title'          => t('Date and time when the preliminary assignment should be sent'),
-      '#access'         => !$pa_sent,
-      '#date_format'    => $format,
-      '#default_value'  => isset($course_session->preliminary_assignment_datetime) ? date('Y-m-d H:i', $course_session->preliminary_assignment_datetime) :
-                                 date('Y-m-d H:i', REQUEST_TIME),
-      '#states' => array(
-          'visible' => array(
-              ':input[name=pa_check]' => array('checked' => TRUE),
-              ':input[name=pa_action]' => array('value' => SCHEDULE),
-              ),
-      ),
-  );
-
-  $form['course_session']['preliminary_assignment']['pa_sent'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Preliminary assignment sent time'),
-      '#disabled' => TRUE,
-      '#access' => $pa_sent,
-      '#value' => isset($course_session->preliminary_assignment_sent) ?
-      format_date($course_session->preliminary_assignment_sent, 'custom', $format) : NULL,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=pa_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
+  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session, 
+                                                'pa',
+                                                'preliminary assignment',
+                                                $pa_sent,
+                                                $preliminary_assignment_options,
+                                                $product_name);  
   // Course assignment
 
+  $ca_sent = isset($course_session->course_assignment_sent);
+  
   $course_assignment_options = _get_assignment_options($product_name, 'course_assignment');
 
-  $form['course_session']['course_assignment'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Course assignment'),
-  );
-  $form['course_session']['course_assignment']['ca_check'] = array(
-      '#type'           => 'checkbox',
-      '#title'          => t('This session has a course assignment'),
-      '#disabled'       => empty($course_assignment_options),
-      '#default_value'  => isset($course_session->course_assignment_node_id) ? TRUE : FALSE,
-  );
-
-  $form['course_session']['course_assignment']['ca_select'] = array(
-      '#type' => 'select',
-      '#title' => t('Course assignment form'),
-      '#default_value' => isset($course_session->course_assignment_node_id) ? $course_session->course_assignment_node_id : NULL,
-      '#options' => $course_assignment_options,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=ca_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
+  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session, 
+                                                'ca',
+                                                'course assignment',
+                                                $ca_sent,
+                                                $course_assignment_options,
+                                                $product_name);
   // Feedback
 
-  $course_feedback_options = _get_assignment_options($product_name, 'course_feedback');
+  $feedback_sent = isset($course_session->feedback_sent);
+  
+  $feedback_options = _get_assignment_options($product_name, 'course_feedback');
 
-  $form['course_session']['course_feedback'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Feedback questionnaire'),
-  );
-  $form['course_session']['course_feedback']['cf_check'] = array(
-      '#type'           => 'checkbox',
-      '#title'          => t('This session has a feedback questionnaire'),
-      '#disabled'       => empty($course_feedback_options),
-      '#default_value'  => isset($course_session->feedback_node_id) ? TRUE : FALSE,
-  );
-
-  $form['course_session']['course_feedback']['cf_select'] = array(
-      '#type' => 'select',
-      '#title' => t('Course feedback form'),
-      '#default_value' => isset($course_session->feedback_node_id) ? $course_session->feedback_node_id : NULL,
-      '#options' => $course_feedback_options,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=cf_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
+  $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session, 
+                                                'feedback',
+                                                'feedback',
+                                                $feedback_sent,
+                                                $feedback_options,
+                                                $product_name);
 
   $form['course_session']['submit'] = array(
       '#type' => 'submit',
@@ -717,6 +599,115 @@ function fa_course_admin_session_edit_form($form, &$form_state, $course_session)
   $form_state['course_session'] = $course_session;
   return $form;
 }
+
+function _get_assignment_form($course_session, $assignment_type, $assignment_type_name, $assignment_sent, $assignment_options, $product_name) {
+  $form = array();
+
+  $form[$assignment_type] = array(
+      '#type' => 'fieldset',
+      '#title' => ucfirst($assignment_type_name),
+  );
+
+  $assignment_type_node_id = $assignment_type . '_node_id';
+  $form[$assignment_type][$assignment_type . '_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('This session has a ' . $assignment_type_name),
+      '#disabled'       => $assignment_sent || empty($assignment_options),
+      '#default_value'  => isset($course_session->{$assignment_type_node_id}) ? TRUE : FALSE,
+  );
+  
+  $form[$assignment_type]['select'] = array(
+      '#type' => 'select',
+      '#title' => t(ucfirst($assignment_type_name) . ' form'),
+      '#default_value' => isset($course_session->preliminary_assignment_node_id) ? $course_session->preliminary_assignment_node_id : NULL,
+      '#options' => $assignment_options,
+      '#disabled' => $assignment_sent,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $template = array();
+  $assignment_email_template = $assignment_type . '_email_template';
+  if (isset($course_session->$assignment_email_template))
+    $template = unserialize($course_session->$assignment_email_template);
+
+  $form[$assignment_type]['title'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t(ucfirst($assignment_type_name) . ' email title'),
+      '#default_value'  => !empty($template) ? $template['title'] : $product_name . ' # : ' . ucfirst($assignment_type_name),
+      '#disabled'       => $assignment_sent,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form[$assignment_type]['body'] = array(
+      '#type'           => 'textarea',
+      '#title'          => t(ucfirst($assignment_type_name) . ' email body'),
+      '#default_value'  => !empty($template) ? $template['body'] : '',
+      '#disabled'       => $assignment_sent,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $assignment_datetime = $assignment_type + '_datetime';
+  $form[$assignment_type][$assignment_type . '_action'] = array(
+      '#type'           => 'radios',
+      '#title'          => t('Action'),
+      '#access'         => !$assignment_sent,
+      '#options'        => array(SCHEDULE => t('Schedule ' . $assignment_type_name),
+                                 SEND_NOW => t('Send ' . $assignment_type_name . ' now')),
+      '#default_value'  => isset($course_session->$assignment_datetime) ?
+                            SCHEDULE : NULL,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form[$assignment_type]['schedule_datetime'] = array(
+      '#type'           => 'date_popup',
+      '#title'          => t('Date and time when the ' .  $assignment_type_name . ' should be sent'),
+      '#access'         => !$assignment_sent,
+      '#date_format'    => DATE_FORMAT,
+      '#default_value'  => isset($course_session->$assignment_datetime) ? date('Y-m-d H:i', $course_session->$assignment_datetime) :
+                                 date('Y-m-d H:i', REQUEST_TIME),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+              ':input[name=' . $assignment_type . '_action]' => array('value' => SCHEDULE),
+              ),
+      ),
+  );
+
+  $assignment_sent_datetime = $assignment_type + '_sent';
+  $form[$assignment_type]['sent'] = array(
+      '#type' => 'textfield',
+      '#title' => t(ucfirst($assignment_type_name) . ' sent time'),
+      '#disabled' => TRUE,
+      '#access' => $assignment_sent,
+      '#value' => isset($course_session->$assignment_sent_datetime) ?
+      format_date($course_session->$assignment_sent_datetime, 'custom', DATE_FORMAT) : NULL,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment_type . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );  
+  
+  return $form;
+}
+
+
 
 function fa_course_admin_session_edit_form_validate($form, &$form_state) {
 
@@ -752,8 +743,7 @@ function fa_course_admin_session_edit_form_validate($form, &$form_state) {
     return;
   }
 
-  // Check that preliminary assignment is scheduled in the future
-  // TODO
+  // Preliminary assignment
 
 
 }
