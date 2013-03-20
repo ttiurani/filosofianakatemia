@@ -1030,17 +1030,24 @@ function fa_course_admin_participants_edit_form($form, &$form_state, $participan
 }
 
 function fa_course_admin_participants_edit_form_validate($form, &$form_state) {
-  // Check assistant email
+  // Check email
   $email = _invite_get_emails($form_state['values']['email']);
   if (_fa_course_validate_emails('email') == FALSE){
     return;
+  }
+
+  // Check that email is unique for this course
+  if (db_select('fa_course_participant', 'p')
+          ->fields('p')
+          ->condition('p.email', $form_state['values']['email'])
+          ->condition('p.facid', $form_state['participant']->facid)
+          ->execute()->fetchObject() != FALSE){
+    form_set_error('email', t('Course already has a participant with given email address'));
   }
 }
 
 function fa_course_admin_participants_edit_form_submit($form, &$form_state) {
   $participant = $form_state['participant'];
-
-
   $participant->first_name = $form_state['values']['first_name'];
   $participant->last_name = $form_state['values']['last_name'];
   $participant->email = $form_state['values']['email'];
