@@ -15,6 +15,11 @@ define('DATE_FORMAT', 'd.m.Y H:i');
 define('SECONDS_IN_DAY', 86400);
 
 
+define('EXCEL', 1);
+define('NAMES', 2);
+
+
+
 /**
  * Return a list of all courses.
  */
@@ -938,6 +943,7 @@ function fa_course_admin_participants($facid) {
   }
 
   $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '<br/>'
+             . l(t("Import participants"), "admin/people/courses/participants/$facid/import") . '<br/>'
              . l(t("Add new participant"), "admin/people/courses/participants/$facid/edit/new") . '</p>';
   $output = render($links);
 
@@ -979,7 +985,7 @@ function _get_participant($facid, $facpid){
 }
 
 /**
- * Form for creating/editing a course session.
+ * Form for creating/editing a course participant.
  */
 function fa_course_admin_participants_edit_form($form, &$form_state, $participant) {
   global $user;
@@ -1060,5 +1066,61 @@ function fa_course_admin_participants_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = "admin/people/courses/participants/" . $participant->facid;
 }
 
+function fa_course_admin_participants_import($facid){
+  $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
+  $output = render($links);
 
+  $import_form = drupal_get_form('fa_course_admin_participants_import_form', $facid);
+  $output .= render($import_form);
+  return $output;
+}
 
+/**
+ * Form for creating/editing a course participant.
+ */
+function fa_course_admin_participants_import_form($form, &$form_state, $facid) {
+  global $user;
+
+  $form['import_participants'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Import participants'),
+  );
+  $form['import_participants']['facid'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Course Id'),
+      '#disabled' => TRUE,
+      '#value' => $facid,
+  );
+
+  $form['import_participants']['action'] = array(
+      '#type'           => 'radios',
+      '#title'          => t('Import action'),
+      '#required'       => TRUE,
+      '#options'        => array(EXCEL => t('Paste email, first name, last name from Excel'),
+                                 NAMES => t('First name, last name and domain')),
+  );
+
+  $form['import_participants']['participants'] = array(
+      '#type'           => 'textarea',
+      '#required'       => TRUE,
+      '#title'          => t('Participants to import, one per row'),
+  );
+
+  $form['import_participants']['domain'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Email domain'),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=action]' => array('value' => NAMES),
+              ),
+      ),
+  );
+
+  $form['import_participants']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Import'),
+  );
+
+  $form_state['facid'] = $facid;
+  return $form;
+}
