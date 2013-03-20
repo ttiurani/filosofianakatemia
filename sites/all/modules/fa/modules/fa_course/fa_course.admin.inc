@@ -1096,6 +1096,7 @@ function fa_course_admin_participants_import_form($form, &$form_state, $facid) {
       '#type'           => 'radios',
       '#title'          => t('Import action'),
       '#required'       => TRUE,
+      '#default_value'  => EXCEL,
       '#options'        => array(EXCEL => t('Paste email, first name, last name from Excel'),
                                  NAMES => t('First name, last name and domain')),
   );
@@ -1123,4 +1124,81 @@ function fa_course_admin_participants_import_form($form, &$form_state, $facid) {
 
   $form_state['facid'] = $facid;
   return $form;
+}
+
+function fa_course_admin_participants_import_form_validate($form, &$form_state){
+  if ($form_state['values']['action'] == NAMES && empty($form_state['values']['domain'])){
+    form_set_error('domain', t('Domain must be given if importing names'));
+    return;
+  }
+  $participant_rows = preg_split( '/\r\n|\r|\n/', $form_state['values']['participants'] );
+  $participants = array();
+  foreach($participant_rows as $participant){
+    if ($participant != ''){
+      if ($form_state['values']['action'] == NAMES){
+        $names = explode(' ', $participant);
+        if (count($names) != 2){
+          form_set_error('participants', t('Names must be in the format [first_name] [last_name] ' . count($names)));
+          return;
+        }
+        $email = _unaccent(strtolower(
+                    str_replace(' ', '.', $participant) . '@' . $form_state['values']['domain']));
+
+        if (!isset($form_state['values']['emails'])) $form_state['values']['emails'] = $email;
+        else $form_state['values']['emails'] .= ', ' . $email;
+        array_push($participants, array('email' => $email,
+                                        'first_name' => $names[0],
+                                        'last_name' => $names[1]));
+      }else{
+        $details = preg_split('/\t/', $participant);
+
+        if (count($details) == 1){
+          array_push($participants, array('email' => $details[0]));
+        }elseif (count($details) == 3){
+          array_push($participants, array('email' => $details[0],
+                                        'first_name' => $details[1],
+                                        'last_name' => $details[2]));
+        }else{
+          form_set_error('participants', t('Excel sheet must be in tab limited format [email] ([first_name] [last_name])'));
+          return;
+        }
+        if (!isset($form_state['values']['emails'])) $form_state['values']['emails'] = $details[0];
+        else $form_state['values']['emails'] .= ', ' . $details[0];
+      }
+    }
+  }
+  if (empty($participants)){
+    form_set_error('participants', t('No participants found'));
+    return;
+  }
+
+  // Validate participant emails before they are imported
+  $participant_emails = _invite_get_emails($form_state['values']['emails']);
+  _fa_course_validate_emails('emails');
+
+  $form_state['participants'] = $participants;
+}
+
+function fa_course_admin_participants_import_form_submit($form, &$form_state) {
+  foreach($form_state['participants'] as $participant){
+    $form_state['participant'] = (object) array(
+                                          'facid'  => $form_state['values']['facid'],
+                                      );
+    $form_state['values']['email'] = $participant['email'];
+    $form_state['values']['first_name'] = isset($participant['first_name']) ? $participant['first_name'] : NULL;
+    $form_state['values']['last_name'] = isset($participant['last_name']) ? $participant['last_name'] : NULL;
+    fa_course_admin_participants_edit_form_validate($form, $form_state);
+    fa_course_admin_participants_edit_form_submit($form, $form_state);
+  }
+  $form_state['redirect'] = "admin/people/courses/participants/" . $form_state['facid'];
+}
+
+function _unaccent($string)
+{
+    if (strpos($string = htmlentities($string, ENT_QUOTES, 'UTF-8'), '&') !== false)
+    {
+        $string = html_entity_decode(preg_replace('~&([a-z]{1,2})(?:acute|cedil|circ|grave|lig|orn|ring|slash|tilde|uml);~i', '$1', $string), ENT_QUOTES, 'UTF-8');
+    }
+
+    return $string;
 }
