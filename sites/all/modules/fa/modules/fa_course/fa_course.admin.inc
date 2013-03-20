@@ -816,7 +816,10 @@ function _validate_assignment_schedule($form_state, $assignment_type){
   }
 
   if ($form_state['values'][$assignment_type . '_reminder_action'] == SEND_NOW){
-    form_set_error($assignment_type . '_reminder_action', t('TODO: Check that assignment has been sent!'));
+    $assignment_sent = $assignment_type . '_sent';
+    if (!isset($form_state['course_session']->$assignment_sent)){
+      form_set_error($assignment_type . '_reminder_action', t('Can not send reminder before assignment!'));
+    }
   }elseif($form_state['values'][$assignment_type . '_reminder_action'] == SCHEDULE){
     $reminder_datetime = strtotime($form_state['values'][$assignment_type . '_reminder_schedule_datetime']);
     if ($reminder_datetime < strtotime("now")) {
