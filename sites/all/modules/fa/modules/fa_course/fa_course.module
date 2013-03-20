@@ -75,7 +75,7 @@ function fa_course_menu() {
       'file' => 'fa_course.admin.inc',
   );
   $items['admin/people/courses/participants/%/edit/%'] = array(
-      'title' => t("Remove participant"),
+      'title' => t("Edit participant"),
       'page callback' => 'fa_course_admin_participants_edit',
       'page arguments' => array(4, 6),
       'access arguments' => array('administer courses'),

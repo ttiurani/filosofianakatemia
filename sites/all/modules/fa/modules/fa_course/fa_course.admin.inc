@@ -441,6 +441,14 @@ function fa_course_admin_sessions_edit($facid, $facsid){
   $links = '<p>' . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
   $output = render($links);
 
+
+  $course_session = _get_course_session($facid, $facsid);
+  $edit_form = drupal_get_form('fa_course_admin_session_edit_form', $course_session);
+  $output .= render($edit_form);
+  return $output;
+}
+
+function _get_course_session($facid, $facsid){
   if ($facsid != 'new'){
     $course_session = db_select('fa_course_session', 's')
     ->fields('s')
@@ -453,11 +461,9 @@ function fa_course_admin_sessions_edit($facid, $facsid){
         'facid'  => $facid,
     );
   }
-
-  $edit_form = drupal_get_form('fa_course_admin_session_edit_form', $course_session);
-  $output .= render($edit_form);
-  return $output;
+  return $course_session;
 }
+
 
 function _get_assignment_options($product_name, $node_type){
   $result = db_query("SELECT n.nid, n.title from node n INNER JOIN url_alias ua ON ua.source = CONCAT('node/', n.nid) "
@@ -875,6 +881,20 @@ function _store_assignment($course_session, $form_state, $assignment_type){
   }
 }
 
+function _fa_course_validate_emails($form_field){
+  if (isset($_SESSION['invite_failed_emails'])){
+    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
+    $error_message = t('Invalid email addresses:');
+    foreach ($failed_emails as $failed_email) {
+      $error_message .= ' ' . $failed_email;
+    }
+    form_set_error($form_field, $error_message);
+    unset($_SESSION['invite_failed_emails']);
+    return FALSE;
+  }
+  return TRUE;
+}
+
 /**
  * Return a list of all course participants.
  */
@@ -918,7 +938,7 @@ function fa_course_admin_participants($facid) {
   }
 
   $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '<br/>'
-             . l(t("Add new participants"), "admin/people/courses/participants/$facid/edit/new") . '</p>';
+             . l(t("Add new participant"), "admin/people/courses/participants/$facid/edit/new") . '</p>';
   $output = render($links);
 
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
@@ -936,20 +956,102 @@ function fa_course_admin_participants_edit($facid, $facpid){
   $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
 
-  $output .= t('TODO: edit course ' . $facid . ' participant ' . $facpid);
+  $participant = _get_participant($facid, $facpid);
+  $edit_form = drupal_get_form('fa_course_admin_participants_edit_form', $participant);
+  $output .= render($edit_form);
   return $output;
 }
 
-function _fa_course_validate_emails($form_field){
-  if (isset($_SESSION['invite_failed_emails'])){
-    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
-    $error_message = t('Invalid email addresses:');
-    foreach ($failed_emails as $failed_email) {
-      $error_message .= ' ' . $failed_email;
-    }
-    form_set_error($form_field, $error_message);
-    unset($_SESSION['invite_failed_emails']);
-    return FALSE;
+function _get_participant($facid, $facpid){
+  if ($facpid != 'new'){
+    $participant = db_select('fa_course_participant', 'p')
+    ->fields('p')
+    ->condition('p.facpid', $facpid)
+    ->condition('p.facid', $facid)
+    ->execute()->fetchObject();
+
+  }else {
+    $participant = (object) array(
+        'facid'  => $facid,
+    );
   }
-  return TRUE;
+  return $participant;
 }
+
+/**
+ * Form for creating/editing a course session.
+ */
+function fa_course_admin_participants_edit_form($form, &$form_state, $participant) {
+  global $user;
+
+  $form['participant'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Edit participant'),
+  );
+  $form['participant']['id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Participant Id'),
+      '#disabled' => TRUE,
+      '#value' => isset($participant->facpid) ? $participant->facpid : 'N/A',
+  );
+  $form['participant']['facid'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Course Id'),
+      '#disabled' => TRUE,
+      '#value' => $participant->facid,
+  );
+
+  $form['participant']['first_name'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('First Name'),
+      '#default_value'  => isset($participant->first_name) ? $participant->first_name : NULL,
+  );
+
+  $form['participant']['last_name'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Last Name'),
+      '#default_value'  => isset($participant->last_name) ? $participant->last_name : NULL,
+  );
+
+  $form['participant']['email'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Email address'),
+      '#required'       => TRUE,
+      '#default_value'  => isset($participant->email) ? $participant->email : NULL,
+  );
+
+  $form['participant']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+  );
+
+  $form_state['participant'] = $participant;
+  return $form;
+}
+
+function fa_course_admin_participants_edit_form_validate($form, &$form_state) {
+  // Check assistant email
+  $email = _invite_get_emails($form_state['values']['email']);
+  if (_fa_course_validate_emails('email') == FALSE){
+    return;
+  }
+}
+
+function fa_course_admin_participants_edit_form_submit($form, &$form_state) {
+  $participant = $form_state['participant'];
+
+
+  $participant->first_name = $form_state['values']['first_name'];
+  $participant->last_name = $form_state['values']['last_name'];
+  $participant->email = $form_state['values']['email'];
+
+  if (isset($participant->facpid))
+    drupal_write_record('fa_course_participant', $participant, 'facpid');
+  else
+    drupal_write_record('fa_course_participant', $participant);
+  drupal_set_message(t('Participant @facpid saved.', array('@facpid' => $participant->facpid)));
+  $form_state['redirect'] = "admin/people/courses/participants/" . $participant->facid;
+}
+
+
+
