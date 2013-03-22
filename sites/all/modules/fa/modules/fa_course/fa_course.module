@@ -82,6 +82,14 @@ function fa_course_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'fa_course.admin.inc',
   );
+  $items['admin/people/courses/participants/%/delete/%'] = array(
+      'title' => t("Delete participant"),
+      'page callback' => 'fa_course_admin_participants_delete',
+      'page arguments' => array(4, 6),
+      'access arguments' => array('administer courses'),
+      'type' => MENU_CALLBACK,
+      'file' => 'fa_course.admin.inc',
+  );
   $items['admin/people/courses/participants/%/import'] = array(
       'title' => t("Import participants"),
       'page callback' => 'fa_course_admin_participants_import',

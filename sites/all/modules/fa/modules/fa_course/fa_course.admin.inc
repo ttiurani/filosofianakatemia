@@ -938,7 +938,10 @@ function fa_course_admin_participants($facid) {
     $cells[] = $row->invite_sent;
     $cells[] = $row->invite_joined;
     $cells[] = $row->invite_reuse;
-    $cells[] = l(t('Edit'), "admin/people/courses/participants/$facid/edit/$row->facpid");
+	$cells[] = (user_access('administer courses'))
+						? l(t('Edit'), "admin/people/courses/participants/$facid/edit/$row->facpid") . '<br/>' .
+						  l(t('Delete'), "admin/people/courses/participants/$facid/delete/$row->facpid")
+						: "";
     $rows[] = $cells;
   }
 
@@ -1066,6 +1069,44 @@ function fa_course_admin_participants_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = "admin/people/courses/participants/" . $participant->facid;
 }
 
+function fa_course_admin_participants_delete($facid, $facpid){
+  $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
+  $output = render($links);
+  $participant = _get_participant($facid, $facpid);
+  $edit_form = drupal_get_form('fa_course_admin_participants_delete_form', $participant);
+  $output .= render($edit_form);
+  return $output;
+
+}
+
+function fa_course_admin_participants_delete_form($form, &$form_state, $participant) {
+  $form['participant'] = array(
+    '#type' => 'value',
+    '#value' => $participant,
+  );
+
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete the participant %email?', array('%email' => $participant->email)),
+    "admin/people/courses/participants/" . $participant->facid,
+    t('This action cannot be undone.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+function fa_course_admin_participants_delete_form_submit($form, &$form_state) {
+  $participant = $form_state['values']['participant'];
+
+	db_delete('fa_course_participant')
+	  ->condition('facpid', $participant->facpid)
+	  ->execute();
+
+  drupal_set_message(t('Participant with email %email has been deleted.', array('%email' => $participant->email)));
+  $form_state['redirect'] = "admin/people/courses/participants/" . $participant->facid;
+}
+
+
 function fa_course_admin_participants_import($facid){
   $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
@@ -1075,8 +1116,9 @@ function fa_course_admin_participants_import($facid){
   return $output;
 }
 
+
 /**
- * Form for creating/editing a course participant.
+ * Form for importing course participants.
  */
 function fa_course_admin_participants_import_form($form, &$form_state, $facid) {
   global $user;
