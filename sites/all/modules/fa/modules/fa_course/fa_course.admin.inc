@@ -423,7 +423,10 @@ function fa_course_admin_sessions($facid) {
     $cells[] = $row->material;
     $cells[] = $row->assistant_email;
     $cells[] = $row->participants;
-    $cells[] = l(t('Edit'), "admin/people/courses/sessions/$facid/edit/$row->facsid");
+    $cells[] = (user_access('administer courses'))
+                ? l(t('Edit'), "admin/people/courses/sessions/$facid/edit/$row->facsid") . '<br/>' .
+                  l(t('Delete'), "admin/people/courses/sessions/$facid/delete/$row->facsid")
+                : "";
     $rows[] = $cells;
   }
 
@@ -900,6 +903,42 @@ function _fa_course_validate_emails($form_field){
   return TRUE;
 }
 
+function fa_course_admin_sessions_delete($facid, $facsid){
+  $links = '<p>' . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
+  $output = render($links);
+  $session = _get_course_session($facid, $facsid);
+  $delete_form = drupal_get_form('fa_course_admin_sessions_delete_form', $session);
+  $output .= render($delete_form);
+  return $output;
+}
+
+function fa_course_admin_sessions_delete_form($form, &$form_state, $session) {
+  $form['session'] = array(
+    '#type' => 'value',
+    '#value' => $session,
+  );
+
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete the session %facsid?', array('%facsid' => $session->facsid)),
+    "admin/people/courses/sessions/" . $session->facid,
+    t('This action cannot be undone.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+function fa_course_admin_sessions_delete_form_submit($form, &$form_state) {
+  $session = $form_state['values']['session'];
+
+  db_delete('fa_course_session')
+    ->condition('facsid', $session->facsid)
+    ->execute();
+
+  drupal_set_message(t('Session with id %facsid has been deleted.', array('%facsid' => $session->facsid)));
+  $form_state['redirect'] = "admin/people/courses/sessions/" . $session->facid;
+}
+
 /**
  * Return a list of all course participants.
  */
@@ -1073,8 +1112,8 @@ function fa_course_admin_participants_delete($facid, $facpid){
   $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
   $participant = _get_participant($facid, $facpid);
-  $edit_form = drupal_get_form('fa_course_admin_participants_delete_form', $participant);
-  $output .= render($edit_form);
+  $delete_form = drupal_get_form('fa_course_admin_participants_delete_form', $participant);
+  $output .= render($delete_form);
   return $output;
 
 }
