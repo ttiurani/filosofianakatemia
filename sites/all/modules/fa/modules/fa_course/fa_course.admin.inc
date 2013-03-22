@@ -104,7 +104,11 @@ function fa_course_admin_overview() {
     $cells[] = $phase['title'] . (isset($phase['action']) && user_access('administer courses') ? " <br/> " . $phase['action'] : "");
     $cells[] = $row->sessions . "<br/>" . l(t("Details"), "admin/people/courses/sessions/$row->facid");
     $cells[] = $row->participants . "<br/>" . l(t("Details"), "admin/people/courses/participants/$row->facid");
-    $cells[] = l(t('Details'), "admin/people/courses/view/$row->facid") . (user_access('administer courses') ? " <br/> " . l(t('Edit'), "admin/people/courses/edit/$row->facid") : "");
+    $cells[] = l(t('Details'), "admin/people/courses/view/$row->facid")
+              . (user_access('administer courses')
+                    ? " <br/> " . l(t('Edit'), "admin/people/courses/edit/$row->facid") . '<br/>'
+                                . l(t('Delete'), "admin/people/courses/delete/$row->facid")
+                    : "");
     $rows[] = $cells;
   }
 
@@ -377,6 +381,67 @@ function _get_session_types() {
       4 => t("Discussion"),
       5 => t("One on One"),
   );
+}
+
+function fa_course_admin_delete($facid){
+  $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '</p>';
+  $output = render($links);
+  $delete_form = drupal_get_form('fa_course_admin_delete_form', $facid);
+  $output .= render($delete_form);
+  return $output;
+}
+
+function fa_course_admin_delete_form($form, &$form_state, $facid) {
+  $form['facid'] = array(
+    '#type' => 'value',
+    '#value' => $facid,
+  );
+
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete the course %facid?', array('%facid' => $facid)),
+    "admin/people/courses",
+    t('This action cannot be undone.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+function fa_course_admin_delete_form_validate($form, &$form_state) {
+  $facid = $form_state['values']['facid'];
+
+  // Course with sessions can't be deleted
+  $query = db_select('fa_course_session')
+          ->condition('facid', $facid);
+  $query->addExpression('COUNT(*)');
+  $session_count = $query
+                    ->execute()
+                    ->fetchField();
+  if ($session_count){
+    form_set_error('submit', t("You must first delete the %count sessions in this course", array('%count' => $session_count)));
+  }
+
+  // Course with participants can't be deleted
+  $query = db_select('fa_course_participant')
+          ->condition('facid', $facid);
+  $query->addExpression('COUNT(*)');
+  $participant_count = $query
+                    ->execute()
+                    ->fetchField();
+  if ($participant_count){
+    form_set_error('submit', t("You must first delete the %count participants in this course", array('%count' => $participant_count)));
+  }
+}
+
+function fa_course_admin_delete_form_submit($form, &$form_state) {
+  $facid = $form_state['values']['facid'];
+
+  db_delete('fa_course')
+    ->condition('facid', $facid)
+    ->execute();
+
+  drupal_set_message(t('Course with id %facid has been deleted.', array('%facid' => $facid)));
+  $form_state['redirect'] = "admin/people/courses";
 }
 
 /**

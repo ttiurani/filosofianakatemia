@@ -50,6 +50,14 @@ function fa_course_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'fa_course.admin.inc',
   );
+  $items['admin/people/courses/delete/%'] = array(
+      'title' => t("Delete course"),
+      'page callback' => 'fa_course_admin_delete',
+      'page arguments' => array(4),
+      'access arguments' => array('administer courses'),
+      'type' => MENU_CALLBACK,
+      'file' => 'fa_course.admin.inc',
+  );
   $items['admin/people/courses/sessions/%'] = array(
       'title' => t("Course sessions"),
       'page callback' => 'fa_course_admin_sessions',
