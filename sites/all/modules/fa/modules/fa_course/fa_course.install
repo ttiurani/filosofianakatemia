@@ -76,6 +76,14 @@ function fa_course_schema() {
         'type' => 'int',
         'not null' => FALSE,
       ),
+      'price' => array(
+        'type' => 'numeric',
+        'size' => 'normal',
+        'not null' => FALSE,
+        'default' => 0,
+        'precision' => 10,
+        'scale' => 2
+      ),
       'billing_information' => array(
           'description' => 'Billing information.',
           'type' => 'text',
@@ -323,15 +331,21 @@ function fa_course_schema() {
               'length' => 256,
               'not null' => FALSE,
           ),
+          'invite_reg_code' => array(
+              'description' => 'Stores the issued registration code and acts as primary identifier for a invite.',
+              'type' => 'varchar',
+              'length' => 8,
+              'not null' => FALSE,
+          ),
           'invite_reuse' => array(
               'description' => 'Number of times the invite that is to be sent can be reused, NULL if not a reusable invite.',
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'iid' => array(
-              'description' => 'Stores the invitation id of the participant.',
-              'type' => 'int',
-              'not null' => FALSE,
+          'invite_joined' => array(
+            'description' => 'Will be filled with the time the invite was accepted upon registration.',
+            'type' => 'int',
+            'not null' => FALSE,
           ),
           'uid' => array(
               'description' => 'Stores the user id of the participant.',
@@ -365,6 +379,66 @@ function fa_course_schema() {
       'primary key' => array('facsid', 'facpid'),
       'indexes' => array(
           'facsid' => array('facsid'),
+      ),
+  );
+
+
+  $schema['fa_course_message'] = array(
+      'description' => 'Stores course email messages.',
+      'fields' => array(
+          'facmid' => array(
+              'description' => 'The primary identifier for a course message.',
+              'type' => 'serial',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'facsid' => array(
+              'description' => 'Id for the course session that has the message template.',
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'template_type' => array(
+              'description' => 'Message template type, 1=preliminary assignment, 2=preliminary assignment reminder, '
+                              .'3=course assignment, 4=course assignment reminder, 5=followup, 5=feedback, 6=feedback reminder',
+              'type' => 'int',
+              'not null' => TRUE,
+          ),
+          'message' => array(
+              'description' => 'Text of the email message, stored in a serialized array.',
+              'type' => 'text',
+              'not null' => TRUE,
+          ),
+          'sent' => array(
+              'description' => 'Stores the time the message was sent.',
+              'type' => 'int',
+              'not null' => TRUE,
+          ),
+      ),
+      'primary key' => array('facmid'),
+  );
+
+  $schema['fa_participants_messages'] = array(
+      'description' => t('Maps participants to messages.'),
+      'fields' => array(
+          'facpid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {fa_course_participant}.facpid for participant.'),
+          ),
+          'facmid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => t('Primary Key: {fa_course_message}.facmid for message.'),
+          ),
+      ),
+      'primary key' => array('facpid', 'facmid'),
+      'indexes' => array(
+          'facpid' => array('facpid'),
       ),
   );
 
