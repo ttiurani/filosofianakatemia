@@ -5,6 +5,14 @@
 */
 
 /**
+ * Schedule Action Constants
+ */
+define('SCHEDULE', 1);
+define('SEND_NOW', 2);
+define('DATE_FORMAT', 'd.m.Y H:i');
+define('SECONDS_IN_DAY', 86400);
+
+/**
 * Implements hook_help.
 *
 * Displays help and module information.
@@ -29,90 +37,90 @@ function fa_course_menu() {
   // Admin menu items
   $items['admin/people/courses'] = array(
       'title' => t("Courses"),
-      'page callback' => 'fa_course_admin_overview',
+      'page callback' => 'fa_course_overview',
       'access callback' => 'view_courses_access_callback',
       'type' => MENU_LOCAL_TASK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.inc',
   );
   $items['admin/people/courses/view/%'] = array(
       'title' => t("View course"),
-      'page callback' => 'fa_course_admin_details',
+      'page callback' => 'fa_course_details',
       'page arguments' => array(3, 4),
       'access callback' => 'view_courses_access_callback',
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.inc',
   );
   $items['admin/people/courses/edit/%'] = array(
       'title' => t("Edit course"),
-      'page callback' => 'fa_course_admin_details',
+      'page callback' => 'fa_course_details',
       'page arguments' => array(3, 4),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.inc',
   );
   $items['admin/people/courses/delete/%'] = array(
       'title' => t("Delete course"),
-      'page callback' => 'fa_course_admin_delete',
+      'page callback' => 'fa_course_delete',
       'page arguments' => array(4),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.inc',
   );
   $items['admin/people/courses/sessions/%'] = array(
       'title' => t("Course sessions"),
-      'page callback' => 'fa_course_admin_sessions',
+      'page callback' => 'fa_course_sessions',
       'page arguments' => array(4),
       'access callback' => 'view_courses_access_callback',
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.sessions.inc',
   );
   $items['admin/people/courses/sessions/%/edit/%'] = array(
       'title' => t("Edit session"),
-      'page callback' => 'fa_course_admin_sessions_edit',
+      'page callback' => 'fa_course_sessions_edit',
       'page arguments' => array(4, 6),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.sessions.inc',
   );
   $items['admin/people/courses/sessions/%/delete/%'] = array(
       'title' => t("Delete session"),
-      'page callback' => 'fa_course_admin_sessions_delete',
+      'page callback' => 'fa_course_sessions_delete',
       'page arguments' => array(4, 6),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.sessions.inc',
   );
   $items['admin/people/courses/participants/%'] = array(
       'title' => t("Course participants"),
-      'page callback' => 'fa_course_admin_participants',
+      'page callback' => 'fa_course_participants',
       'page arguments' => array(4),
       'access callback' => 'view_courses_access_callback',
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.participants.inc',
   );
   $items['admin/people/courses/participants/%/edit/%'] = array(
       'title' => t("Edit participant"),
-      'page callback' => 'fa_course_admin_participants_edit',
+      'page callback' => 'fa_course_participants_edit',
       'page arguments' => array(4, 6),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.participants.inc',
   );
   $items['admin/people/courses/participants/%/delete/%'] = array(
       'title' => t("Delete participant"),
-      'page callback' => 'fa_course_admin_participants_delete',
+      'page callback' => 'fa_course_participants_delete',
       'page arguments' => array(4, 6),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.participants.inc',
   );
   $items['admin/people/courses/participants/%/import'] = array(
       'title' => t("Import participants"),
-      'page callback' => 'fa_course_admin_participants_import',
+      'page callback' => 'fa_course_participants_import',
       'page arguments' => array(4),
       'access arguments' => array('administer courses'),
       'type' => MENU_CALLBACK,
-      'file' => 'fa_course.admin.inc',
+      'file' => 'fa_course.participants.inc',
   );
 
   return $items;
@@ -139,6 +147,29 @@ function fa_course_permission() {
   );
 }
 
+
+function _fa_course_validate_one_email($parsed_emails, $form_field){
+  if (_fa_course_validate_emails($parsed_emails, $form_field)){
+    // Also validate that there are exactly one email
+    if (!empty($parsed_emails['valid']) && count($parsed_emails['valid']) == 1){
+      return TRUE;
+    }
+    form_set_error($form_field, t('Exactly one email expected'));
+  }
+  return FALSE;
+}
+
+function _fa_course_validate_emails($parsed_emails, $form_field){
+  if (!empty($parsed_emails['failed'])){
+    $error_message = t('Invalid email addresses:');
+    foreach ($parsed_emails['failed'] as $failed_email) {
+      $error_message .= ' ' . $failed_email;
+    }
+    form_set_error($form_field, $error_message);
+    return FALSE;
+  }
+  return TRUE;
+}
 
 /**
  * Extract valid e-mail addresses from a string.
