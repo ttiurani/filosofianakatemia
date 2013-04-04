@@ -168,21 +168,11 @@ function fa_course_edit_form($form, &$form_state, $course, $action) {
   if (!isset($course->lead_trainer_id))
     $academians[0] = t('-- unknown --');
 
-  // Prepare role options
-  $roles = user_roles(TRUE);
-  foreach($roles as $rid => $role){
-    $role_array = explode('#', $role);
-    if (count($role_array) == 3){
-      // Organization
-      $organization_options[$rid] = $role_array[1];
-    }else if (count($role_array) == 4){
-      // Product
-      $product_options[$rid] = $role_array[2];
-    }
-  }
+  $course_roles = _fa_course_get_course_roles();
+
   // Not listed options
-  $organization_options[0] = t('--not listed--');
-  $product_options[0] = t('--not listed--');
+  $course_roles['organizations'][0] = t('--not listed--');
+  $course_roles['products'][0] = t('--not listed--');
 
   $form['course'] = array(
       '#type' => 'fieldset',
@@ -200,7 +190,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action) {
       '#type'           => 'select',
       '#multiple'       => FALSE,
       '#title'          => t('Select Organization'),
-      '#options'        => $organization_options,
+      '#options'        => $course_roles['organizations'],
       '#disabled'       => $action == 'view',
       '#description'    => t('Select the organization/company where the course will be kept.'),
   );
@@ -225,7 +215,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action) {
       '#multiple'       => FALSE,
       '#title'          => t('Select Product'),
       '#disabled'       => $action == 'view',
-      '#options'        => $product_options,
+      '#options'        => $course_roles['products'],
       '#description'    => t('Select the product.'),
   );
   $form['course']['product'] = array(

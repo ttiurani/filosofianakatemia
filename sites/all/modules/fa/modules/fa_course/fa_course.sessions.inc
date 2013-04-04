@@ -109,19 +109,6 @@ function _get_course_session($facid, $facsid){
   return $course_session;
 }
 
-
-function _get_assignment_options($product_name, $node_type){
-  $result = db_query("SELECT n.nid, n.title from node n INNER JOIN url_alias ua ON ua.source = CONCAT('node/', n.nid) "
-      . "WHERE n.type = :type AND ua.alias LIKE :match",
-      array(':type' => $node_type,
-            ':match' => 'lykeion/' . strtolower($product_name) . '%'));
-  $assignment_options = array();
-  foreach($result as $row){
-    $assignment_options[$row->nid] = $row->title;
-  }
-  return $assignment_options;
-}
-
 /**
  * Form for creating/editing a course session.
  */
@@ -215,7 +202,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 
   // Preliminary assignment
 
-  $preliminary_assignment_options = _get_assignment_options($product_name, 'preliminary_assignment');
+  $preliminary_assignment_options = _fa_course_get_assignment_options($product_name, 'preliminary_assignment');
   $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session,
                                                 'preliminary_assignment',
                                                 'preliminary assignment',
@@ -223,7 +210,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
                                                 $product_name);
   // Course assignment
 
-  $course_assignment_options = _get_assignment_options($product_name, 'course_assignment');
+  $course_assignment_options = _fa_course_get_assignment_options($product_name, 'course_assignment');
   $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session,
                                                 'course_assignment',
                                                 'course assignment',
@@ -231,7 +218,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
                                                 $product_name);
   // Feedback
 
-  $feedback_options = _get_assignment_options($product_name, 'course_feedback');
+  $feedback_options = _fa_course_get_assignment_options($product_name, 'course_feedback');
   $form['course_session'] = $form['course_session'] + _get_assignment_form($course_session,
                                                 'feedback',
                                                 'feedback',
@@ -286,10 +273,12 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
   if (isset($course_session->$assignment_email_template))
     $template = unserialize($course_session->$assignment_email_template);
 
+  $default_subject_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment_type . '_subject_template';
   $form[$assignment_type][$assignment_type . '_subject'] = array(
       '#type'           => 'textfield',
       '#title'          => t(ucfirst($assignment_type_name) . ' email title'),
-      '#default_value'  => !empty($template) ? $template['subject'] : $product_name . ' # : ' . ucfirst($assignment_type_name),
+      '#default_value'  => !empty($template) ? $template['subject'] :
+            variable_get($default_subject_id, NULL),
       '#disabled'       => $assignment_sent,
       '#states' => array(
           'visible' => array(
@@ -298,10 +287,12 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
       ),
   );
 
+  $default_message_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment_type . '_message_template';
   $form[$assignment_type][$assignment_type . '_message'] = array(
       '#type'           => 'textarea',
       '#title'          => t(ucfirst($assignment_type_name) . ' email body'),
-      '#default_value'  => !empty($template) ? $template['message'] : '',
+      '#default_value'  => !empty($template) ? $template['message'] :
+            variable_get($default_message_id, NULL),
       '#disabled'       => $assignment_sent,
       '#states' => array(
           'visible' => array(

@@ -218,3 +218,35 @@ function _fa_course_get_emails($string) {
   return array('valid' => $valid_emails,
                'failed' => $failed_emails);
 }
+
+function _fa_course_get_assignment_options($product_name, $node_type){
+  $result = db_query("SELECT n.nid, n.title from node n INNER JOIN url_alias ua ON ua.source = CONCAT('node/', n.nid) "
+      . "WHERE n.type = :type AND ua.alias LIKE :match",
+      array(':type' => $node_type,
+            ':match' => 'lykeion/' . strtolower($product_name) . '%'));
+  $assignment_options = array();
+  foreach($result as $row){
+    $assignment_options[$row->nid] = $row->title;
+  }
+  return $assignment_options;
+}
+
+function _fa_course_get_course_roles(){
+  // Prepare role options
+  $roles = user_roles(TRUE);
+  $organization_options = $product_options = array();
+  foreach($roles as $rid => $role){
+    $role_array = explode('#', $role);
+    if (count($role_array) == 3){
+      // Organization
+      $organization_options[$rid] = $role_array[1];
+    }else if (count($role_array) == 4){
+      // Product
+      $product_options[$rid] = $role_array[2];
+    }
+  }
+  return array(
+    'organizations' => $organization_options,
+    'products' => $product_options,
+  );
+}
