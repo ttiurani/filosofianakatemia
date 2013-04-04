@@ -185,10 +185,18 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#default_value'  => isset($course_session->address) ? $course_session->address : NULL,
   );
 
+
+  // Material
+  $material_choices = preg_split( '/\r\n|\r|\n/', variable_get('fa_course_materials', array('N/A')));
+  if (isset($course_session->material) && !in_array($course_session->material, $material_choices)){
+    array_push($material_choices, $course_session->material);
+  }
   $form['course_session']['material'] = array(
-      '#type'           => 'textfield',
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
       '#title'          => t('Material promised to the session'),
-      '#default_value'  => isset($course_session->material) ? $course_session->material : NULL,
+      '#default_value'  => isset($course_session->material) ? array_search($course_session->material, $material_choices) : 0,
+      '#options'        => $material_choices,
   );
 
   $form['course_session']['summary_emails'] = array(
@@ -442,8 +450,10 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
   _fa_course_validate_emails($summary_emails_field, 'summary_emails');
 
   // Check assistant email
-  $assistant_email_field = _fa_course_get_emails($form_state['values']['assistant_email']);
-  _fa_course_validate_one_email($assistant_email_field, 'assistant_email');
+  if (!empty($form_state['values']['assistant_email'])){
+    $assistant_email_field = _fa_course_get_emails($form_state['values']['assistant_email']);
+    _fa_course_validate_one_email($assistant_email_field, 'assistant_email');
+  }
 
   // Preliminary assignment
   _validate_assignment_schedule($form_state, 'preliminary_assignment');
@@ -487,7 +497,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   $course_session->session_start_datetime = $form_state['values']['start_datetime_epoch'];
   $course_session->session_end_datetime = $form_state['values']['end_datetime_epoch'];
   $course_session->address = $form_state['values']['address'];
-  $course_session->material = $form_state['values']['material'];
+  $course_session->material = $form['course_session']['material']['#options'][$form_state['values']['material']];
   $course_session->summary_emails = $form_state['values']['summary_emails'];
   $course_session->assistant_email = $form_state['values']['assistant_email'];
 

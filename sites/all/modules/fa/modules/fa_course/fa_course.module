@@ -35,6 +35,17 @@ function fa_course_help($path, $arg) {
  */
 function fa_course_menu() {
   // Admin menu items
+  $items['admin/config/people/courses'] = array(
+    'title' => 'Filosofian Akatemia Courses',
+    'description' => 'Modify Filosofian Akatamia course settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fa_course_settings'),
+    'access arguments' => array('administer courses'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 10,
+    'file' => 'fa_course.admin.inc',
+  );
+  // People->Courses menu items
   $items['admin/people/courses'] = array(
       'title' => t("Courses"),
       'page callback' => 'fa_course_overview',

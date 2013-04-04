@@ -5,9 +5,6 @@
  * Course editing functions for Filosofian Akatemia Course module.
  */
 
-define('EXCEL', 1);
-define('NAMES', 2);
-
 /**
  * Return a list of all courses.
  */
