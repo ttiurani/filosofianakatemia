@@ -5,21 +5,6 @@
  * Course session editing functions for Filosofian Akatemia Course module.
  */
 
-
-define('EXCEL', 1);
-define('NAMES', 2);
-
-function _get_session_types() {
-  return array(
-      0 => t("Other"),
-      1 => t("Lecture"),
-      2 => t("Workshop"),
-      3 => t("Lecture and Workshop"),
-      4 => t("Discussion"),
-      5 => t("One on One"),
-  );
-}
-
 /**
  * Return a list of all course sessions.
  */
@@ -84,6 +69,17 @@ function fa_course_sessions($facid) {
   }
 
   return $output;
+}
+
+function _get_session_types() {
+  return array(
+      0 => t("Other"),
+      1 => t("Lecture"),
+      2 => t("Workshop"),
+      3 => t("Lecture and Workshop"),
+      4 => t("Discussion"),
+      5 => t("One on One"),
+  );
 }
 
 function fa_course_sessions_edit($facid, $facsid){
@@ -417,8 +413,6 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
 
   return $form;
 }
-
-
 
 function fa_course_session_edit_form_validate($form, &$form_state) {
 
