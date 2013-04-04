@@ -301,7 +301,7 @@ function fa_course_admin_edit_form($form, &$form_state, $course, $action) {
 
 function _fa_course_get_selected_role($form_state, $role_type){
   $selected_role = new stdClass();
-  if (!empty($form_state['values']['fa_invite_' . $role_type])){
+  if (!empty($form_state['values'][$role_type])){
     // Role needs to be created
     $selected_role->name = '';
     if ($role_type == 'product'){
@@ -324,11 +324,11 @@ function fa_course_admin_edit_form_validate($form, &$form_state) {
 
   foreach($roles as $role_name){
     if (!isset($organization_role->rid) && $role_name == $organization_role->name){
-      form_set_error('fa_invite_organization', t('Role name with given organization already exists'));
+      form_set_error('organization', t('Role name with given organization already exists'));
       return;
     }
     if (!isset($product_role->rid) && $role_name == $product_role->name){
-      form_set_error('fa_invite_product', t('Role name with given product already exists'));
+      form_set_error('product', t('Role name with given product already exists'));
       return;
     }
   }
@@ -838,10 +838,6 @@ function _get_assignment_form($course_session, $assignment_type, $assignment_typ
 
 function fa_course_admin_session_edit_form_validate($form, &$form_state) {
 
-  if (!empty($form_state['values']['assistant_email']) && valid_email_address($form_state['values']['assistant_email'])){
-    form_set_error('assistant_email', t('Not a valid email address'));
-    return;
-  }
   if (!empty($form_state['values']['length'])){
     if (!is_numeric($form_state['values']['length']) ){
       form_set_error('length', t('Length value must be a number'));
@@ -866,14 +862,12 @@ function fa_course_admin_session_edit_form_validate($form, &$form_state) {
     form_set_error('summary_emails', t('Summary emails are mandatory if assignments are sent.'));
   }
 
-  $summary_emails = _invite_get_emails($form_state['values']['summary_emails']);
-  _fa_course_validate_emails('summary_emails');
+  $summary_emails_field = _fa_course_get_emails($form_state['values']['summary_emails']);
+  _fa_course_validate_emails($summary_emails_field, 'summary_emails');
 
   // Check assistant email
-  $assistant_email = _invite_get_emails($form_state['values']['assistant_email']);
-  if (_fa_course_validate_emails('assistant_email') == FALSE){
-    return;
-  }
+  $assistant_email_field = _fa_course_get_emails($form_state['values']['assistant_email']);
+  _fa_course_validate_one_email($assistant_email_field, 'assistant_email');
 
   // Preliminary assignment
   _validate_assignment_schedule($form_state, 'preliminary_assignment');
@@ -954,15 +948,24 @@ function _store_assignment($course_session, $form_state, $assignment_type){
   }
 }
 
-function _fa_course_validate_emails($form_field){
-  if (isset($_SESSION['invite_failed_emails'])){
-    $failed_emails = (array) unserialize($_SESSION['invite_failed_emails']);
+function _fa_course_validate_one_email($parsed_emails, $form_field){
+  if (_fa_course_validate_emails($parsed_emails, $form_field)){
+    // Also validate that there are exactly one email
+    if (!empty($parsed_emails['valid']) && count($parsed_emails['valid']) == 1){
+      return TRUE;
+    }
+    form_set_error($form_field, t('Exactly one email expected'));
+  }
+  return FALSE;
+}
+
+function _fa_course_validate_emails($parsed_emails, $form_field){
+  if (!empty($parsed_emails['failed'])){
     $error_message = t('Invalid email addresses:');
-    foreach ($failed_emails as $failed_email) {
+    foreach ($parsed_emails['failed'] as $failed_email) {
       $error_message .= ' ' . $failed_email;
     }
     form_set_error($form_field, $error_message);
-    unset($_SESSION['invite_failed_emails']);
     return FALSE;
   }
   return TRUE;
@@ -1012,20 +1015,16 @@ function fa_course_admin_participants($facid) {
     array('data' => t('E-mail'), 'field' => 'p.email', 'sort' => 'asc'),
     array('data' => t('First Name'), 'field' => 'p.first_name'),
     array('data' => t('Last Name'), 'field' => 'p.last_name'),
-    t('Invite sent'),
     t('Joined'),
     t('Invite reuses left'),
     t('Actions'),
   );
 
   $result = db_select('fa_course_participant', 'p')
-    ->fields('p', array('facid', 'facpid', 'email', 'first_name', 'last_name', 'invite_reuse', 'iid', 'uid'))
+    ->fields('p', array('facid', 'facpid', 'email', 'first_name', 'last_name', 'invite_joined', 'invite_reuse', 'uid'))
     ->extend('TableSort')
     ->extend('PagerDefault');
   $result->condition('p.facid', $facid);
-  $result->leftJoin('invite', 'i', 'i.iid = p.iid');
-  $result->addField('i', 'created', 'invite_sent');
-  $result->addField('i', 'joined', 'invite_joined');
   $result->distinct();
   $result->groupBy('p.facid');
   $result->groupBy('p.facpid');
@@ -1039,7 +1038,6 @@ function fa_course_admin_participants($facid) {
     $cells[] = isset($row->uid) ? l($row->email, "user/" . $row->uid) : $row->email;
     $cells[] = isset($row->first_name) ? $row->first_name : t('Not set');
     $cells[] = isset($row->last_name) ? $row->last_name : t('Not set');
-    $cells[] = $row->invite_sent;
     $cells[] = $row->invite_joined;
     $cells[] = $row->invite_reuse;
 	$cells[] = (user_access('administer courses'))
@@ -1144,15 +1142,15 @@ function fa_course_admin_participants_edit_form($form, &$form_state, $participan
 
 function fa_course_admin_participants_edit_form_validate($form, &$form_state) {
   // Check email
-  $email = _invite_get_emails($form_state['values']['email']);
-  if (_fa_course_validate_emails('email') == FALSE){
+  $email_field = _fa_course_get_emails($form_state['values']['email']);
+  if (_fa_course_validate_one_email($email_field, 'email') == FALSE){
     return;
   }
 
   // Check that email is unique for this course
   if (db_select('fa_course_participant', 'p')
           ->fields('p')
-          ->condition('p.email', $form_state['values']['email'])
+          ->condition('p.email', $email_field['valid'][0])
           ->condition('p.facid', $form_state['participant']->facid)
           ->execute()->fetchObject() != FALSE){
     form_set_error('email', t('Course already has a participant with given email address'));
@@ -1319,8 +1317,8 @@ function fa_course_admin_participants_import_form_validate($form, &$form_state){
   }
 
   // Validate participant emails before they are imported
-  $participant_emails = _invite_get_emails($form_state['values']['emails']);
-  _fa_course_validate_emails('emails');
+  $participant_email_fields = _fa_course_get_emails($form_state['values']['emails']);
+  _fa_course_validate_emails($participant_email_fields, 'emails');
 
   $form_state['participants'] = $participants;
 }

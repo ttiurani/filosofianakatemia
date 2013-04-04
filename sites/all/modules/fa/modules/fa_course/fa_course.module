@@ -141,40 +141,38 @@ function fa_course_permission() {
 
 
 /**
- * Implements invite_accept() from Invite module.
- * Creates links between invites and course participants.
+ * Extract valid e-mail addresses from a string.
+ *
+ * E-mails must be separated by newlines or commas. E-mails are allowed to
+ * include a display name (eg. Some Name <foo@example.com>).
+ *
+ * @param $string
+ *   The string to process. Recognized delimiters are comma, NL and CR.
+ * @return
+ *   Array of valid and failed e-mail addresses.
  */
-function fa_course_invite_accept($invite, $account, $is_new) {
-  if ($is_new == TRUE){
-    if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE){
-      // Reusable invite, first search for the distributor of the course invite
-      $distributor = db_select('fa_course_participant', 'cp')
-                    ->fields('cp')
-                    ->condition('iid', $invite->iid)
-                    ->isNotNull('invite_reuse')
-                    ->execute()
-                    ->fetchObject();
-      if ($distributor){
-        if (empty($distributor->uid)){
-          // This should happen only once
-          $distributor->uid = $invite->invitee;
-          drupal_write_record('fa_course_participant', $distributor, 'facpid');
-        }
-        // Create a new participant
-        db_query("INSERT INTO {fa_course_participant}(facid, email, iid, uid) VALUES(:facid, :email, :iid, :uid)",
-            array(':facid' => $participant->facid,
-                  ':email' => $invite->email,
-                  ':iid' => $invite->iid,
-                  ':uid' => $invite->invitee));
-      }else{
-        watchdog('fa_course','Could not find distributor participant of invite with id: %iid and email: %email',
-            array('%iid' => $invite->iid, '%email' => $invite->email), WATCHDOG_ERROR);
+function _fa_course_get_emails($string) {
+  $valid_emails = $failed_emails = array();
+  $user = '[a-zA-Z0-9_\-\.\+\^!#\$%&*+\/\=\?\`\|\{\}~\']+';
+  $domain = '(?:(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.?)+';
+  $ipv4 = '[0-9]{1,3}(\.[0-9]{1,3}){3}';
+  $ipv6 = '[0-9a-fA-F]{1,4}(\:[0-9a-fA-F]{1,4}){7}';
+  $rx = "/($user@($domain|(\[($ipv4|$ipv6)\])))>?$/";
+
+  $emails = str_replace(array("\n", "\r"), ',', drupal_strtolower($string));
+  $emails = array_filter(array_unique(explode(',', $emails)));
+  foreach ($emails as $email) {
+    $email = preg_replace('/^.*<(.*)>$/', '${1}', trim($email));
+    if ($email) {
+      if (preg_match($rx, $email, $match)) {
+        $valid_emails[] = $match[1];
       }
-    }else{
-      db_query("UPDATE {fa_course_participant} SET uid = :uid WHERE iid = :iid",
-          array(':facid' => $facid,
-              ':iid' => $invite->iid,
-              ':uid' => $invite->invitee));
+      else {
+        $failed_emails[] = $email;
+      }
     }
   }
+
+  return array('valid' => $valid_emails,
+               'failed' => $failed_emails);
 }
