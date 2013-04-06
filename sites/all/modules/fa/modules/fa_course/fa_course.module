@@ -133,6 +133,14 @@ function fa_course_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'fa_course.participants.inc',
   );
+  // Invite methods
+  $items['invite/accept/%fa_course_participant'] = array(
+    'page callback' => 'fa_course_invite_accept',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'fa_course.invite.inc',
+  );
 
   return $items;
 }
@@ -249,4 +257,32 @@ function _fa_course_get_course_roles(){
     'organizations' => $organization_options,
     'products' => $product_options,
   );
+}
+
+ /**
+ * Load a participant record for a tracking code.
+ * Called automatically because %fa_course_participant
+ */
+function fa_course_participant_load($code) {
+  $participants = &drupal_static(__FUNCTION__);
+  if (!isset($participants)) {
+    $participants = array();
+  }
+
+  if (!isset($participants[$code])) {
+    $participant = db_select('fa_course_participant', 'fap')
+      ->fields('fap')
+      ->condition('invite_reg_code', $code)
+      ->execute()
+      ->fetchObject();
+
+    if ($participant) {
+      $participants[$code] = $participant;
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  return $participants[$code];
 }
