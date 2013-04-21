@@ -59,6 +59,10 @@ function fa_course_settings() {
           + _get_default_assignment_form('feedback',
                                          t('feedback'),
                                          $product);
+    $form['product'][$product] = $form['product'][$product]
+          + _get_default_assignment_form('completion_message',
+                                         t('completion message'),
+                                         $product);
   }
 
   // Add vertical tabs display if available.
