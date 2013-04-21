@@ -445,57 +445,54 @@ function fa_course_schema() {
   return $schema;
 }
 
-
-/* TODO: This needs to be run when installing the module for the first time!
-
-INSERT INTO fa_course
-   (course_id, product_id, organization_id, created, crm_link, lead_sales_id, trainer_handover, sales_handover)
-
-SELECT r1.rid AS course_id,
-       r2.rid AS product_id,
-       r3.rid AS organization_id,
-       UNIX_TIMESTAMP(substring(
-      substring_index(r1.name, '#', -2),
-      1,
-      char_length(substring_index(r1.name, '#', -2))-1))
-      AS created,
-       'https://filosofianakatemia.capsulecrm.com' AS crm_link,
-       146 AS lead_sales_id,
-       UNIX_TIMESTAMP() AS trainer_handover,
-       UNIX_TIMESTAMP() AS sales_handover
-FROM role r1
-INNER JOIN role r2 ON r1.name LIKE
-   (CONCAT('%', substring_index(r2.name, '#', -2), '%'))
-INNER JOIN role r3 ON r1.name LIKE (CONCAT(r3.name, '%'))
-WHERE r1.name LIKE '%201%'
-   AND r2.name LIKE ('##%')
-   AND (LENGTH(r3.name) - LENGTH(REPLACE(r3.name, '#', '')))
-  / LENGTH('#') = 2.0;
-
-INSERT INTO fa_course_session
-    (facid, session_type, session_start_datetime, session_end_datetime, summary_emails)
-SELECT facid,
-       1 AS session_type,
-       created AS session_start_datetime,
-       created + 10800 AS session_end_datetime,
-       'info@filosofianakatemia.fi' AS summary_emails
-FROM fa_course;
-
-INSERT INTO fa_course_participant
-    (facid, email, invite_reg_code, invite_joined, uid)
-SELECT c.facid,
-       i.email,
-       i.reg_code,
-       i.joined,
-       i.invitee
-FROM invite i
-INNER JOIN invite_roles ir ON i.iid = ir.iid
-INNER JOIN role r ON ir.rid = r.rid
-INNER JOIN fa_course c ON r.rid = c.course_id;
-
-
+/**
+ * Implements hook_install().
  */
+function fa_course_install() {
 
+  db_query("INSERT INTO fa_course
+               (course_id, product_id, organization_id, created, crm_link, lead_sales_id, trainer_handover, sales_handover)
+
+            SELECT r1.rid AS course_id,
+                   r2.rid AS product_id,
+                   r3.rid AS organization_id,
+                   UNIX_TIMESTAMP(substring(
+                  substring_index(r1.name, '#', -2),
+                  1,
+                  char_length(substring_index(r1.name, '#', -2))-1))
+                  AS created,
+                   'https://filosofianakatemia.capsulecrm.com' AS crm_link,
+                   146 AS lead_sales_id,
+                   UNIX_TIMESTAMP() AS trainer_handover,
+                   UNIX_TIMESTAMP() AS sales_handover
+            FROM role r1
+            INNER JOIN role r2 ON r1.name LIKE
+               (CONCAT('%', substring_index(r2.name, '#', -2), '%'))
+            INNER JOIN role r3 ON r1.name LIKE (CONCAT(r3.name, '%'))
+            WHERE r1.name LIKE '%201%'
+               AND r2.name LIKE ('##%')
+               AND (LENGTH(r3.name) - LENGTH(REPLACE(r3.name, '#', '')))
+              / LENGTH('#') = 2.0");
+  db_query("INSERT INTO fa_course_session
+                (facid, session_type, session_start_datetime, session_end_datetime, summary_emails)
+            SELECT facid,
+                   1 AS session_type,
+                   created AS session_start_datetime,
+                   created + 10800 AS session_end_datetime,
+                   'info@filosofianakatemia.fi' AS summary_emails
+            FROM fa_course");
+  db_query("INSERT INTO fa_course_participant
+                (facid, email, invite_reg_code, invite_joined, uid)
+            SELECT c.facid,
+                   i.email,
+                   i.reg_code,
+                   i.joined,
+                   i.invitee
+            FROM invite i
+            INNER JOIN invite_roles ir ON i.iid = ir.iid
+            INNER JOIN role r ON ir.rid = r.rid
+            INNER JOIN fa_course c ON r.rid = c.course_id");
+}
 /**
  * Implements hook_uninstall().
  */
