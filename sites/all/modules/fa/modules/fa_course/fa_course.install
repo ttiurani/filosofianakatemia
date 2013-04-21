@@ -71,6 +71,16 @@ function fa_course_schema() {
         'type' => 'text',
         'not null' => FALSE,
       ),
+      'completion_message_email_template' => array(
+        'description' => 'Text of the completion message email template, stored in a serialized array.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'completion_message_sent' => array(
+        'description' => 'Time when completion message was sent.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
       'sales_handover' => array(
         'description' => 'Time when the course responsibility was handed back to the sales person.',
         'type' => 'int',
@@ -396,11 +406,17 @@ function fa_course_schema() {
               'description' => 'Id for the course session that has the message template.',
               'type' => 'int',
               'unsigned' => TRUE,
-              'not null' => TRUE,
+              'not null' => FALSE,
+          ),
+          'facid' => array(
+              'description' => 'Id for the course that has the message template (completion message).',
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => FALSE,
           ),
           'template_type' => array(
               'description' => 'Message template type, 1=preliminary assignment, 2=preliminary assignment reminder, '
-                              .'3=course assignment, 4=course assignment reminder, 5=followup, 5=feedback, 6=feedback reminder',
+                              .'3=course assignment, 4=course assignment reminder, 5=followup, 5=feedback, 6=feedback reminder, 7=completion message',
               'type' => 'int',
               'not null' => TRUE,
           ),
