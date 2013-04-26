@@ -48,20 +48,16 @@ function fa_course_settings() {
       '#group' => 'additional_settings',
     );
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form('preliminary_assignment',
-                                         t('preliminary assignment'),
+          + _get_default_assignment_form(unserialize(PRELIMINARY_ASSIGNMENT),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form('course_assignment',
-                                         t('course assignment'),
+          + _get_default_assignment_form(unserialize(COURSE_ASSIGNMENT),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form('feedback',
-                                         t('feedback'),
+          + _get_default_assignment_form(unserialize(FEEDBACK),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form('completion_message',
-                                         t('completion message'),
+          + _get_default_assignment_form(unserialize(COMPLETION_MESSAGE),
                                          $product);
   }
 
@@ -71,20 +67,20 @@ function fa_course_settings() {
   return system_settings_form($form);
 }
 
-function _get_default_assignment_form($assignment_type, $assignment_type_name, $product) {
+function _get_default_assignment_form($assignment, $product) {
   $form = array();
 
-  $subject_id = 'fa_course_default_' . $product .'_'. $assignment_type . '_subject_template';
+  $subject_id = 'fa_course_default_' . $product .'_'. $assignment['type'] . '_subject_template';
   $form[$subject_id] = array(
     '#type' => 'textfield',
-    '#title' => t('Default subject for ' . $assignment_type_name),
+    '#title' => t('Default subject for ' . $assignment['name']),
     '#default_value' => variable_get($subject_id, NULL),
     '#required' => FALSE,
   );
-  $message_id = 'fa_course_default_' . $product .'_'. $assignment_type . '_message_template';
+  $message_id = 'fa_course_default_' . $product .'_'. $assignment['type'] . '_message_template';
   $form[$message_id] = array(
     '#type' => 'textarea',
-    '#title' => t('Default message for ' . $assignment_type_name),
+    '#title' => t('Default message for ' . $assignment['name']),
     '#default_value' => variable_get($message_id, NULL),
     '#required' => FALSE,
   );
