@@ -222,6 +222,47 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
                                                 $feedback_options,
                                                 $product_name);
 
+  // Completion message
+  $completion_message = unserialize(COMPLETION_MESSAGE);
+  $form['course_session'][$completion_message['type']] = array(
+      '#type' => 'fieldset',
+      '#title' => ucfirst($completion_message['name']),
+  );
+
+  $form['course_session'][$completion_message['type']][$completion_message['type'] . '_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('This session has a ' . $completion_message['name']),
+      '#default_value'  => isset($course_session->completion_message_email_template),
+  );
+
+  $form['course_session'][$completion_message['type']] = $form['course_session'][$completion_message['type']]
+            + _get_email_template($course_session, $completion_message,
+              isset($course_session->completion_message_sent),
+              $product_name);
+
+  $form['course_session'][$completion_message['type']][$completion_message['type'] . '_action'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Send ' . $completion_message['name']),
+      '#default_value'  => FALSE,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $completion_message['type'] . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form['course_session'][$completion_message['type']][$completion_message['type'] . '_send_now'] = array(
+      '#type' => 'submit',
+      '#value' => t('Send now'),
+      '#submit' => array('fa_course_session_send_message'),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $completion_message['type'] . '_check]' => array('checked' => TRUE),
+              ':input[name=' . $completion_message['type'] . '_action]' => array('checked' => TRUE),
+              ),
+      ),
+  );
+
   $form['course_session']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
@@ -237,7 +278,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
     $assignment_type = $form_state['send_info']['assignment']['type'];
     $form['course_session'][$assignment_type][$assignment_type . '_subject']['#default_value'] = $form_state['send_info']['subject'];
     $form['course_session'][$assignment_type][$assignment_type . '_message']['#default_value'] = $form_state['send_info']['message'];
-    $participants = 0;
+    $participants = _get_participants_for_session($course_session);
     return confirm_form(
       $form,
       t('Are you sure you want to send the message with the subject "%subject" to %participants participants?',
@@ -249,6 +290,10 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       t('Cancel')
     );
   }
+}
+
+function _get_participants_for_session($course_session){
+  return db_query("SELECT COUNT(facpid) FROM fa_course_participant WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
 function _get_assignment_form($course_session, $assignment, $assignment_options, $product_name) {
@@ -286,38 +331,8 @@ function _get_assignment_form($course_session, $assignment, $assignment_options,
       ),
   );
 
-  $template = array();
-  $assignment_email_template = $assignment['type'] . '_email_template';
-  if (isset($course_session->$assignment_email_template))
-    $template = unserialize($course_session->$assignment_email_template);
-
-  $default_subject_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment['type'] . '_subject_template';
-  $form[$assignment['type']][$assignment['type'] . '_subject'] = array(
-      '#type'           => 'textfield',
-      '#title'          => t(ucfirst($assignment['name']) . ' email title'),
-      '#default_value'  => !empty($template) ? $template['subject'] :
-            variable_get($default_subject_id, NULL),
-      '#disabled'       => $assignment_sent,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=' . $assignment['type'] . '_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
-  $default_message_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment['type'] . '_message_template';
-  $form[$assignment['type']][$assignment['type'] . '_message'] = array(
-      '#type'           => 'textarea',
-      '#title'          => t(ucfirst($assignment['name']) . ' email body'),
-      '#default_value'  => !empty($template) ? $template['message'] :
-            variable_get($default_message_id, NULL),
-      '#disabled'       => $assignment_sent,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=' . $assignment['type'] . '_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
+  $form[$assignment['type']] = $form[$assignment['type']]
+            + _get_email_template($course_session, $assignment, $assignment_sent, $product_name);
 
   $assignment_datetime = $assignment['type'] . '_datetime';
   $form[$assignment['type']][$assignment['type'] . '_action'] = array(
@@ -398,6 +413,18 @@ function _get_assignment_form($course_session, $assignment, $assignment_options,
       ),
   );
 
+  $form[$assignment['type']][$assignment['type'] . '_reminder_send_now'] = array(
+      '#type' => 'submit',
+      '#value' => t('Send now'),
+      '#submit' => array('fa_course_session_send_message'),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment['type'] . '_check]' => array('checked' => TRUE),
+              ':input[name=' . $assignment['type'] . '_reminder_action]' => array('value' => SEND_NOW),
+              ),
+      ),
+  );
+
   $default_reminder_datetime = date('Y-m-d H:i', REQUEST_TIME);
   if (isset($course_session->session_start_datetime)){
     $default_reminder_datetime = date('Y-m-d H:i', $course_session->session_start_datetime - (SECONDS_IN_DAY * 2));
@@ -434,6 +461,46 @@ function _get_assignment_form($course_session, $assignment, $assignment_options,
 
   return $form;
 }
+
+function _get_email_template($course_session, $assignment, $assignment_sent, $product_name){
+
+  $form = array();
+
+  $template = array();
+  $assignment_email_template = $assignment['type'] . '_email_template';
+  if (isset($course_session->$assignment_email_template))
+    $template = unserialize($course_session->$assignment_email_template);
+
+  $default_subject_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment['type'] . '_subject_template';
+  $form[$assignment['type'] . '_subject'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t(ucfirst($assignment['name']) . ' email title'),
+      '#default_value'  => !empty($template) ? $template['subject'] :
+            variable_get($default_subject_id, NULL),
+      '#disabled'       => $assignment_sent,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment['type'] . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $default_message_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment['type'] . '_message_template';
+  $form[$assignment['type'] . '_message'] = array(
+      '#type'           => 'textarea',
+      '#title'          => t(ucfirst($assignment['name']) . ' email body'),
+      '#default_value'  => !empty($template) ? $template['message'] :
+            variable_get($default_message_id, NULL),
+      '#disabled'       => $assignment_sent,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $assignment['type'] . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+  return $form;
+}
+
 
 function fa_course_session_edit_form_validate($form, &$form_state) {
 
@@ -520,6 +587,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   _store_assignment($course_session, $form_state, unserialize(PRELIMINARY_ASSIGNMENT));
   _store_assignment($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));
   _store_assignment($course_session, $form_state, unserialize(FEEDBACK));
+  _store_assignment($course_session, $form_state, unserialize(COMPLETION_MESSAGE));
 
   if (isset($course_session->facsid))
     drupal_write_record('fa_course_session', $course_session, 'facsid');
@@ -538,27 +606,27 @@ function _store_assignment($course_session, $form_state, $assignment){
     // Either checked manually on save or during sending, when checked flag for some reason can not be set
     if ($form_state['values'][$assignment['type'] . '_check'] ||
         (isset($form_state['send_info']) && $form_state['send_info']['assignment']['type'] == $assignment['type'])){
-      $assignment_node_id = $assignment['type'] . '_node_id';
-      $course_session->$assignment_node_id = $form_state['values'][$assignment['type'] . '_select'];
       $template = array();
       $template['subject'] = $form_state['values'][$assignment['type'] . '_subject'];
       $template['message'] = $form_state['values'][$assignment['type'] . '_message'];
       $assignment_email_template = $assignment['type'] . '_email_template';
       $course_session->$assignment_email_template = serialize($template);
 
-      if (isset($form_state['values'][$assignment['type'] . '_action'])){
-        if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
-          $assignment_datetime = $assignment['type'] . '_datetime';
-          $course_session->$assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
-        }else{
-          // TODO send now
+      if ($assignment['type'] != 'completion_message'){
+        $assignment_node_id = $assignment['type'] . '_node_id';
+        $course_session->$assignment_node_id = $form_state['values'][$assignment['type'] . '_select'];
+
+        if (isset($form_state['values'][$assignment['type'] . '_action'])){
+          if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
+            $assignment_datetime = $assignment['type'] . '_datetime';
+            $course_session->$assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
+          }else{
+            // TODO send now
+          }
         }
       }
     }
-
   }
-
-
 }
 
 function fa_course_session_send_message($form = array(), &$form_state = array()){
@@ -575,6 +643,8 @@ function fa_course_session_send_message($form = array(), &$form_state = array())
     $send_info = _get_send_info($form_state, unserialize(FEEDBACK));
   }elseif($form_state['values']['feedback_reminder_action'] == SEND_NOW){
     $send_info = _get_send_info($form_state, unserialize(FEEDBACK_REMINDER));
+  }elseif($form_state['values']['completion_message_action'] == TRUE){
+    $send_info = _get_send_info($form_state, unserialize(COMPLETION_MESSAGE));
   }
 
   if (isset($send_info)){
