@@ -25,6 +25,13 @@ function fa_course_settings() {
     '#description' => t('The from email address for summary emails.'),
     '#required' => TRUE,
   );
+  $form['general']['fa_course_default_from_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default from email'),
+    '#default_value' => variable_get('fa_course_default_to_email', 'info@filosofianakatemia.fi'),
+    '#description' => t('The default email address when multiple emails can be sent with one message using the bcc field.'),
+    '#required' => TRUE,
+  );
   $form['general']['fa_course_materials'] = array(
     '#type' => 'textarea',
     '#title' => t('Options for material promises'),

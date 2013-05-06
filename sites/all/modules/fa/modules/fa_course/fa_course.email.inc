@@ -88,8 +88,7 @@ function _get_emails($course_session, $email_template, $action, $new_email){
         // Just create one big bcc address
         if (empty($emails)){
           $email = _get_email_array($row, $email_template, $from);
-          #### TODO: Change this to info@ when ready!
-          $email['to'] = 'webmaster@filosofianakatemia.fi';
+          $email['to'] = variable_get('fa_course_default_to_email', 'info@filosofianakatemia.fi');
           $email['bcc'] = $row->email;
           array_push($emails, $email);
         }else{
