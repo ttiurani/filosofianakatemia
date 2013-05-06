@@ -18,6 +18,13 @@ function fa_course_settings() {
     '#collapsed' => FALSE,
     '#group' => 'additional_settings',
   );
+  $form['general']['fa_course_default_from_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default from email'),
+    '#default_value' => variable_get('fa_course_default_from_email', 'webmaster@filosofianakatemia.fi'),
+    '#description' => t('The from email address for summary emails.'),
+    '#required' => TRUE,
+  );
   $form['general']['fa_course_materials'] = array(
     '#type' => 'textarea',
     '#title' => t('Options for material promises'),
