@@ -56,7 +56,8 @@ function fa_course_sessions($facid) {
     $rows[] = $cells;
   }
 
-  $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '<br/>'
+  $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
+            . l(t("Back to courses"), "admin/people/courses") . '<br/>'
             . l(t("Add new session"), "admin/people/courses/sessions/$facid/edit/new") . '</p>';
   $output = render($links);
 
@@ -83,7 +84,8 @@ function _get_session_types() {
 }
 
 function fa_course_sessions_edit($facid, $facsid){
-  $links = '<p>' . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
+  $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
+           . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
   $output = render($links);
 
 

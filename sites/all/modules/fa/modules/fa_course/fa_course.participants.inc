@@ -48,7 +48,8 @@ function fa_course_participants($facid) {
     $rows[] = $cells;
   }
 
-  $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '<br/>'
+  $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
+             . l(t("Back to courses"), "admin/people/courses") . '<br/>'
              . l(t("Import participants"), "admin/people/courses/participants/$facid/import") . '<br/>'
              . l(t("Add new participant"), "admin/people/courses/participants/$facid/edit/new") . '</p>';
   $output = render($links);
@@ -65,7 +66,8 @@ function fa_course_participants($facid) {
 }
 
 function fa_course_participants_edit($facid, $facpid){
-  $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
+  $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
+            . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
 
   $participant = _get_participant($facid, $facpid);
@@ -213,7 +215,8 @@ function fa_course_participants_delete_form_submit($form, &$form_state) {
 
 
 function fa_course_participants_import($facid){
-  $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
+  $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
+            . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
 
   $import_form = drupal_get_form('fa_course_participants_import_form', $facid);

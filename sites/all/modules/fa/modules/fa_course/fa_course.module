@@ -198,6 +198,31 @@ function fa_course_permission() {
   );
 }
 
+function _fa_course_get_course_name($facid){
+  $result = db_query("SELECT c.product_id AS product_id, c.organization_id AS organization_id, s.session_start_datetime AS session_start_datetime "
+                   . "FROM fa_course c "
+                   . "LEFT JOIN fa_course_session s ON s.facid = c.facid "
+                   . "WHERE c.facid = :facid "
+                   . "ORDER BY s.session_start_datetime ASC",
+              array(':facid' => $facid));
+  foreach($result as $row){
+    return _fa_course_format_course_name($row->product_id, $row->organization_id,
+            isset($row->session_start_datetime) ? $row->session_start_datetime : NULL);
+  }
+  return FALSE;
+}
+
+function _fa_course_format_course_name($product_id, $organization_id, $first_session_time){
+  $role_array = _fa_course_get_course_roles();
+  $product_name = $role_array['products'][$product_id];
+  $organization_name = $role_array['organizations'][$organization_id];
+  if ($first_session_time != NULL){
+    $first_session_string = date('Y-m-d', $first_session_time);
+  }else{
+    $first_session_string = 'TBD';
+  }
+  return $product_name . ' @ ' . $organization_name . ' @ ' . $first_session_string;
+}
 
 function _fa_course_validate_one_email($parsed_emails, $form_field){
   if (_fa_course_validate_emails($parsed_emails, $form_field)){
