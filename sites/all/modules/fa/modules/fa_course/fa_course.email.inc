@@ -12,63 +12,64 @@ define('ADD_EMAIL', 3);
 define('FIX_EMAIL', 4);
 
 function fa_course_send_assignment($course_session, $assignment){
-
   if ($assignment['is_reminder']) $action = REMIND;
   else $action = SEND;
 
-  $email_template = _fa_course_get_email_template($course_session, $assignment);
-  $emails = _get_emails($course_session, $email_template, $action);
+  $email_template = _fa_course_get_assignment_email_template($course_session, $assignment);
+  $emails = _fa_course_get_assignment_emails($course_session, $email_template, $action);
   foreach ($emails as $email){
     // Send email
-    $message = _send_email($email);
+    $message = _fa_course_send_email($email);
     if ($message == FALSE){
       return 0;
     }
     // Save email
-    _save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
+    _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
   }
-  _send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, $action);
+  _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, $action);
   return count($emails);
 }
 
-function fix_email($participant, $old_email){
-  $first_session = _get_first_session($participant->facid);
+function fa_course_fix_email($participant, $old_email){
+  $first_session = _fa_course_get_first_session($participant->facid);
   if ($first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
     // Preliminary assignment has already been sent, need to send it again
-    $email_template = _fa_course_get_email_template($first_session, PRELIMINARY_ASSIGNMENT);
-    $email = _get_emails($first_session, $email_template, FIX_EMAIL, $participant);
+    $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
+    $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
+    $email = _fa_course_get_assignment_emails($first_session, $email_template, FIX_EMAIL, $participant);
     // Send email
-    $message = _send_email($email);
+    $message = _fa_course_send_email($email);
     if ($message == FALSE){
       return FALSE;
     }
     // Save email
-    _save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
-    _send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, FIX_EMAIL, $participant, $old_email);
+    _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
+    _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, FIX_EMAIL, $participant, $old_email);
     return TRUE;
   }
   return FALSE;
 }
 
-function add_email($participant){
-  $first_session = _get_first_session($participant->facid);
+function fa_course_add_email($participant){
+  $first_session = _fa_course_get_first_session($participant->facid);
   if ($first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
-    $email_template = _fa_course_get_email_template($first_session, PRELIMINARY_ASSIGNMENT);
-    $email = _get_emails($first_session, $email_template, ADD_EMAIL, $participant);
+    $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
+    $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
+    $email = _fa_course_get_assignment_emails($first_session, $email_template, ADD_EMAIL, $participant);
     // Send email
-    $message = _send_email($email);
+    $message = _fa_course_send_email($email);
     if ($message == FALSE){
       return FALSE;
     }
     // Save email
-    _save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
-    _send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, ADD_EMAIL, $participant);
+    _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
+    _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, ADD_EMAIL, $participant);
     return TRUE;
   }
   return FALSE;
 }
 
-function _fa_course_get_email_template($course_session, $assignment){
+function _fa_course_get_assignment_email_template($course_session, $assignment){
   switch ($assignment['id']) {
     case 1:
       $email_template = unserialize($course_session->preliminary_assignment_email_template);
@@ -93,13 +94,19 @@ function _fa_course_get_email_template($course_session, $assignment){
       drupal_set_message(t('Unsupported assignment id @id.',  array('@id' => $assignment['id'])), 'error');
       return;
   }
+
+  $assignment_node_id = $assignment['type'] . '_node_id';
+  $email_template['message'] = str_replace('[invite:join-link]',
+                                   '[invite:join-link]?destination='
+                                      . _fa_course_get_node_url($course_session->$assignment_node_id),
+                                   $email_template['message']);
   return $email_template;
 }
 
-function _get_emails($course_session, $email_template, $action, $participant = NULL){
+function _fa_course_get_assignment_emails($course_session, $email_template, $action, $participant = NULL){
   global $user;
 
-  $sender_fields = user_load(_get_lead_trainer_uid($course_session));
+  $sender_fields = user_load(_fa_course_get_lead_trainer_uid($course_session));
 
   if (!empty($sender_fields->field_first_name) && !empty($sender_fields->field_last_name)){
     $firstname = $sender_fields->field_first_name['und']['0']['value'];
@@ -130,11 +137,12 @@ function _get_emails($course_session, $email_template, $action, $participant = N
     if (strpos($email_template['message'], '[invite:join-link]') == FALSE){
       $one_email = TRUE;
     }
+
     foreach ($result as $row) {
       if ($one_email){
         // Just create one big bcc address
         if (empty($emails)){
-          $email = _get_email_array($row, $email_template, $from);
+          $email = _fa_course_get_email_array($row, $email_template, $from);
           $email['to'] = variable_get('fa_course_default_to_email', 'info@filosofianakatemia.fi');
           $email['bcc'] = $row->email;
           $email['participant_ids'] = array($row->facpid);
@@ -146,14 +154,14 @@ function _get_emails($course_session, $email_template, $action, $participant = N
           array_push($email['participant_ids'], $row->facpid);
         }
       }else{
-        $email = _get_email_array($row, $email_template, $from);
+        $email = _fa_course_get_email_array($row, $email_template, $from);
         $email['to'] = $row->email;
         $email['participant_ids'] = array($row->facpid);
         array_push($emails, $email);
       }
     }
   }elseif ($action == ADD_EMAIL || $action == FIX_EMAIL){
-    $email = _get_email_array($participant, $email_template, $from);
+    $email = _fa_course_get_email_array($participant, $email_template, $from);
     $email['to'] = $participant->email;
     $email['participant_ids'] = array($participant->facpid);
     return $email;
@@ -161,8 +169,8 @@ function _get_emails($course_session, $email_template, $action, $participant = N
   return $emails;
 }
 
-function _get_email_array($participant, $email_template, $from){
-  $email_content = _get_email_content($email_template, $participant);
+function _fa_course_get_email_array($participant, $email_template, $from){
+  $email_content = _fa_course_get_email_content($email_template, $participant);
   return array(
         'from' => $from,
         'reply-to' => $from,
@@ -171,11 +179,11 @@ function _get_email_array($participant, $email_template, $from){
       );
 }
 
-function _get_lead_trainer_uid($course_session){
+function _fa_course_get_lead_trainer_uid($course_session){
   return db_query("SELECT lead_trainer_id FROM fa_course WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
-function _get_email_content($email_template, $participant){
+function _fa_course_get_email_content($email_template, $participant){
   $email_content['subject'] = $email_template['subject'];
   $email_content['message'] = str_replace('[invite:join-link]',
                                  url('invite/accept/' . $participant->invite_reg_code,
@@ -184,13 +192,19 @@ function _get_email_content($email_template, $participant){
   return $email_content;
 }
 
-function _get_first_session($facid){
+function _fa_course_get_node_url($assignment_node_id){
+  return db_query("SELECT ua.alias FROM url_alias ua WHERE ua.source = CONCAT('node/', :assignment_node_id)",
+                  array(':assignment_node_id' => $assignment_node_id)
+                        )->fetchField();
+}
+
+function _fa_course_get_first_session($facid){
   return db_query("SELECT * FROM fa_course_session "
                 . "WHERE facid = :facid ORDER BY session_start_datetime ASC LIMIT 1",
                 array(':facid' => $course_session->facid))->fetchField();
 }
 
-function _send_summary($facid, $email_template, $emails, $summary_emails, $action, $participant = NULL, $old_email = NULL){
+function _fa_course_send_summary($facid, $email_template, $emails, $summary_emails, $action, $participant = NULL, $old_email = NULL){
   $summary = array();
   if ($action == SEND || $action == REMIND){
 
@@ -228,10 +242,10 @@ function _send_summary($facid, $email_template, $emails, $summary_emails, $actio
 
   $summary['from'] = variable_get('fa_course_default_from_email', 'Filosofian Akatemia webmaster <webmaster@filosofianakatemia.fi>');
   $summary['to'] = $summary_emails;
-  _send_email($summary);
+  _fa_course_send_email($summary);
 }
 
-function _send_email($email){
+function _fa_course_send_email($email){
   global $language;
   $message = drupal_mail('fa_course', 'fa_course', $email['to'], $language, $email, $email['from'], TRUE);
   if ($message['result'] != TRUE){
@@ -243,7 +257,7 @@ function _send_email($email){
   return $message;
 }
 
-function _save_email($course_session_id, $assignment_id, $message, $participant_ids){
+function _fa_course_save_email($course_session_id, $assignment_id, $message, $participant_ids){
   $facmid = db_insert('fa_course_message')
               ->fields(array(
                 'facsid' => $course_session_id,

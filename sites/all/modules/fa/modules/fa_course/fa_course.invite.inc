@@ -12,7 +12,7 @@
 function fa_course_invite_accept($participant) {
   global $user;
 
-  $status = get_fa_course_invite_status($participant);
+  $status = _fa_course_get_fa_course_invite_status($participant);
 
   // Logs out the current user if logged in to avoid problems with setting roles
   if ($user->uid != 0){
@@ -42,7 +42,7 @@ function fa_course_invite_accept($participant) {
 /**
  * Checks the status of an invite.
  */
-function get_fa_course_invite_status($participant) {
+function _fa_course_get_fa_course_invite_status($participant) {
 
   if (isset($participant->invite_joined)){
     if (!isset($participant->invite_reuse) || $participant->invite_reuse == 0) {

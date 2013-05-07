@@ -17,12 +17,12 @@ function fa_course_participants($facid) {
     array('data' => t('First Name'), 'field' => 'p.first_name'),
     array('data' => t('Last Name'), 'field' => 'p.last_name'),
     t('Joined'),
-    t('Invite reuses left'),
+    t('Invite reg code'),
     t('Actions'),
   );
 
   $result = db_select('fa_course_participant', 'p')
-    ->fields('p', array('facid', 'facpid', 'email', 'first_name', 'last_name', 'invite_joined', 'invite_reuse', 'uid'))
+    ->fields('p', array('facid', 'facpid', 'email', 'first_name', 'last_name', 'invite_joined', 'invite_reg_code', 'uid'))
     ->extend('TableSort')
     ->extend('PagerDefault');
   $result->condition('p.facid', $facid);
@@ -40,7 +40,7 @@ function fa_course_participants($facid) {
     $cells[] = isset($row->first_name) ? $row->first_name : t('Not set');
     $cells[] = isset($row->last_name) ? $row->last_name : t('Not set');
     $cells[] = $row->invite_joined;
-    $cells[] = $row->invite_reuse;
+    $cells[] = $row->invite_reg_code;
 	$cells[] = (user_access('administer courses'))
 						? l(t('Edit'), "admin/people/courses/participants/$facid/edit/$row->facpid") . '<br/>' .
 						  l(t('Delete'), "admin/people/courses/participants/$facid/delete/$row->facpid")
@@ -70,13 +70,13 @@ function fa_course_participants_edit($facid, $facpid){
             . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
 
-  $participant = _get_participant($facid, $facpid);
+  $participant = fa_course_get_participant($facid, $facpid);
   $edit_form = drupal_get_form('fa_course_participants_edit_form', $participant);
   $output .= render($edit_form);
   return $output;
 }
 
-function _get_participant($facid, $facpid){
+function fa_course_get_participant($facid, $facpid){
   if ($facpid != 'new'){
     $participant = db_select('fa_course_participant', 'p')
     ->fields('p')
@@ -167,6 +167,10 @@ function fa_course_participants_edit_form_submit($form, &$form_state) {
   $participant->first_name = $form_state['values']['first_name'];
   $participant->last_name = $form_state['values']['last_name'];
   $participant->email = $form_state['values']['email'];
+  if (!isset($participant->invite_reg_code)){
+    // Generate reg code
+    $participant->invite_reg_code = fa_course_generate_reg_code();
+  }
 
   if (isset($participant->facpid))
     drupal_write_record('fa_course_participant', $participant, 'facpid');
@@ -179,7 +183,7 @@ function fa_course_participants_edit_form_submit($form, &$form_state) {
 function fa_course_participants_delete($facid, $facpid){
   $links = '<p>' . l(t("Back to participants"), "admin/people/courses/participants/$facid") . '</p>';
   $output = render($links);
-  $participant = _get_participant($facid, $facpid);
+  $participant = fa_course_get_participant($facid, $facpid);
   $delete_form = drupal_get_form('fa_course_participants_delete_form', $participant);
   $output .= render($delete_form);
   return $output;

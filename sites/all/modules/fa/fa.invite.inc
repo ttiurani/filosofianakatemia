@@ -512,7 +512,7 @@ function fa_invite_form_submit($form, &$form_state) {
         form_set_error('fa_invite_action', 'Error while sending email to additional participants');
         return;
       }
-      update_role_mappings($additional_invite, _get_roles($form_state['values']['additional_invite_example']));
+      update_role_mappings($additional_invite, fa_course_get_roles($form_state['values']['additional_invite_example']));
     }
   }else if ($form_state['values']['fa_invite_action'] == COURSE_FIX){
     $form_state['values']['invite']->email = $form_state['values']['correct_email'];
@@ -660,7 +660,7 @@ function _fa_invite_validate_emails($form_field){
   return TRUE;
 }
 
-function _get_roles($invite){
+function fa_course_get_roles($invite){
   // Gets all roles based on given invite
   $query = db_select('invite', 'i')
       ->fields('r', array('rid', 'name'))

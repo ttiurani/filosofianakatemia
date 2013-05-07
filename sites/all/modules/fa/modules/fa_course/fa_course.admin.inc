@@ -62,16 +62,16 @@ function fa_course_settings() {
       '#group' => 'additional_settings',
     );
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form(unserialize(PRELIMINARY_ASSIGNMENT),
+          + fa_course_get_default_assignment_form(unserialize(PRELIMINARY_ASSIGNMENT),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form(unserialize(COURSE_ASSIGNMENT),
+          + fa_course_get_default_assignment_form(unserialize(COURSE_ASSIGNMENT),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form(unserialize(FEEDBACK),
+          + fa_course_get_default_assignment_form(unserialize(FEEDBACK),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + _get_default_assignment_form(unserialize(COMPLETION_MESSAGE),
+          + fa_course_get_default_assignment_form(unserialize(COMPLETION_MESSAGE),
                                          $product);
   }
 
@@ -81,7 +81,7 @@ function fa_course_settings() {
   return system_settings_form($form);
 }
 
-function _get_default_assignment_form($assignment, $product) {
+function fa_course_get_default_assignment_form($assignment, $product) {
   $form = array();
 
   $subject_id = 'fa_course_default_' . $product .'_'. $assignment['type'] . '_subject_template';
