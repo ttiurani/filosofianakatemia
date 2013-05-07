@@ -18,30 +18,37 @@ define('SECONDS_IN_DAY', 86400);
 define('PRELIMINARY_ASSIGNMENT', serialize(
     array('id'=>1,
           'type'=>'preliminary_assignment',
+          'is_reminder'=> FALSE,
           'name'=>t('preliminary assignment'))));
 define('PRELIMINARY_ASSIGNMENT_REMINDER', serialize(
     array('id'=>2,
           'type'=>'preliminary_assignment_reminder',
+          'is_reminder'=> TRUE,
           'name'=>t('preliminary assignment reminder'))));
 define('COURSE_ASSIGNMENT', serialize(
     array('id'=>3,
           'type'=>'course_assignment',
+          'is_reminder'=> FALSE,
           'name'=>t('course assignment'))));
 define('COURSE_ASSIGNMENT_REMINDER', serialize(
     array('id'=>4,
           'type'=>'course_assignment_reminder',
+          'is_reminder'=> TRUE,
           'name'=>t('course assignment reminder'))));
 define('COMPLETION_MESSAGE', serialize(
     array('id'=>5,
           'type'=>'completion_message',
+          'is_reminder'=> FALSE,
           'name'=>t('completion message'))));
 define('FEEDBACK', serialize(
     array('id'=>6,
           'type'=>'feedback',
+          'is_reminder'=> FALSE,
           'name'=>t('feedback'))));
 define('FEEDBACK_REMINDER', serialize(
     array('id'=>7,
           'type'=>'feedback_reminder',
+          'is_reminder'=> TRUE,
           'name'=>t('feedback reminder'))));
 
 /**

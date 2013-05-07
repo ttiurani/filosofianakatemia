@@ -416,7 +416,7 @@ function fa_course_schema() {
               'not null' => TRUE,
           ),
           'message' => array(
-              'description' => 'Text of the email message, stored in a serialized array.',
+              'description' => 'Full message, stored in a serialized array.',
               'type' => 'text',
               'not null' => TRUE,
           ),

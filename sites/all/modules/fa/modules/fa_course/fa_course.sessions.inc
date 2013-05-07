@@ -280,6 +280,8 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
     $assignment_type = $form_state['send_info']['assignment']['type'];
     $form['course_session'][$assignment_type][$assignment_type . '_subject']['#default_value'] = $form_state['send_info']['subject'];
     $form['course_session'][$assignment_type][$assignment_type . '_message']['#default_value'] = $form_state['send_info']['message'];
+    $form['course_session']['summary_emails']['#default_value'] = $form_state['send_info']['summary_emails'];
+
     $participants = _get_participants_for_session($course_session);
     return confirm_form(
       $form,
@@ -575,7 +577,6 @@ function _validate_assignment_schedule($form_state, $assignment){
 }
 
 function fa_course_session_edit_form_submit($form, &$form_state) {
-
   $course_session = $form_state['course_session'];
 
   $course_session->session_type = $form_state['values']['session_type'];
@@ -591,11 +592,27 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   _store_assignment($course_session, $form_state, unserialize(FEEDBACK));
   _store_assignment($course_session, $form_state, unserialize(COMPLETION_MESSAGE));
 
+  // Send emails
+  if (isset($form_state['send_info'])){
+    module_load_include('inc', 'fa_course', 'fa_course.email');
+    $number_of_emails = fa_course_send_assignment($course_session, $form_state['send_info']['assignment']);
+
+    if ($number_of_emails > 0){
+      // Set assignment sent
+      $assignment_sent = $form_state['send_info']['assignment']['type'] . '_sent';
+      $course_session->$assignment_sent = REQUEST_TIME;
+      drupal_set_message(t('@num emails sent to participants.', array('@num' => $number_of_emails)));
+    }else{
+      drupal_set_message(t('Error sending emails.', array('@facsid' => $course_session->facsid)), 'error');
+    }
+  }
+
   if (isset($course_session->facsid))
     drupal_write_record('fa_course_session', $course_session, 'facsid');
   else
     drupal_write_record('fa_course_session', $course_session);
   drupal_set_message(t('Course session @facsid saved.', array('@facsid' => $course_session->facsid)));
+
   $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid;
 }
 
@@ -622,8 +639,7 @@ function _store_assignment($course_session, $form_state, $assignment){
           if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
             $assignment_datetime = $assignment['type'] . '_datetime';
             $course_session->$assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
-          }else{
-            // TODO send now
+            // TODO: schedule using the  Rules module!
           }
         }
       }
@@ -659,20 +675,19 @@ function fa_course_session_send_message($form = array(), &$form_state = array())
 function _get_send_info($form_state, $assignment){
 
   $reminder_len = strlen('_reminder');
-  if (substr($assignment['type'], -$reminder_len) === '_reminder'){
+  if ($assignment['is_reminder']){
     $subject = $form_state['values'][substr($assignment['type'], strlen($assignment['type']) - $reminder_len) . '_subject'];
     $message = $form_state['values'][substr($assignment['type'], strlen($assignment['type']) - $reminder_len) . '_message'];
-    $is_reminder = TRUE;
   }
   else{
     $subject = $form_state['values'][$assignment['type'] . '_subject'];
     $message = $form_state['values'][$assignment['type'] . '_message'];
-    $is_reminder = FALSE;
   }
   return array('assignment' => $assignment,
                'subject' => $subject,
                'message' => $message,
-               'is_reminder' => $is_reminder);
+               'summary_emails' => $form_state['values']['summary_emails'],
+               'is_reminder' => $assignment['is_reminder']);
 }
 
 function fa_course_sessions_delete($facid, $facsid){
