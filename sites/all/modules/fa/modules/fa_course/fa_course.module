@@ -303,7 +303,7 @@ function _fa_course_get_assignment_options($product_name, $node_type){
 }
 
 function _fa_course_get_lead_trainer_info($course_session){
-   $result = db_query("SELECT c.lead_trainer_id, u.mail FROM fa_course c "
+  $result = db_query("SELECT c.lead_trainer_id, u.mail FROM fa_course c "
                   ."INNER JOIN users u ON u.uid = c.lead_trainer_id "
                   ."WHERE facid = :facid",
                   array(':facid' => $course_session->facid));
@@ -331,6 +331,46 @@ function _fa_course_get_course_roles(){
     'organizations' => $organization_options,
     'products' => $product_options,
   );
+}
+
+function _fa_course_set_course_role($facid){
+  $result = db_query("SELECT c.course_id AS course_role_id, r1.name AS organization_role, r2.name as product_role FROM fa_course c "
+                  ."INNER JOIN role r1 ON r1.rid = c.organization_id "
+                  ."INNER JOIN role r2 ON r2.rid = c.product_id "
+                  ."WHERE facid = :facid",
+                  array(':facid' => $facid));
+  foreach($result as $row){
+    if (isset($row->course_role_id)) return NULL;
+    $organization_role_name = $row->organization_role;
+    $product_role_name = $row->product_role;
+    break;
+  }
+  if (!isset($organization_role_name) || !isset($product_role_name)) return FALSE;
+
+  $first_session = _fa_course_get_first_session($facid);
+  $first_session_string = date('Y-m-d', $first_session->session_start_datetime);
+
+  // Create course role based on organization, product and time of first session
+  $course_role = new stdClass();
+  $course_role->name = $organization_role_name . substr($product_role_name, 2, (strlen($product_role_name)-2))
+                      . $first_session_string . '#';
+
+  user_role_save($course_role);
+  db_query("UPDATE {fa_course} SET course_id = :rid WHERE facid = :facid",
+            array(':rid' => $course_role->rid, ':facid' => $facid));
+
+  return TRUE;
+}
+
+function _fa_course_get_first_session($facid){
+  $result = db_query("SELECT * FROM fa_course_session "
+                . "WHERE facid = :facid ORDER BY session_start_datetime ASC LIMIT 1",
+                array(':facid' => $facid));
+
+  foreach($result as $row){
+    return $row;
+  }
+  return FALSE;
 }
 
  /**

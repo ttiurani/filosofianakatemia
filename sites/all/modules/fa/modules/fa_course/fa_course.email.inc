@@ -194,12 +194,6 @@ function _fa_course_get_node_url($assignment_node_id){
                         )->fetchField();
 }
 
-function _fa_course_get_first_session($facid){
-  return db_query("SELECT * FROM fa_course_session "
-                . "WHERE facid = :facid ORDER BY session_start_datetime ASC LIMIT 1",
-                array(':facid' => $course_session->facid))->fetchField();
-}
-
 function _fa_course_send_summary($facid, $email_template, $emails, $summary_emails, $action, $participant = NULL, $old_email = NULL){
   $summary = array();
   if ($action == SEND || $action == REMIND){
@@ -248,8 +242,6 @@ function _fa_course_send_email($email){
      drupal_set_message(t('Error sending email with subject "@subject"',  array('@subject' => $email['subject'])), 'error');
      return FALSE;
   }
-  watchdog('debug', '<pre>'. print_r($message, TRUE) . '</pre>');
-
   return $message;
 }
 
