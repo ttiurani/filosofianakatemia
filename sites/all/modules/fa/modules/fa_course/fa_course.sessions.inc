@@ -645,7 +645,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     drupal_write_record('fa_course_session', $course_session);
   drupal_set_message(t('Course session @facsid saved.', array('@facsid' => $course_session->facsid)));
 
-  $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid;
+  $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid . '/edit/' . $course_session->facsid;
 }
 
 function _fa_course_store_assignment($course_session, $form_state, $assignment){

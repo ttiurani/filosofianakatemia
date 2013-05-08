@@ -28,7 +28,8 @@ function fa_course_overview() {
   $result = db_select('fa_course', 'fac')
     ->fields('fac', array('facid', 'city', 'crm_link', 'trainer_handover', 'sales_handover', 'lead_sales_id', 'lead_trainer_id'))
     ->extend('TableSort')
-    ->extend('PagerDefault');
+    ->extend('PagerDefault')
+    ->limit(20);
   $result->innerJoin('role', 'ro', 'ro.rid = fac.organization_id');
   $result->addField('ro', 'name', 'organization');
   $result->addField('ro', 'rid', 'organization_id');
@@ -178,41 +179,45 @@ function _fa_course_get_academians(){
  * Form for course static information.
  */
 function fa_course_info_form($form, &$form_state, $course, $action) {
-  $form['course_info'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Course Info'),
-  );
-  $info = _fa_course_get_course_info($course->facid);
 
-  $form['course_info']['participants'] = array(
-      '#markup' => '<p>' . l('Participants: ' . $info->participants, "admin/people/courses/participants/$course->facid") . '<br/>'
-                         . l('Sessions: ' . $info->participants, "admin/people/courses/sessions/$course->facid")
-                   . '</p>',
-  );
+  $info = _fa_course_get_course_info(isset($course->facid) ? $course->facid : NULL);
+  $form = array();
+  if ($info != FALSE){
+    $form['course_info'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Course Info'),
+    );
+    $form['course_info']['participants'] = array(
+        '#markup' => '<p>' . l('Participants: ' . $info->participants, "admin/people/courses/participants/$course->facid") . '<br/>'
+                           . l('Sessions: ' . $info->participants, "admin/people/courses/sessions/$course->facid")
+                     . '</p>',
+    );
 
-  $phase = _fa_course_get_phase($info);
+    $phase = _fa_course_get_phase($info);
 
-  $form['course_info']['phase'] = array(
-      '#markup' => '<p>' . t('Phase: ') . $phase['title'] .
-                         (isset($phase['action']) && user_access('administer courses') ?
-                          '<br/>' . $phase['action'] : "")
-                         . '</p>',
-  );
-
+    $form['course_info']['phase'] = array(
+        '#markup' => '<p>' . t('Phase: ') . $phase['title'] .
+                           (isset($phase['action']) && user_access('administer courses') ?
+                            '<br/>' . $phase['action'] : "")
+                           . '</p>',
+    );
+  }
   return $form;
 }
 
 function _fa_course_get_course_info($facid){
-   $result = db_query(
-                  "SELECT c.facid AS facid, c.sales_handover AS sales_handover, c.trainer_handover AS trainer_handover, "
-                .         "COUNT(DISTINCT s.facsid) AS sessions, COUNT(DISTINCT p.facpid) as participants "
-                . "FROM {fa_course} c "
-                . "LEFT JOIN {fa_course_session} s ON s.facid = c.facid "
-                . "LEFT JOIN {fa_course_participant} p ON p.facid = c.facid "
-                . "WHERE c.facid = :facid",
-                  array(':facid' => $facid));
-  foreach($result as $row){
-    return $row;
+  if ($facid != NULL){
+    $result = db_query(
+                    "SELECT c.facid AS facid, c.sales_handover AS sales_handover, c.trainer_handover AS trainer_handover, "
+                  .         "COUNT(DISTINCT s.facsid) AS sessions, COUNT(DISTINCT p.facpid) as participants "
+                  . "FROM {fa_course} c "
+                  . "LEFT JOIN {fa_course_session} s ON s.facid = c.facid "
+                  . "LEFT JOIN {fa_course_participant} p ON p.facid = c.facid "
+                  . "WHERE c.facid = :facid",
+                    array(':facid' => $facid));
+    foreach($result as $row){
+      return $row;
+    }
   }
   return FALSE;
 }
@@ -403,7 +408,7 @@ function fa_course_edit_form_submit($form, &$form_state) {
   else
     drupal_write_record('fa_course', $course);
   drupal_set_message(t('Course @facid saved.', array('@facid' => $course->facid)));
-  $form_state['redirect'] = "admin/people/courses";
+  $form_state['redirect'] = "admin/people/courses/view/" . $course->facid;
 }
 
 function fa_course_delete($facid){
