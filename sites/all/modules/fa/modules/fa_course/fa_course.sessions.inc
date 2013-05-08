@@ -621,15 +621,15 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
 
   // Send emails
   if (isset($form_state['send_info'])){
+    // If course role has not been created create it now
+    if(_fa_course_set_course_role($course_session->facid) == FALSE){
+      drupal_set_message(t('Could not create course role.'), 'error');
+    }
+
     module_load_include('inc', 'fa_course', 'fa_course.email');
     $number_of_emails = fa_course_send_assignment($course_session, $form_state['send_info']['assignment']);
 
     if ($number_of_emails > 0){
-      // If course role has not been created create it now
-      if(_fa_course_set_course_role($course_session->facid) == FALSE){
-        drupal_set_message(t('Could not create course role.'), 'error');
-      }
-
       // Set assignment sent
       $assignment_sent = $form_state['send_info']['assignment']['type'] . '_sent';
       $course_session->$assignment_sent = REQUEST_TIME;
