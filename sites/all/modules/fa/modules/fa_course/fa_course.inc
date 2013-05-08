@@ -10,8 +10,8 @@
  */
 function fa_course_overview() {
   $header = array(
-    array('data' => t('Course Id'), 'field' => 'facid'),
-    array('data' => t('First session'), 'field' => 'first_session', 'sort' => 'desc'),
+    array('data' => t('Course Id'), 'field' => 'facid', 'sort' => 'desc'),
+    array('data' => t('First session'), 'field' => 'first_session'),
     array('data' => t('Organization'), 'field' => 'organization'),
     array('data' => t('Product'), 'field' => 'product'),
     array('data' => t('Lead Sales'), 'field' => 'sales'),

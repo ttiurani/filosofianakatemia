@@ -126,12 +126,16 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#title' => t('Session Id'),
       '#disabled' => TRUE,
       '#value' => isset($course_session->facsid) ? $course_session->facsid : 'N/A',
+      '#size'           => 10,
+      '#maxlength'      => 10,
   );
   $form['course_session']['facid'] = array(
       '#type' => 'textfield',
       '#title' => t('Course Id'),
       '#disabled' => TRUE,
       '#value' => $course_session->facid,
+      '#size'           => 10,
+      '#maxlength'      => 10,
   );
 
   $session_type = _fa_course_get_session_types();
@@ -159,6 +163,9 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#title'          => t('Length of the session in minutes'),
       '#default_value'  => isset($course_session->session_end_datetime) ? ($course_session->session_end_datetime - $course_session->session_start_datetime) / 60: 180,
       '#required'       => TRUE,
+      '#size'           => 4,
+      '#maxlength'      => 4,
+
   );
 
   $form['course_session']['address'] = array(
@@ -168,8 +175,10 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
                                     required for both the participants and the trainer to find their way to the
                                     right place. E.g. room number and contact phone number might be needed.'),
       '#default_value'  => isset($course_session->address) ? $course_session->address : NULL,
-  );
+      '#size'           => 100,
+      '#maxlength'      => 512,
 
+  );
 
   // Material
   $material_choices = preg_split( '/\r\n|\r|\n/', variable_get('fa_course_materials', 'N/A'));
@@ -184,16 +193,28 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#options'        => $material_choices,
   );
 
+  $default_summary_emails = NULL;
+  $lead_trainer_info = _fa_course_get_lead_trainer_info($course_session);
+  if ($lead_trainer_info != FALSE){
+    $default_summary_emails = variable_get('fa_course_default_summary_emails', NULL);
+    if ($default_summary_emails != NULL) $default_summary_emails .= ', ';
+    $default_summary_emails .= _fa_course_get_lead_trainer_info($course_session)->mail;
+  }
+
   $form['course_session']['summary_emails'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Summary emails, separated with comma'),
-      '#default_value'  => isset($course_session->summary_emails) ? $course_session->summary_emails : NULL,
+      '#default_value'  => isset($course_session->summary_emails) ? $course_session->summary_emails :
+                                $default_summary_emails,
+      '#size'           => 100,
+      '#maxlength'      => 512,
   );
 
   $form['course_session']['assistant_email'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Assistant email'),
       '#default_value'  => isset($course_session->assistant_email) ? $course_session->assistant_email : NULL,
+
   );
 
   $product_name = str_replace('#', '', db_query("SELECT r.name from fa_course fac "
@@ -216,6 +237,47 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
                                                 unserialize(COURSE_ASSIGNMENT),
                                                 $course_assignment_options,
                                                 $product_name);
+  // Followup
+  $followup = unserialize(FOLLOWUP);
+  $form['course_session'][$followup['type']] = array(
+      '#type' => 'fieldset',
+      '#title' => ucfirst($followup['name']),
+  );
+
+  $form['course_session'][$followup['type']][$followup['type'] . '_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('This session has a ' . $followup['name']),
+      '#default_value'  => isset($course_session->followup_email_template),
+  );
+
+  $form['course_session'][$followup['type']] = $form['course_session'][$followup['type']]
+            + _fa_course_get_email_template($course_session, $followup,
+              isset($course_session->followup_sent),
+              $product_name);
+
+  $form['course_session'][$followup['type']][$followup['type'] . '_action'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Send ' . $followup['name']),
+      '#default_value'  => FALSE,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $followup['type'] . '_check]' => array('checked' => TRUE),
+          ),
+      ),
+  );
+
+  $form['course_session'][$followup['type']][$followup['type'] . '_send_now'] = array(
+      '#type' => 'submit',
+      '#value' => t('Send now'),
+      '#submit' => array('fa_course_session_send_message'),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=' . $followup['type'] . '_check]' => array('checked' => TRUE),
+              ':input[name=' . $followup['type'] . '_action]' => array('checked' => TRUE),
+              ),
+      ),
+  );
+
   // Feedback
 
   $feedback_options = _fa_course_get_assignment_options($product_name, 'course_feedback');
@@ -223,47 +285,6 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
                                                 unserialize(FEEDBACK),
                                                 $feedback_options,
                                                 $product_name);
-
-  // Completion message
-  $completion_message = unserialize(COMPLETION_MESSAGE);
-  $form['course_session'][$completion_message['type']] = array(
-      '#type' => 'fieldset',
-      '#title' => ucfirst($completion_message['name']),
-  );
-
-  $form['course_session'][$completion_message['type']][$completion_message['type'] . '_check'] = array(
-      '#type'           => 'checkbox',
-      '#title'          => t('This session has a ' . $completion_message['name']),
-      '#default_value'  => isset($course_session->completion_message_email_template),
-  );
-
-  $form['course_session'][$completion_message['type']] = $form['course_session'][$completion_message['type']]
-            + _fa_course_get_email_template($course_session, $completion_message,
-              isset($course_session->completion_message_sent),
-              $product_name);
-
-  $form['course_session'][$completion_message['type']][$completion_message['type'] . '_action'] = array(
-      '#type'           => 'checkbox',
-      '#title'          => t('Send ' . $completion_message['name']),
-      '#default_value'  => FALSE,
-      '#states' => array(
-          'visible' => array(
-              ':input[name=' . $completion_message['type'] . '_check]' => array('checked' => TRUE),
-          ),
-      ),
-  );
-
-  $form['course_session'][$completion_message['type']][$completion_message['type'] . '_send_now'] = array(
-      '#type' => 'submit',
-      '#value' => t('Send now'),
-      '#submit' => array('fa_course_session_send_message'),
-      '#states' => array(
-          'visible' => array(
-              ':input[name=' . $completion_message['type'] . '_check]' => array('checked' => TRUE),
-              ':input[name=' . $completion_message['type'] . '_action]' => array('checked' => TRUE),
-              ),
-      ),
-  );
 
   $form['course_session']['submit'] = array(
       '#type' => 'submit',
@@ -600,7 +621,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   _fa_course_store_assignment($course_session, $form_state, unserialize(PRELIMINARY_ASSIGNMENT));
   _fa_course_store_assignment($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));
   _fa_course_store_assignment($course_session, $form_state, unserialize(FEEDBACK));
-  _fa_course_store_assignment($course_session, $form_state, unserialize(COMPLETION_MESSAGE));
+  _fa_course_store_assignment($course_session, $form_state, unserialize(FOLLOWUP));
 
   // Send emails
   if (isset($form_state['send_info'])){
@@ -608,6 +629,9 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     $number_of_emails = fa_course_send_assignment($course_session, $form_state['send_info']['assignment']);
 
     if ($number_of_emails > 0){
+      // If course role has not been created create it now
+      // TODO
+
       // Set assignment sent
       $assignment_sent = $form_state['send_info']['assignment']['type'] . '_sent';
       $course_session->$assignment_sent = REQUEST_TIME;
@@ -641,7 +665,7 @@ function _fa_course_store_assignment($course_session, $form_state, $assignment){
       $assignment_email_template = $assignment['type'] . '_email_template';
       $course_session->$assignment_email_template = serialize($template);
 
-      if ($assignment['type'] != 'completion_message'){
+      if ($assignment['type'] != 'followup'){
         $assignment_node_id = $assignment['type'] . '_node_id';
         $course_session->$assignment_node_id = $form_state['values'][$assignment['type'] . '_select'];
 
@@ -671,8 +695,8 @@ function fa_course_session_send_message($form = array(), &$form_state = array())
     $send_info = _fa_course_get_send_info($form_state, unserialize(FEEDBACK));
   }elseif($form_state['values']['feedback_reminder_action'] == SEND_NOW){
     $send_info = _fa_course_get_send_info($form_state, unserialize(FEEDBACK_REMINDER));
-  }elseif($form_state['values']['completion_message_action'] == TRUE){
-    $send_info = _fa_course_get_send_info($form_state, unserialize(COMPLETION_MESSAGE));
+  }elseif($form_state['values']['followup_action'] == TRUE){
+    $send_info = _fa_course_get_send_info($form_state, unserialize(FOLLOWUP));
   }
 
   if (isset($send_info)){

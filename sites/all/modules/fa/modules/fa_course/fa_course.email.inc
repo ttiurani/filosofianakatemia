@@ -84,7 +84,7 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
       $email_template = unserialize($course_session->course_assignment_email_template);
       $email_template['subject'] = t('Reminder: ') . $email_template['subject'];
     case 5:
-      $email_template = unserialize($course_session->completion_message_email_template);
+      $email_template = unserialize($course_session->followup_email_template);
     case 6:
       $email_template = unserialize($course_session->feedback_email_template);
     case 7:
@@ -106,7 +106,7 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
 function _fa_course_get_assignment_emails($course_session, $email_template, $action, $participant = NULL){
   global $user;
 
-  $sender_fields = user_load(_fa_course_get_lead_trainer_uid($course_session));
+  $sender_fields = user_load(_fa_course_get_lead_trainer_info($course_session)->lead_trainer_id);
 
   if (!empty($sender_fields->field_first_name) && !empty($sender_fields->field_last_name)){
     $firstname = $sender_fields->field_first_name['und']['0']['value'];
@@ -177,10 +177,6 @@ function _fa_course_get_email_array($participant, $email_template, $from){
         'subject' => $email_content['subject'],
         'message' => $email_content['message']
       );
-}
-
-function _fa_course_get_lead_trainer_uid($course_session){
-  return db_query("SELECT lead_trainer_id FROM fa_course WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
 function _fa_course_get_email_content($email_template, $participant){

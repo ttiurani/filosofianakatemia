@@ -32,6 +32,14 @@ function fa_course_settings() {
     '#description' => t('The default email address when multiple emails can be sent with one message using the bcc field.'),
     '#required' => TRUE,
   );
+  $form['general']['fa_course_default_summary_emails'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default summary emails'),
+    '#default_value' => variable_get('fa_course_default_summary_emails', 'info@filosofianakatemia.fi'),
+    '#description' => t('The default summary email address, in addition to the lead trainer email.'),
+    '#required' => TRUE,
+  );
+
   $form['general']['fa_course_materials'] = array(
     '#type' => 'textarea',
     '#title' => t('Options for material promises'),
@@ -68,10 +76,10 @@ function fa_course_settings() {
           + fa_course_get_default_assignment_form(unserialize(COURSE_ASSIGNMENT),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + fa_course_get_default_assignment_form(unserialize(FEEDBACK),
+          + fa_course_get_default_assignment_form(unserialize(FOLLOWUP),
                                          $product);
     $form['product'][$product] = $form['product'][$product]
-          + fa_course_get_default_assignment_form(unserialize(COMPLETION_MESSAGE),
+          + fa_course_get_default_assignment_form(unserialize(FEEDBACK),
                                          $product);
   }
 

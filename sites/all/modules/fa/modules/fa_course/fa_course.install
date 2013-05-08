@@ -212,27 +212,12 @@ function fa_course_schema() {
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'completion_message_email_template' => array(
-            'description' => 'Text of the completion message email template, stored in a serialized array.',
-            'type' => 'text',
-            'not null' => FALSE,
-          ),
-          'completion_message_sent' => array(
-            'description' => 'Time when completion message was sent.',
-            'type' => 'int',
-            'not null' => FALSE,
-          ),
-          'followup_email_template' => array(
+          'followup_template' => array(
               'description' => 'Text of the followup email template, stored in a serialized array.',
               'type' => 'text',
               'not null' => FALSE,
           ),
-          'followup_email_datetime' => array(
-              'description' => 'Time when the followup email should be sent for this session.',
-              'type' => 'int',
-              'not null' => FALSE,
-          ),
-          'followup_email_sent' => array(
+          'followup_sent' => array(
               'description' => 'Time when the followup email was sent.',
               'type' => 'int',
               'not null' => FALSE,
@@ -410,8 +395,8 @@ function fa_course_schema() {
           ),
           'template_type' => array(
               'description' => 'Message template type, 1=preliminary assignment, 2=preliminary assignment reminder, '
-                              .'3=course assignment, 4=course assignment reminder, 5=completion message, '
-                              .'6=feedback, 7=feedback reminder, ',
+                              .'3=course assignment, 4=course assignment reminder, 5=followup, '
+                              .'6=feedback, 7=feedback reminder',
               'type' => 'int',
               'not null' => TRUE,
           ),
