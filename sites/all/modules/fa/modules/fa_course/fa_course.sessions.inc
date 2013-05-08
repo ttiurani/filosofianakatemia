@@ -297,6 +297,8 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
     $assignment_type = $form_state['send_info']['assignment']['type'];
     $form['course_session'][$assignment_type][$assignment_type . '_subject']['#default_value'] = $form_state['send_info']['subject'];
     $form['course_session'][$assignment_type][$assignment_type . '_message']['#default_value'] = $form_state['send_info']['message'];
+    $form['course_session'][$assignment_type][$assignment_type . '_check']['#default_value'] = TRUE;
+    $form['course_session'][$assignment_type][$assignment_type . '_select']['#default_value'] = $form_state['send_info']['assignment_node_id'];
     $form['course_session']['summary_emails']['#default_value'] = $form_state['send_info']['summary_emails'];
     $form['course_session']['assistant_email']['#default_value'] = $form_state['send_info']['assistant_email'];
 
@@ -361,6 +363,7 @@ function _fa_course_get_assignment_form($course_session, $assignment, $assignmen
       '#type'           => 'radios',
       '#title'          => t(ucfirst($assignment['name']) . ' action'),
       '#access'         => !$assignment_sent,
+      '#disabled'       => !isset($course_session->facsid),
       '#options'        => array(SCHEDULE => t('Schedule ' . $assignment['name']),
                                  SEND_NOW => t('Send ' . $assignment['name'] . ' now')),
       '#default_value'  => isset($course_session->$assignment_datetime) ?
@@ -423,6 +426,7 @@ function _fa_course_get_assignment_form($course_session, $assignment, $assignmen
   $form[$assignment['type']][$assignment['type'] . '_reminder_action'] = array(
       '#type'           => 'radios',
       '#title'          => t(ucfirst($assignment['name']) . ' reminder action'),
+      '#disabled'       => !isset($course_session->facsid),
       '#access'         => !isset($course_session->$reminder_sent_datetime),
       '#options'        => array(SCHEDULE => t('Schedule ' . $assignment['name'] . ' reminder'),
                                  SEND_NOW => t('Send ' . $assignment['name'] . ' reminder now')),
@@ -718,6 +722,7 @@ function _fa_course_get_send_info($form_state, $assignment){
   return array('assignment' => $assignment,
                'subject' => $subject,
                'message' => $message,
+               'assignment_node_id' => $form_state['values'][$assignment['type'] . '_select'],
                'summary_emails' => $form_state['values']['summary_emails'],
                'assistant_email' => $form_state['values']['assistant_email'],
                'is_reminder' => $assignment['is_reminder']);

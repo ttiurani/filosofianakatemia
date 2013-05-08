@@ -166,10 +166,23 @@ function fa_course_participants_edit_form_submit($form, &$form_state) {
   $participant = $form_state['participant'];
   $participant->first_name = $form_state['values']['first_name'];
   $participant->last_name = $form_state['values']['last_name'];
-  $participant->email = $form_state['values']['email'];
   if (!isset($participant->invite_reg_code)){
     // Generate reg code
     $participant->invite_reg_code = fa_course_generate_reg_code();
+  }
+
+  module_load_include('inc', 'fa_course', 'fa_course.email');
+  if (isset($participant->email)){
+    $old_email = $participant->email;
+    $participant->email = $form_state['values']['email'];
+    if (fa_course_fix_email($participant, $old_email) == FALSE){
+      drupal_set_message(t('Could not send participant email to new address, save failed.'));
+    }
+  }else{
+    $participant->email = $form_state['values']['email'];
+    if (fa_course_add_email($participant) == FALSE){
+      drupal_set_message(t('Could not send new participant email, save failed.'));
+    }
   }
 
   if (isset($participant->facpid))

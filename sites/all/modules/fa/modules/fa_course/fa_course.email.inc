@@ -32,7 +32,7 @@ function fa_course_send_assignment($course_session, $assignment){
 
 function fa_course_fix_email($participant, $old_email){
   $first_session = _fa_course_get_first_session($participant->facid);
-  if ($first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
+  if ($first_session != FALSE && $first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
     // Preliminary assignment has already been sent, need to send it again
     $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
     $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
@@ -45,14 +45,13 @@ function fa_course_fix_email($participant, $old_email){
     // Save email
     _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
     _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, FIX_EMAIL, $participant, $old_email);
-    return TRUE;
   }
-  return FALSE;
+  return TRUE;
 }
 
 function fa_course_add_email($participant){
   $first_session = _fa_course_get_first_session($participant->facid);
-  if ($first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
+  if ($first_session != FALSE && $first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
     $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
     $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
     $email = _fa_course_get_assignment_emails($first_session, $email_template, ADD_EMAIL, $participant);
@@ -64,9 +63,8 @@ function fa_course_add_email($participant){
     // Save email
     _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
     _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, ADD_EMAIL, $participant);
-    return TRUE;
   }
-  return FALSE;
+  return TRUE;
 }
 
 function _fa_course_get_assignment_email_template($course_session, $assignment){

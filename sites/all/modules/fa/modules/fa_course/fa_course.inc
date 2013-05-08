@@ -149,8 +149,8 @@ function fa_course_details($action, $facid){
   $links .= '</p>';
 
   $output = render($links);
-  //$info_form = drupal_get_form('fa_course_info_form', $course, $action);
-  //$output .= render($info_form);
+  $info_form = drupal_get_form('fa_course_info_form', $course, $action);
+  $output .= render($info_form);
   $edit_form = drupal_get_form('fa_course_edit_form', $course, $action);
   $output .= render($edit_form);
 
@@ -189,7 +189,7 @@ function fa_course_info_form($form, &$form_state, $course, $action) {
     );
     $form['course_info']['participants'] = array(
         '#markup' => '<p>' . l('Participants: ' . $info->participants, "admin/people/courses/participants/$course->facid") . '<br/>'
-                           . l('Sessions: ' . $info->participants, "admin/people/courses/sessions/$course->facid")
+                           . l('Sessions: ' . $info->sessions, "admin/people/courses/sessions/$course->facid")
                      . '</p>',
     );
 
