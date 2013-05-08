@@ -149,8 +149,8 @@ function fa_course_details($action, $facid){
   $links .= '</p>';
 
   $output = render($links);
-  $info_form = drupal_get_form('fa_course_info_form', $course, $action);
-  $output .= render($info_form);
+  //$info_form = drupal_get_form('fa_course_info_form', $course, $action);
+  //$output .= render($info_form);
   $edit_form = drupal_get_form('fa_course_edit_form', $course, $action);
   $output .= render($edit_form);
 
@@ -255,6 +255,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action) {
       '#multiple'       => FALSE,
       '#title'          => t('Select Organization'),
       '#options'        => $course_roles['organizations'],
+      '#default_value'  => isset($course->organization_id) ? $course->organization_id : NULL,
       '#disabled'       => $action == 'view',
       '#description'    => t('Select the organization/company where the course will be kept.'),
   );
@@ -280,6 +281,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action) {
       '#title'          => t('Select Product'),
       '#disabled'       => $action == 'view',
       '#options'        => $course_roles['products'],
+      '#default_value'  => isset($course->product_id) ? $course->product_id : NULL,
       '#description'    => t('Select the product.'),
   );
   $form['course']['product'] = array(
