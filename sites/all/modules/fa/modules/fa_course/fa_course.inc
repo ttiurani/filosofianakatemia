@@ -11,6 +11,7 @@
 function fa_course_overview() {
   $header = array(
     array('data' => t('Course Id'), 'field' => 'facid', 'sort' => 'desc'),
+    t('Course name'),
     array('data' => t('First session'), 'field' => 'first_session'),
     array('data' => t('Organization'), 'field' => 'organization'),
     array('data' => t('Product'), 'field' => 'product'),
@@ -22,7 +23,6 @@ function fa_course_overview() {
     t('Phase'),
     t('Sessions'),
     t('Participants'),
-    t('Actions'),
   );
 
   $result = db_select('fa_course', 'fac')
@@ -31,8 +31,10 @@ function fa_course_overview() {
     ->extend('PagerDefault');
   $result->innerJoin('role', 'ro', 'ro.rid = fac.organization_id');
   $result->addField('ro', 'name', 'organization');
+  $result->addField('ro', 'rid', 'organization_id');
   $result->innerJoin('role', 'rp', 'rp.rid = fac.product_id');
   $result->addField('rp', 'name', 'product');
+  $result->addField('rp', 'rid', 'product_id');
   $result->innerJoin('users', 'us', 'us.uid = fac.lead_sales_id');
   $result->innerJoin('field_data_field_first_name', 'us_fn', 'us_fn.entity_id = us.uid');
   $result->addField('us_fn', 'field_first_name_value', 'sales_first_name');
@@ -60,6 +62,8 @@ function fa_course_overview() {
   foreach ($result as $row) {
     $cells = array();
     $cells[] = $row->facid;
+    $course_name = _fa_course_format_course_name($row->product_id, $row->organization_id, (isset($row->first_session) ? $row->first_session : NULL));
+    $cells[] = l($course_name, "admin/people/courses/view/$row->facid");
     $cells[] = isset($row->first_session) ? format_date($row->first_session, 'custom', 'D d.m.Y H:i') : t('Not set');
     $cells[] = str_replace('#', '', $row->organization);
     $cells[] = str_replace('#', '', $row->product);
@@ -69,31 +73,10 @@ function fa_course_overview() {
     $cells[] = $row->course_role == NULL ? t('Not set') : $row->course_role;
     $cells[] = l(t("View CRM"), $row->crm_link, array('attributes' => array('target'=>'_blank')));
 
-    $phase_options = array(
-        'pending' =>  array(
-            'title' => t("Sales pending more information"),
-            'action' => l(t("Handover to the trainer"), "admin/people/courses/trainer_handover/$row->facid")),
-        'trainer' =>  array(
-            'title' => t("Trainer responsibility"),
-            'action' => l(t("Handover back to sales"), "admin/people/courses/sales_handover/$row->facid")),
-        'finished' =>  array(
-            'title' => t("Sales responsible for resale")),
-    );
-    $phase = $phase_options['pending'];
-    if (isset($row->trainer_handover)){
-      $phase = $phase_options['trainer'];
-      if (isset($row->sales_handover)){
-          $phase = $phase_options['finished'];
-      }
-    }
-    $cells[] = $phase['title'] . (isset($phase['action']) && user_access('administer courses') ? " <br/> " . $phase['action'] : "");
-    $cells[] = $row->sessions . "<br/>" . l(t("Details"), "admin/people/courses/sessions/$row->facid");
-    $cells[] = $row->participants . "<br/>" . l(t("Details"), "admin/people/courses/participants/$row->facid");
-    $cells[] = l(t('Details'), "admin/people/courses/view/$row->facid")
-              . (user_access('administer courses')
-                    ? " <br/> " . l(t('Edit'), "admin/people/courses/edit/$row->facid") . '<br/>'
-                                . l(t('Delete'), "admin/people/courses/delete/$row->facid")
-                    : "");
+    $phase = _fa_course_get_phase($row);
+    $cells[] = $phase['title'];
+    $cells[] = $row->sessions;
+    $cells[] = $row->participants;
     $rows[] = $cells;
   }
 
@@ -114,6 +97,29 @@ function fa_course_overview() {
   return $output;
 }
 
+function _fa_course_get_phase($course){
+  $phase_options =  array(
+        'pending' =>  array(
+            'title' => t("Sales pending more information"),
+            'action' => l(t("Handover to the trainer"), "admin/people/courses/trainer_handover/$course->facid")),
+        'trainer' =>  array(
+            'title' => t("Trainer responsibility"),
+            'action' => l(t("Handover back to sales"), "admin/people/courses/sales_handover/$course->facid")),
+        'finished' =>  array(
+            'title' => t("Sales responsible for resale")),
+  );
+
+  $phase = $phase_options['pending'];
+  if (isset($course->trainer_handover)){
+    $phase = $phase_options['trainer'];
+    if (isset($course->sales_handover)){
+      $phase = $phase_options['finished'];
+    }
+  }
+  return $phase;
+}
+
+
 function fa_course_details($action, $facid){
   if ($action == 'view' && $facid == 'new'){
   	return t('Invalid action');
@@ -129,10 +135,21 @@ function fa_course_details($action, $facid){
       'created'  => REQUEST_TIME,
     );
   }
+  $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>';
+  if ($action == 'view'){
+    $links .= l(t("Back"), "admin/people/courses")
+               . (user_access('administer courses')
+                 ? " <br/> " . l(t('Edit'), "admin/people/courses/edit/$facid") . '<br/>'
+                   . l(t('Delete'), "admin/people/courses/delete/$facid")
+                 : "");
+  }elseif ($action == 'edit'){
+    $links .= l(t("Back"), "admin/people/courses/view/$facid");
+  }
+  $links .= '</p>';
 
-  $links = '<p>' . l(t("Back to courses"), "admin/people/courses") . '</p>';
   $output = render($links);
-
+  $info_form = drupal_get_form('fa_course_info_form', $course, $action);
+  $output .= render($info_form);
   $edit_form = drupal_get_form('fa_course_edit_form', $course, $action);
   $output .= render($edit_form);
 
@@ -157,6 +174,48 @@ function _fa_course_get_academians(){
   return $academians;
 }
 
+/**
+ * Form for course static information.
+ */
+function fa_course_info_form($form, &$form_state, $course, $action) {
+  $form['course_info'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Course Info'),
+  );
+  $info = _fa_course_get_course_info($course->facid);
+
+  $form['course_info']['participants'] = array(
+      '#markup' => '<p>' . l('Participants: ' . $info->participants, "admin/people/courses/participants/$course->facid") . '<br/>'
+                         . l('Sessions: ' . $info->participants, "admin/people/courses/sessions/$course->facid")
+                   . '</p>',
+  );
+
+  $phase = _fa_course_get_phase($info);
+
+  $form['course_info']['phase'] = array(
+      '#markup' => '<p>' . t('Phase: ') . $phase['title'] .
+                         (isset($phase['action']) && user_access('administer courses') ?
+                          '<br/>' . $phase['action'] : "")
+                         . '</p>',
+  );
+
+  return $form;
+}
+
+function _fa_course_get_course_info($facid){
+   $result = db_query(
+                  "SELECT c.facid AS facid, c.sales_handover AS sales_handover, c.trainer_handover AS trainer_handover, "
+                .         "COUNT(DISTINCT s.facsid) AS sessions, COUNT(DISTINCT p.facpid) as participants "
+                . "FROM {fa_course} c "
+                . "LEFT JOIN {fa_course_session} s ON s.facid = c.facid "
+                . "LEFT JOIN {fa_course_participant} p ON p.facid = c.facid "
+                . "WHERE c.facid = :facid",
+                  array(':facid' => $facid));
+  foreach($result as $row){
+    return $row;
+  }
+  return FALSE;
+}
 
 /**
  * Form for creating/editing a course.

@@ -49,7 +49,7 @@ function fa_course_participants($facid) {
   }
 
   $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
-             . l(t("Back to courses"), "admin/people/courses") . '<br/>'
+             . l(t("Back"), "admin/people/courses/view/$facid") . '<br/>'
              . l(t("Import participants"), "admin/people/courses/participants/$facid/import") . '<br/>'
              . l(t("Add new participant"), "admin/people/courses/participants/$facid/edit/new") . '</p>';
   $output = render($links);

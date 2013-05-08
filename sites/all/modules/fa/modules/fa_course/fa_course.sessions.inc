@@ -17,7 +17,6 @@ function fa_course_sessions($facid) {
       t('Address'),
       t('Material'),
       t('Assistant email'),
-      t('Participants'),
       t('Actions'),
   );
 
@@ -27,8 +26,6 @@ function fa_course_sessions($facid) {
     ->fields('s', array('facid', 'facsid', 'session_type', 'session_start_datetime', 'session_end_datetime', 'address', 'material', 'assistant_email'))
     ->extend('TableSort')
     ->extend('PagerDefault');
-  $result->leftJoin('fa_sessions_participants', 'sp', 'sp.facsid = s.facsid');
-  $result->addExpression('COUNT(sp.facpid)', 'participants');
   $result->condition('s.facid', $facid);
   $result->distinct();
 
@@ -48,7 +45,6 @@ function fa_course_sessions($facid) {
     $cells[] = $row->address;
     $cells[] = $row->material;
     $cells[] = $row->assistant_email;
-    $cells[] = $row->participants;
     $cells[] = (user_access('administer courses'))
                 ? l(t('Edit'), "admin/people/courses/sessions/$facid/edit/$row->facsid") . '<br/>' .
                   l(t('Delete'), "admin/people/courses/sessions/$facid/delete/$row->facsid")
@@ -57,7 +53,7 @@ function fa_course_sessions($facid) {
   }
 
   $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
-            . l(t("Back to courses"), "admin/people/courses") . '<br/>'
+            . l(t("Back"), "admin/people/courses/view/$facid") . '<br/>'
             . l(t("Add new session"), "admin/people/courses/sessions/$facid/edit/new") . '</p>';
   $output = render($links);
 
