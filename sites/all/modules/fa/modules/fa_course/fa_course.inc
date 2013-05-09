@@ -204,20 +204,26 @@ function fa_course_info_form($form, &$form_state, $course, $action, $opportunity
     $phase = _fa_course_get_phase($info);
 
     $form['course_info']['phase'] = array(
-        '#markup' => '<p>' . t('Phase: ') . $phase['title'] .
-                           (isset($phase['action']) && user_access('administer courses') ?
-                            '<br/>' . $phase['action'] : "")
-                           . '</p>',
+        '#markup' => '<p>' . t('Phase: ') . $phase['title'],
     );
 
     if ($opportunity != NULL){
+      if ($opportunity->probablity == '100'){
+        $form['course_info']['phase']['#markup'] .= (isset($phase['action']) && user_access('administer courses') && opportunity ?
+                                                    '<br/>' . $phase['action'] : "")
+                                                   . '</p>';
+      }elseif ($phase['action']){
+        $form['course_info']['phase']['#markup'] .= '<br/><strong>' . t("Can't handover, opportunity probability not 100%")
+                                                   . '</strong></p>';
+      }
       $form['course_info']['crm'] = array(
           '#markup' => '<p>' . t('Opportunity name: ') . $opportunity->name . '<br/>'
-                             . t('Probablity: ') . $opportunity->probability . '<br/>'
+                             . t('Probablity: ') . $opportunity->probability . '%' . '<br/>'
                              . t('Value: ') . $opportunity->value . ' ' . $opportunity->currency . '<br/>'
                       . '</p>',
       );
-
+    }else{
+      $form['course_info']['phase']['#markup'] .= '</p>';
     }
   }
   return $form;
