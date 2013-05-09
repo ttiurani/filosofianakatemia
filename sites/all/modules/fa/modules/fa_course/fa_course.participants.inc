@@ -172,23 +172,32 @@ function fa_course_participants_edit_form_submit($form, &$form_state) {
   }
 
   module_load_include('inc', 'fa_course', 'fa_course.email');
-  if (isset($participant->email)){
+  $new_participant = FALSE;
+  if (isset($participant->email) && $participant->email != $form_state['values']['email']){
     $old_email = $participant->email;
     $participant->email = $form_state['values']['email'];
-    if (fa_course_fix_email($participant, $old_email) == FALSE){
-      drupal_set_message(t('Could not send participant email to new address, save failed.'));
+    $number_of_emails = fa_course_fix_email($participant, $old_email);
+    if ($number_of_emails == FALSE){
+      drupal_set_message(t('Could not send participant email to new address, save failed.'), 'error');
+    }elseif ($number_of_emails == 1){
+      drupal_set_message(t('One email sent to new address.'));
     }
-  }else{
+
+  }elseif(!isset($participant->email)){
+    $new_participant = TRUE;
     $participant->email = $form_state['values']['email'];
-    if (fa_course_add_email($participant) == FALSE){
-      drupal_set_message(t('Could not send new participant email, save failed.'));
+    drupal_write_record('fa_course_participant', $participant);
+    $number_of_emails = fa_course_add_email($participant);
+    if ($number_of_emails == FALSE){
+      drupal_set_message(t('Could not send new participant email, save failed.'), 'error');
+    }elseif ($number_of_emails == 1){
+      drupal_set_message(t('One email sent to new participant.'));
     }
   }
 
-  if (isset($participant->facpid))
+  if (!$new_participant)
     drupal_write_record('fa_course_participant', $participant, 'facpid');
-  else
-    drupal_write_record('fa_course_participant', $participant);
+
   drupal_set_message(t('Participant @facpid saved.', array('@facpid' => $participant->facpid)));
   $form_state['redirect'] = "admin/people/courses/participants/" . $participant->facid;
 }

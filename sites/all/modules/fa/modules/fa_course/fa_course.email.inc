@@ -43,10 +43,11 @@ function fa_course_fix_email($participant, $old_email){
       return FALSE;
     }
     // Save email
-    _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
-    _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, FIX_EMAIL, $participant, $old_email);
+    _fa_course_save_email($first_session->facsid, $assignment['id'], $message, $email['participant_ids']);
+    _fa_course_send_summary($first_session->facid, $email_template, array($email), $first_session->summary_emails, FIX_EMAIL, $participant, $old_email);
+    return 1;
   }
-  return TRUE;
+  return 0;
 }
 
 function fa_course_add_email($participant){
@@ -61,10 +62,11 @@ function fa_course_add_email($participant){
       return FALSE;
     }
     // Save email
-    _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
-    _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, ADD_EMAIL, $participant);
+    _fa_course_save_email($first_session->facsid, $assignment['id'], $message, $email['participant_ids']);
+    _fa_course_send_summary($first_session->facid, $email_template, array($email), $first_session->summary_emails, ADD_EMAIL, $participant);
+    return 1;
   }
-  return TRUE;
+  return 0;
 }
 
 function _fa_course_get_assignment_email_template($course_session, $assignment){
@@ -210,18 +212,24 @@ function _fa_course_send_summary($facid, $email_template, $emails, $summary_emai
         $summary['message'] .= 'bcc: ' . $email['bcc'] . "\n";
       }
     }else{
-      $summary['message'] .= 'to:' . "\n";
+      $missing_header = TRUE;
       foreach($emails as $email){
-        $summary['message'] .= '    ' . $email['to'] . "\n";
+        if ($missing_header){
+          $summary['message'] .= $email['from'] . "\n"
+                            . 'to: ' . $email['to'] . "\n";
+          $missing_header = FALSE;
+        }else{
+          $summary['message'] .= '    ' . $email['to'] . "\n";
+        }
       }
     }
   }elseif ($action == ADD_EMAIL){
     $summary['subject'] = t('ADDED: ') . _fa_course_get_course_name($facid);
-    $summary['message'] = t('An invitation like following was sent to this additional recipient:' . "\n\n")
+    $summary['message'] = t('An invitation from the following template was sent to this additional recipient:' . "\n\n")
                             . $participant->email . "\n";
   }elseif ($action == FIX_EMAIL){
     $summary['subject'] = t('FIXED: ') . _fa_course_get_course_name($facid);
-    $summary['message'] = t("The following message was sent to the fixed email address:" . "\n\n")
+    $summary['message'] = t("A message from the following template was sent to the fixed email address:" . "\n\n")
                        . $old_email . ' => ' . $participant->email . "\n";
   }
   $summary['message'] .= "\n**********\n\n"

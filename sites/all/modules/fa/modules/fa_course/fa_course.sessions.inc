@@ -628,6 +628,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     // If course role has not been created create it now
     if(_fa_course_set_course_role($course_session->facid) == FALSE){
       drupal_set_message(t('Could not create course role.'), 'error');
+      return;
     }
 
     module_load_include('inc', 'fa_course', 'fa_course.email');

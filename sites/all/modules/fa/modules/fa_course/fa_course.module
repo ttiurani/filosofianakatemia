@@ -340,11 +340,12 @@ function _fa_course_set_course_role($facid){
                   ."WHERE facid = :facid",
                   array(':facid' => $facid));
   foreach($result as $row){
-    if (isset($row->course_role_id)) return NULL;
+    if (isset($row->course_role_id)) return TRUE;
     $organization_role_name = $row->organization_role;
     $product_role_name = $row->product_role;
     break;
   }
+
   if (!isset($organization_role_name) || !isset($product_role_name)) return FALSE;
 
   $first_session = _fa_course_get_first_session($facid);
