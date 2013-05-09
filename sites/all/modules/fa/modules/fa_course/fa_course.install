@@ -89,6 +89,11 @@ function fa_course_schema() {
           'type' => 'text',
           'not null' => FALSE,
       ),
+      'billing_sent' => array(
+        'description' => 'Time when billing information was sent.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
       'other_information' => array(
           'description' => 'Free text column to add other course related information.',
           'type' => 'text',

@@ -39,6 +39,13 @@ function fa_course_settings() {
     '#description' => t('The default summary email address, in addition to the lead trainer email.'),
     '#required' => TRUE,
   );
+  $form['general']['fa_course_billing_emails'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Emails where billing information needs to be sent to after first session'),
+    '#default_value' => variable_get('fa_course_billing_emails', NULL),
+    '#description' => t('The default billing addresses, separated with a comma. Note: lead trainer and sales will be CC:d.'),
+    '#required' => TRUE,
+  );
   $form['general']['fa_course_capsulecrm_api_authentication_token'] = array(
     '#type' => 'textfield',
     '#title' => t('CapsuleCRM API authentication token'),
