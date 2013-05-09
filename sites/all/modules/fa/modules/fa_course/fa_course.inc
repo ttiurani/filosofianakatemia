@@ -122,6 +122,8 @@ function _fa_course_get_phase($course){
 
 
 function fa_course_details($action, $facid){
+  module_load_include('inc', 'fa_course', 'fa_course.capsulecrm');
+
   if ($action == 'view' && $facid == 'new'){
   	return t('Invalid action');
   }
@@ -148,10 +150,16 @@ function fa_course_details($action, $facid){
   }
   $links .= '</p>';
 
+  $opportunity = NULL;
+  if (isset($course->facid)){
+    $opportunity = fa_course_get_crm_opportunity($course->crm_link);
+  }
+
+
   $output = render($links);
-  $info_form = drupal_get_form('fa_course_info_form', $course, $action);
+  $info_form = drupal_get_form('fa_course_info_form', $course, $action, $opportunity);
   $output .= render($info_form);
-  $edit_form = drupal_get_form('fa_course_edit_form', $course, $action);
+  $edit_form = drupal_get_form('fa_course_edit_form', $course, $action, $opportunity);
   $output .= render($edit_form);
 
   return $output;
@@ -178,7 +186,7 @@ function _fa_course_get_academians(){
 /**
  * Form for course static information.
  */
-function fa_course_info_form($form, &$form_state, $course, $action) {
+function fa_course_info_form($form, &$form_state, $course, $action, $opportunity) {
 
   $info = _fa_course_get_course_info(isset($course->facid) ? $course->facid : NULL);
   $form = array();
@@ -201,6 +209,16 @@ function fa_course_info_form($form, &$form_state, $course, $action) {
                             '<br/>' . $phase['action'] : "")
                            . '</p>',
     );
+
+    if ($opportunity != NULL){
+      $form['course_info']['crm'] = array(
+          '#markup' => '<p>' . t('Opportunity name: ') . $opportunity->name . '<br/>'
+                             . t('Probablity: ') . $opportunity->probability . '<br/>'
+                             . t('Value: ') . $opportunity->value . ' ' . $opportunity->currency . '<br/>'
+                      . '</p>',
+      );
+
+    }
   }
   return $form;
 }
@@ -209,7 +227,7 @@ function _fa_course_get_course_info($facid){
   if ($facid != NULL){
     $result = db_query(
                     "SELECT c.facid AS facid, c.sales_handover AS sales_handover, c.trainer_handover AS trainer_handover, "
-                  .         "COUNT(DISTINCT s.facsid) AS sessions, COUNT(DISTINCT p.facpid) as participants "
+                  .         "COUNT(DISTINCT s.facsid) AS sessions, COUNT(DISTINCT p.facpid) as participants, c.crm_link AS crm_link "
                   . "FROM {fa_course} c "
                   . "LEFT JOIN {fa_course_session} s ON s.facid = c.facid "
                   . "LEFT JOIN {fa_course_participant} p ON p.facid = c.facid "
@@ -225,7 +243,7 @@ function _fa_course_get_course_info($facid){
 /**
  * Form for creating/editing a course.
  */
-function fa_course_edit_form($form, &$form_state, $course, $action) {
+function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity) {
   global $user;
 
   $academians = _fa_course_get_academians();
@@ -376,6 +394,10 @@ function fa_course_edit_form_validate($form, &$form_state) {
 
   if (!valid_url($form_state['values']['crm_link'], TRUE)){
     form_set_error('crm_link', t('Not a valid URL'));
+    return;
+  }
+  if (!fa_course_validate_crm_opportunity_url($form_state['values']['crm_link'])){
+    form_set_error('crm_link', t('Not a valid CapsuleCRM opportunity URL'));
     return;
   }
 }

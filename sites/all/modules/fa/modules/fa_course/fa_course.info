@@ -12,3 +12,4 @@ files[] = fa_course.sessions.inc
 files[] = fa_course.participants.inc
 files[] = fa_course.invite.inc
 files[] = fa_course.email.inc
+files[] = fa_course.capsulecrm.inc

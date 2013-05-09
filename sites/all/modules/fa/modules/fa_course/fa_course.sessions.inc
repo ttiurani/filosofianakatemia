@@ -317,7 +317,8 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 }
 
 function _fa_course_get_participants_for_session($course_session){
-  return db_query("SELECT COUNT(facpid) FROM fa_course_participant WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
+  return db_query("SELECT COUNT(facpid) FROM fa_course_participant "
+                . "WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
 function _fa_course_get_assignment_form($course_session, $assignment, $assignment_options, $product_name) {

@@ -39,6 +39,12 @@ function fa_course_settings() {
     '#description' => t('The default summary email address, in addition to the lead trainer email.'),
     '#required' => TRUE,
   );
+  $form['general']['fa_course_capsulecrm_api_authentication_token'] = array(
+    '#type' => 'textfield',
+    '#title' => t('CapsuleCRM API authentication token'),
+    '#default_value' => variable_get('fa_course_capsulecrm_api_authentication_token', NULL),
+    '#required' => TRUE,
+  );
 
   $form['general']['fa_course_materials'] = array(
     '#type' => 'textarea',
