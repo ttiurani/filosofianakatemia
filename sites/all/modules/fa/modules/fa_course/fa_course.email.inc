@@ -17,16 +17,18 @@ function fa_course_send_assignment($course_session, $assignment){
 
   $email_template = _fa_course_get_assignment_email_template($course_session, $assignment);
   $emails = _fa_course_get_assignment_emails($course_session, $email_template, $action);
-  foreach ($emails as $email){
-    // Send email
-    $message = _fa_course_send_email($email);
-    if ($message == FALSE){
-      return 0;
+  if (!empty($emails)){
+    foreach ($emails as $email){
+      // Send email
+      $message = _fa_course_send_email($email);
+      if ($message == FALSE){
+        return FALSE;
+      }
+      // Save email
+      _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
     }
-    // Save email
-    _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
+    _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, $action);
   }
-  _fa_course_send_summary($course_session->facid, $email_template, $emails, $course_session->summary_emails, $action);
   return count($emails);
 }
 
@@ -109,8 +111,6 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
 }
 
 function _fa_course_get_assignment_emails($course_session, $email_template, $action, $participant = NULL){
-  global $user;
-
   $sender_fields = user_load(_fa_course_get_lead_trainer_info($course_session)->lead_trainer_id);
 
   if (!empty($sender_fields->field_first_name) && !empty($sender_fields->field_last_name)){
@@ -126,15 +126,18 @@ function _fa_course_get_assignment_emails($course_session, $email_template, $act
   if ($action == SEND || $action == REMIND){
     // First get all participants for the session
     $result = db_select('fa_course_participant', 'p')
-                ->fields('p', array('facpid', 'email','invite_reg_code'));
+                  ->fields('p', array('facpid', 'email','invite_reg_code'));
     $result->condition('p.facid', $course_session->facid);
+
+    if ($action == REMIND){
+      // Add additional condition to exclude participants who have already used invite
+      $result->condition('p.invite_joined', NULL);
+    }
     $result->distinct();
     $result = $result->execute()->fetchAll();
 
     if (empty($result)){
-      // No participants, error
-      drupal_set_message(t('Session with id @id has no participants.',  array('@id' => $course_session->facsid)), 'error');
-      return;
+      return array();
     }
 
     // Check whether emails need to be sent one at a time, or as one big email

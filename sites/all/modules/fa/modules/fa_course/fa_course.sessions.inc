@@ -305,7 +305,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
     $participants = _fa_course_get_participants_for_session($course_session);
     return confirm_form(
       $form,
-      t('Are you sure you want to send the message with the subject "%subject" to %participants participants?',
+      t('Are you sure you want to send the message with the subject "%subject" to a session with %participants participants?',
           array('%subject' => $form_state['send_info']['is_reminder'] ? t("Reminder: ") . $form_state['send_info']['subject'] : $form_state['send_info']['subject'],
                 '%participants' => $participants)),
       "admin/people/courses/sessions/" . $form_state['course_session']->facid . '/edit/' . $form_state['course_session']->facsid,
@@ -639,7 +639,10 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
       $assignment_sent = $form_state['send_info']['assignment']['type'] . '_sent';
       $course_session->$assignment_sent = REQUEST_TIME;
       drupal_set_message(t('@num emails sent to participants.', array('@num' => $number_of_emails)));
-    }else{
+    }elseif ($number_of_emails == 0){
+      drupal_set_message(t('No participants match criteria, nothing sent.'));
+    }
+    elseif ($number_of_emails == FALSE){
       drupal_set_message(t('Error sending emails.', array('@facsid' => $course_session->facsid)), 'error');
     }
   }
