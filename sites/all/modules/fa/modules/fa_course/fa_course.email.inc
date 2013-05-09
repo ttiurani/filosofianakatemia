@@ -95,7 +95,12 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
       return;
   }
 
-  $assignment_node_id = $assignment['type'] . '_node_id';
+  if ($assignment['is_reminder']){
+    $original_assignment_type = substr($assignment['type'], 0, strlen($assignment['type']) - strlen('_reminder'));
+    $assignment_node_id = $original_assignment_type . '_node_id';
+  }else{
+    $assignment_node_id = $assignment['type'] . '_node_id';
+  }
   $email_template['message'] = str_replace('[invite:join-link]',
                                    '[invite:join-link]?destination='
                                       . _fa_course_get_node_url($course_session->$assignment_node_id),
@@ -198,11 +203,16 @@ function _fa_course_send_summary($facid, $email_template, $emails, $summary_emai
   $summary = array();
   if ($action == SEND || $action == REMIND){
 
-    if ($action == SEND) $summary['subject'] = t('SUMMARY: ') . _fa_course_get_course_name($facid);
-    else $summary['subject'] = t('REMINDED: ') . _fa_course_get_course_name($facid);
-
-    $summary['message'] = t("An invitation using the following message template was sent:" . "\n\n")
+    if ($action == SEND){
+      $summary['subject'] = t('SUMMARY: ') . _fa_course_get_course_name($facid);
+      $summary['message'] = t("An invitation using the following message template was sent:" . "\n\n")
                           . 'from: ';
+    }else {
+      $summary['subject'] = t('REMINDED: ') . _fa_course_get_course_name($facid);
+      $summary['message'] = t("An reminder using the following message template was sent:" . "\n\n")
+                          . 'from: ';
+    }
+
     if (count($emails) == 1){
       $aux = array_values($emails);
       $email = array_shift($aux);

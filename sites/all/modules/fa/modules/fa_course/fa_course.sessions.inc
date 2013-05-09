@@ -476,8 +476,8 @@ function _fa_course_get_assignment_form($course_session, $assignment, $assignmen
       '#title' => t(ucfirst($assignment['name']) . ' reminder sent time'),
       '#disabled' => TRUE,
       '#access' => isset($course_session->$reminder_sent_datetime),
-      '#value' => isset($course_session->$assignment_reminder_datetime) ?
-                      format_date($course_session->$assignment_reminder_datetime, 'custom', DATE_FORMAT) : NULL,
+      '#value' => isset($course_session->$reminder_sent_datetime) ?
+                      format_date($course_session->$reminder_sent_datetime, 'custom', DATE_FORMAT) : NULL,
       '#states' => array(
           'visible' => array(
               ':input[name=' . $assignment['type'] . '_check]' => array('checked' => TRUE),
@@ -711,19 +711,21 @@ function fa_course_session_send_message($form = array(), &$form_state = array())
 
 function _fa_course_get_send_info($form_state, $assignment){
 
-  $reminder_len = strlen('_reminder');
   if ($assignment['is_reminder']){
-    $subject = $form_state['values'][substr($assignment['type'], strlen($assignment['type']) - $reminder_len) . '_subject'];
-    $message = $form_state['values'][substr($assignment['type'], strlen($assignment['type']) - $reminder_len) . '_message'];
+    $original_assignment_type = substr($assignment['type'], 0, strlen($assignment['type']) - strlen('_reminder'));
+    $subject = $form_state['values'][$original_assignment_type . '_subject'];
+    $message = $form_state['values'][$original_assignment_type . '_message'];
+    $assignment_node_id = $form_state['values'][$original_assignment_type . '_select'];
   }
   else{
     $subject = $form_state['values'][$assignment['type'] . '_subject'];
     $message = $form_state['values'][$assignment['type'] . '_message'];
+    $assignment_node_id = $form_state['values'][$assignment['type'] . '_select'];
   }
   return array('assignment' => $assignment,
                'subject' => $subject,
                'message' => $message,
-               'assignment_node_id' => $form_state['values'][$assignment['type'] . '_select'],
+               'assignment_node_id' => $assignment_node_id,
                'summary_emails' => $form_state['values']['summary_emails'],
                'assistant_email' => $form_state['values']['assistant_email'],
                'is_reminder' => $assignment['is_reminder']);
