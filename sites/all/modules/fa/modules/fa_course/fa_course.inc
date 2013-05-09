@@ -650,7 +650,6 @@ function fa_course_trainer_handover_form_validate($form, &$form_state) {
   if ($participant_count == 0){
     form_set_error('submit', t("Course has no participants"));
   }
-
 }
 
 function fa_course_trainer_handover_form_submit($form, &$form_state) {
@@ -666,6 +665,59 @@ function fa_course_trainer_handover_form_submit($form, &$form_state) {
 }
 
 function fa_course_sales_handover($course){
-  $output = "fa_course_sales_handover" . $course->facid;
+  $links = '<p>' . l(t("Back"), "admin/people/courses/view/$course->facid") . '</p>';
+  $output = render($links);
+  $handover_form = drupal_get_form('fa_course_sales_handover_form', $course);
+  $output .= render($handover_form);
   return $output;
+}
+
+function fa_course_sales_handover_form($form, &$form_state, $course){
+  $form['course'] = array(
+    '#type' => 'value',
+    '#value' => $course,
+  );
+  return confirm_form(
+    $form,
+    t('Are you sure you want to handover the course @course_name '
+      . 'back to sales?',
+      array('@course_name' => _fa_course_get_course_name($course->facid))
+      ),
+    "admin/people/courses/view/" . $course->facid,
+    t('This action cannot be undone.'),
+    t('Handover'),
+    t('Cancel')
+  );
+}
+
+function fa_course_sales_handover_form_validate($form, &$form_state) {
+  $course = $form_state['values']['course'];
+
+  // Check that course has the right values
+  if (!isset($course->trainer_evaluation)){
+    form_set_error('submit', t("Trainer evaluation not given"));
+  }
+
+  // Sessions have to have all ended
+  $unfinished_sessions_count = db_query("SELECT COUNT(DISTINCT s.facsid) FROM fa_course_session s "
+                  . "WHERE s.facid = :facid AND s.session_end_datetime > :now",
+                      array(':facid' => $course->facid, ':now' => REQUEST_TIME)
+                    )->fetchField();
+
+  if ($unfinished_sessions_count > 0){
+    form_set_error('submit', t("All sessions are not finished yet"));
+  }
+
+}
+
+function fa_course_sales_handover_form_submit($form, &$form_state) {
+  $course = $form_state['values']['course'];
+  $course->sales_handover = REQUEST_TIME;
+
+  // Send message to sales
+  // TODO
+
+  drupal_write_record('fa_course', $course, 'facid');
+  drupal_set_message(t('Course with id %facid has been handed back over to sales.', array('%facid' => $course->facid)));
+  $form_state['redirect'] = "admin/people/courses/view/" . $course->facid;
 }
