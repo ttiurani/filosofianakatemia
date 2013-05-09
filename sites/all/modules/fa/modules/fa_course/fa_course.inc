@@ -274,6 +274,22 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#disabled' => TRUE,
       '#value' => isset($course->facid) ? $course->facid : 'N/A',
   );
+  $form['course']['trainer_handover'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Handed over to the trainer'),
+      '#disabled' => TRUE,
+      '#access' => isset($course->trainer_handover),
+      '#value' => isset($course->trainer_handover) ?
+                      format_date($course->trainer_handover, 'custom', DATE_FORMAT) : NULL,
+  );
+  $form['course']['sales_handover'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Handed back over to sales'),
+      '#disabled' => TRUE,
+      '#access' => isset($course->sales_handover),
+      '#value' => isset($course->sales_handover) ?
+                      format_date($course->sales_handover, 'custom', DATE_FORMAT) : NULL,
+  );
 
   // Organization select
   $form['course']['organization_select'] = array(
@@ -364,6 +380,46 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#options'        => $academians,
       '#default_value'  => isset($course->lead_trainer_id) ? $course->lead_trainer_id : 0,
   );
+
+  $form['course']['trainer_evaluation'] = array(
+      '#type' => 'fieldset',
+      '#access' => isset($course->trainer_handover),
+      '#title' => t('Trainer evaluation'),
+  );
+
+  $trainer_evaluation = array();
+  if (isset($course->trainer_evaluation)){
+    $trainer_evaluation = unserialize($course->trainer_evaluation);
+  }
+  $form['course']['trainer_evaluation']['evaluation_well'] = array(
+      '#type' => 'textarea',
+      '#disabled'  => $action == 'view',
+      '#default_value' => isset($trainer_evaluation['well']) ? $trainer_evaluation['well']: NULL,
+      '#title' => t('What went well in the training?'),
+      '#access' => isset($course->trainer_handover),
+  );
+  $form['course']['trainer_evaluation']['evaluation_better'] = array(
+      '#type' => 'textarea',
+      '#disabled' => $action == 'view',
+      '#default_value' => isset($trainer_evaluation['better']) ? $trainer_evaluation['better']: NULL,
+      '#title' => t('What will I do better next time?'),
+      '#access' => isset($course->trainer_handover),
+  );
+  $form['course']['trainer_evaluation']['evaluation_other'] = array(
+      '#type' => 'textarea',
+      '#disabled'  => $action == 'view',
+      '#title' => t('Other remarks, e.g. further actions'),
+      '#default_value' => isset($trainer_evaluation['other']) ? $trainer_evaluation['other']: NULL,
+      '#access' => isset($course->trainer_handover),
+  );
+  $form['course']['other_information'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Other information'),
+      '#description' => t('Other information about the course'),
+      '#disabled'       => $action == 'view',
+      '#default_value' => isset($course->other_information) ? $course->other_information: NULL,
+      '#required' => FALSE,
+  );
   $form['course']['submit'] = array(
       '#type' => 'submit',
       '#disabled'       => $action == 'view',
@@ -443,6 +499,20 @@ function fa_course_edit_form_submit($form, &$form_state) {
   $course->lead_sales_id = $form_state['values']['lead_sales'];
   if ($form_state['values']['lead_trainer'] != 0)
     $course->lead_trainer_id = $form_state['values']['lead_trainer'];
+  $course->other_information = $form_state['values']['other_information'];
+
+  // Trainer evaluation
+  $trainer_evaluation = NULL;
+  if ($form_state['values']['evaluation_well'] != NULL ||
+      $form_state['values']['evaluation_better'] != NULL ||
+      $form_state['values']['evaluation_other'] != NULL){
+    $trainer_evaluation = serialize(array(
+        'well' => $form_state['values']['evaluation_well'],
+        'better' => $form_state['values']['evaluation_better'],
+        'other' => $form_state['values']['evaluation_other'],
+      ));
+  }
+  $course->trainer_evaluation = $trainer_evaluation;
 
   if (isset($course->facid))
     drupal_write_record('fa_course', $course, 'facid');
