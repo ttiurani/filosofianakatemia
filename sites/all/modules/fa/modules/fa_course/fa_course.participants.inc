@@ -177,18 +177,17 @@ function fa_course_participants_edit_form_submit($form, &$form_state) {
     $old_email = $participant->email;
     $participant->email = $form_state['values']['email'];
     $number_of_emails = fa_course_fix_email($participant, $old_email);
-    if ($number_of_emails == FALSE){
+    if ($number_of_emails == -1){
       drupal_set_message(t('Could not send participant email to new address, save failed.'), 'error');
     }elseif ($number_of_emails == 1){
       drupal_set_message(t('One email sent to new address.'));
     }
-
   }elseif(!isset($participant->email)){
     $new_participant = TRUE;
     $participant->email = $form_state['values']['email'];
     drupal_write_record('fa_course_participant', $participant);
     $number_of_emails = fa_course_add_email($participant);
-    if ($number_of_emails == FALSE){
+    if ($number_of_emails == -1){
       drupal_set_message(t('Could not send new participant email, save failed.'), 'error');
     }elseif ($number_of_emails == 1){
       drupal_set_message(t('One email sent to new participant.'));

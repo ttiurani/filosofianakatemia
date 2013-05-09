@@ -208,11 +208,13 @@ function fa_course_info_form($form, &$form_state, $course, $action, $opportunity
     );
 
     if ($opportunity != NULL){
-      if ($opportunity->probablity == '100'){
-        $form['course_info']['phase']['#markup'] .= (isset($phase['action']) && user_access('administer courses') && opportunity ?
+      if ($opportunity->probability == '100'){
+        if (isset($course->lead_trainer_id)){
+          $form['course_info']['phase']['#markup'] .= (isset($phase['action']) && user_access('administer courses') ?
                                                     '<br/>' . $phase['action'] : "")
                                                    . '</p>';
-      }elseif ($phase['action']){
+        }
+      }elseif (isset($phase['action'])){
         $form['course_info']['phase']['#markup'] .= '<br/><strong>' . t("Can't handover, opportunity probability not 100%")
                                                    . '</strong></p>';
       }
@@ -337,6 +339,14 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#default_value' => isset($course->crm_link) ? $course->crm_link: NULL,
       '#required' => TRUE,
   );
+  $form['course']['billing_information'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Billing information'),
+      '#description' => t('Information about where the invoice should be sent after the first session has been held'),
+      '#disabled'       => $action == 'view',
+      '#default_value' => isset($course->billing_information) ? $course->billing_information: NULL,
+      '#required' => FALSE,
+  );
   $form['course']['lead_sales'] = array(
       '#type'           => 'select',
       '#multiple'       => FALSE,
@@ -429,6 +439,7 @@ function fa_course_edit_form_submit($form, &$form_state) {
 
   $course->city = $form_state['values']['city'];
   $course->crm_link = $form_state['values']['crm_link'];
+  $course->billing_information = $form_state['values']['billing_information'];
   $course->lead_sales_id = $form_state['values']['lead_sales'];
   if ($form_state['values']['lead_trainer'] != 0)
     $course->lead_trainer_id = $form_state['values']['lead_trainer'];
@@ -503,10 +514,86 @@ function fa_course_delete_form_submit($form, &$form_state) {
 }
 
 function fa_course_trainer_handover($course){
-  $output = "fa_course_trainer_handover" . $course->facid;
+  $links = '<p>' . l(t("Back"), "admin/people/courses/view/$course->facid") . '</p>';
+  $output = render($links);
+  $handover_form = drupal_get_form('fa_course_trainer_handover_form', $course);
+  $output .= render($handover_form);
   return $output;
 }
 
+function fa_course_trainer_handover_form($form, &$form_state, $course){
+  $form['course'] = array(
+    '#type' => 'value',
+    '#value' => $course,
+  );
+  return confirm_form(
+    $form,
+    t('Are you sure you want to handover the course @course_name '
+      . 'to the trainer @trainer_email?',
+      array('@course_name' => _fa_course_get_course_name($course->facid),
+            '@trainer_email' => _fa_course_get_lead_trainer_info($course->facid)->mail)
+      ),
+    "admin/people/courses/view/" . $course->facid,
+    t('This action cannot be undone.'),
+    t('Handover'),
+    t('Cancel')
+  );
+}
+
+function fa_course_trainer_handover_form_validate($form, &$form_state) {
+  $course = $form_state['values']['course'];
+
+  // Check that course has the right values
+  if (!isset($course->billing_information)){
+    form_set_error('submit', t("No billing information given"));
+  }
+  if (!isset($course->lead_trainer_id)){
+    form_set_error('submit', t("Lead trainer not set"));
+  }
+
+  // Get information about sessions
+  $result = db_query("SELECT * FROM fa_course_session "
+                . "WHERE facid = :facid ORDER BY session_start_datetime ASC",
+                array(':facid' => $course->facid));
+  $has_sessions = FALSE;
+  foreach($result as $row){
+    $has_sessions = TRUE;
+    if (!isset($row->address)){
+      form_set_error('submit', t("Session @session_id has no address",
+                                array('@session_id' => $course->facid)));
+    }
+    if (!isset($row->material)){
+      form_set_error('submit', t("Session @session_id has no material promises set",
+                                array('@session_id' => $course->facid)));
+    }
+  }
+  if (!$has_sessions){
+    form_set_error('submit', t("Course has no sessions"));
+  }
+
+  // Get participant count
+  $participant_count = db_query("SELECT COUNT(DISTINCT p.facpid) FROM fa_course_participant p "
+                  . "WHERE p.facid = :facid",
+                      array(':facid' => $course->facid)
+                    )->fetchField();
+
+  if ($participant_count == 0){
+    form_set_error('submit', t("Course has no participants"));
+  }
+
+}
+
+function fa_course_trainer_handover_form_submit($form, &$form_state) {
+  $course = $form_state['values']['course'];
+  $course->trainer_handover = REQUEST_TIME;
+
+  // Send message to trainer
+  // TODO
+
+  drupal_write_record('fa_course', $course, 'facid');
+  drupal_set_message(t('Course with id %facid has been handed over to the trainer.', array('%facid' => $course->facid)));
+  $form_state['redirect'] = "admin/people/courses/view/" . $course->facid;
+}
 
 function fa_course_sales_handover($course){
   $output = "fa_course_sales_handover" . $course->facid;

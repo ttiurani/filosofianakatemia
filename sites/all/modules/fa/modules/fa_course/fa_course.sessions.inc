@@ -81,7 +81,7 @@ function _fa_course_get_session_types() {
 
 function fa_course_sessions_edit($facid, $facsid){
   $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>'
-           . l(t("Back to sessions"), "admin/people/courses/sessions/$facid") . '</p>';
+           . l(t("Back"), "admin/people/courses/sessions/$facid") . '</p>';
   $output = render($links);
 
 
@@ -165,14 +165,12 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
   );
 
   $form['course_session']['address'] = array(
-      '#type'           => 'textfield',
+      '#type'           => 'textarea',
       '#title'          => t('Address of session'),
       '#description'          => t('Detailed address for the session, should include all information that is
                                     required for both the participants and the trainer to find their way to the
                                     right place. E.g. room number and contact phone number might be needed.'),
       '#default_value'  => isset($course_session->address) ? $course_session->address : NULL,
-      '#size'           => 100,
-      '#maxlength'      => 512,
 
   );
 
@@ -190,11 +188,11 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
   );
 
   $default_summary_emails = NULL;
-  $lead_trainer_info = _fa_course_get_lead_trainer_info($course_session);
+  $lead_trainer_info = _fa_course_get_lead_trainer_info($course_session->facid);
   if ($lead_trainer_info != FALSE){
     $default_summary_emails = variable_get('fa_course_default_summary_emails', NULL);
     if ($default_summary_emails != NULL) $default_summary_emails .= ', ';
-    $default_summary_emails .= _fa_course_get_lead_trainer_info($course_session)->mail;
+    $default_summary_emails .= $lead_trainer_info->mail;
   }
 
   $form['course_session']['summary_emails'] = array(

@@ -42,7 +42,7 @@ function fa_course_fix_email($participant, $old_email){
     // Send email
     $message = _fa_course_send_email($email);
     if ($message == FALSE){
-      return FALSE;
+      return -1;
     }
     // Save email
     _fa_course_save_email($first_session->facsid, $assignment['id'], $message, $email['participant_ids']);
@@ -61,7 +61,7 @@ function fa_course_add_email($participant){
     // Send email
     $message = _fa_course_send_email($email);
     if ($message == FALSE){
-      return FALSE;
+      return -1;
     }
     // Save email
     _fa_course_save_email($first_session->facsid, $assignment['id'], $message, $email['participant_ids']);
@@ -111,7 +111,7 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
 }
 
 function _fa_course_get_assignment_emails($course_session, $email_template, $action, $participant = NULL){
-  $sender_fields = user_load(_fa_course_get_lead_trainer_info($course_session)->lead_trainer_id);
+  $sender_fields = user_load(_fa_course_get_lead_trainer_info($course_session->facid)->lead_trainer_id);
 
   if (!empty($sender_fields->field_first_name) && !empty($sender_fields->field_last_name)){
     $firstname = $sender_fields->field_first_name['und']['0']['value'];

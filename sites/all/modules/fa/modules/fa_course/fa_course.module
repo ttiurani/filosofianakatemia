@@ -319,11 +319,11 @@ function _fa_course_get_assignment_options($product_name, $node_type){
   return $assignment_options;
 }
 
-function _fa_course_get_lead_trainer_info($course_session){
+function _fa_course_get_lead_trainer_info($facid){
   $result = db_query("SELECT c.lead_trainer_id, u.mail FROM fa_course c "
                   ."INNER JOIN users u ON u.uid = c.lead_trainer_id "
                   ."WHERE facid = :facid",
-                  array(':facid' => $course_session->facid));
+                  array(':facid' => $facid));
   foreach($result as $row){
     return $row;
   }
