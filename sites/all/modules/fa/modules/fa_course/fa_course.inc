@@ -501,3 +501,14 @@ function fa_course_delete_form_submit($form, &$form_state) {
   drupal_set_message(t('Course with id %facid has been deleted.', array('%facid' => $facid)));
   $form_state['redirect'] = "admin/people/courses";
 }
+
+function fa_course_trainer_handover($course){
+  $output = "fa_course_trainer_handover" . $course->facid;
+  return $output;
+}
+
+
+function fa_course_sales_handover($course){
+  $output = "fa_course_sales_handover" . $course->facid;
+  return $output;
+}

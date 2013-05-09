@@ -116,6 +116,22 @@ function fa_course_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'fa_course.inc',
   );
+  $items['admin/people/courses/trainer_handover/%fa_course'] = array(
+      'title' => t("Handover to the trainer"),
+      'page callback' => 'fa_course_trainer_handover',
+      'page arguments' => array(4),
+      'access arguments' => array('administer courses'),
+      'type' => MENU_CALLBACK,
+      'file' => 'fa_course.inc',
+  );
+  $items['admin/people/courses/sales_handover/%fa_course'] = array(
+      'title' => t("Handover back to sales"),
+      'page callback' => 'fa_course_sales_handover',
+      'page arguments' => array(4),
+      'access arguments' => array('administer courses'),
+      'type' => MENU_CALLBACK,
+      'file' => 'fa_course.inc',
+  );
   $items['admin/people/courses/sessions/%'] = array(
       'title' => t("Course sessions"),
       'page callback' => 'fa_course_sessions',
@@ -172,6 +188,7 @@ function fa_course_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'fa_course.participants.inc',
   );
+
   // Invite methods
   $items['invite/accept/%fa_course_participant'] = array(
     'page callback' => 'fa_course_invite_accept',
@@ -400,6 +417,19 @@ function fa_course_participant_load($code) {
   }
 
   return $participants[$code];
+}
+
+ /**
+ * Load a course record for handover.
+ * Called automatically because %fa_course
+ */
+function fa_course_load($facid) {
+  $course = db_select('fa_course', 'fac')
+      ->fields('fac')
+      ->condition('facid', $facid)
+      ->execute()
+      ->fetchObject();
+  return $course;
 }
 
 /**
