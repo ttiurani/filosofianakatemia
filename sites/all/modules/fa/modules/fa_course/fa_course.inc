@@ -151,7 +151,7 @@ function fa_course_details($action, $facid){
   $links .= '</p>';
 
   $opportunity = NULL;
-  if (isset($course->facid)){
+  if (isset($course->facid) && !isset($course->sales_handover)){
     $opportunity = fa_course_get_crm_opportunity($course->crm_link);
   }
 
@@ -396,7 +396,7 @@ function fa_course_edit_form_validate($form, &$form_state) {
     form_set_error('crm_link', t('Not a valid URL'));
     return;
   }
-  if (!fa_course_validate_crm_opportunity_url($form_state['values']['crm_link'])){
+  if (!isset($form_state['course']->sales_handover) && !fa_course_validate_crm_opportunity_url($form_state['values']['crm_link'])){
     form_set_error('crm_link', t('Not a valid CapsuleCRM opportunity URL'));
     return;
   }
