@@ -641,7 +641,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     }elseif ($number_of_emails == 0){
       drupal_set_message(t('No participants match criteria, nothing sent.'));
     }
-    elseif ($number_of_emails == FALSE){
+    elseif ($number_of_emails == -1){
       drupal_set_message(t('Error sending emails.', array('@facsid' => $course_session->facsid)), 'error');
     }
   }

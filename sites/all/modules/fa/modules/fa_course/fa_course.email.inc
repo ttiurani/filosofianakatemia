@@ -21,8 +21,8 @@ function fa_course_send_assignment($course_session, $assignment){
     foreach ($emails as $email){
       // Send email
       $message = _fa_course_send_email($email);
-      if ($message == FALSE){
-        return FALSE;
+      if ($message == NULL){
+        return -1;
       }
       // Save email
       _fa_course_save_email($course_session->facsid, $assignment['id'], $message, $email['participant_ids']);
@@ -33,12 +33,20 @@ function fa_course_send_assignment($course_session, $assignment){
 }
 
 function fa_course_fix_email($participant, $old_email){
+  return _fa_course_alter_email(FIX_EMAIL, $participant, $old_email);
+}
+
+function fa_course_add_email($participant){
+  return _fa_course_alter_email(ADD_EMAIL, $participant);
+}
+
+function _fa_course_alter_email($action, $participant, $old_email = NULL){
   $first_session = _fa_course_get_first_session($participant->facid);
   if ($first_session != FALSE && $first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
     // Preliminary assignment has already been sent, need to send it again
     $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
     $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
-    $email = _fa_course_get_assignment_emails($first_session, $email_template, FIX_EMAIL, $participant);
+    $email = _fa_course_get_assignment_emails($first_session, $email_template, $action, $participant);
     // Send email
     $message = _fa_course_send_email($email);
     if ($message == FALSE){
@@ -46,29 +54,60 @@ function fa_course_fix_email($participant, $old_email){
     }
     // Save email
     _fa_course_save_email($first_session->facsid, $assignment['id'], $message, $email['participant_ids']);
-    _fa_course_send_summary($first_session->facid, $email_template, array($email), $first_session->summary_emails, FIX_EMAIL, $participant, $old_email);
+    _fa_course_send_summary($first_session->facid, $email_template, array($email), $first_session->summary_emails, $action, $participant, $old_email);
     return 1;
   }
   return 0;
 }
 
-function fa_course_add_email($participant){
-  $first_session = _fa_course_get_first_session($participant->facid);
-  if ($first_session != FALSE && $first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
-    $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
-    $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
-    $email = _fa_course_get_assignment_emails($first_session, $email_template, ADD_EMAIL, $participant);
-    // Send email
-    $message = _fa_course_send_email($email);
-    if ($message == FALSE){
-      return -1;
-    }
-    // Save email
-    _fa_course_save_email($first_session->facsid, $assignment['id'], $message, $email['participant_ids']);
-    _fa_course_send_summary($first_session->facid, $email_template, array($email), $first_session->summary_emails, ADD_EMAIL, $participant);
-    return 1;
+
+function fa_course_send_trainer_handover($course){
+  return _fa_course_send_handover(TRUE, $course);
+}
+
+function fa_course_send_sales_handover($course){
+  return _fa_course_send_handover(FALSE, $course);
+}
+
+function _fa_course_send_handover($is_trainer, $course){
+  // Get emails
+  $result = db_query("SELECT trainer.mail AS trainer_email, sales.mail AS sales_email FROM fa_course f "
+          ."INNER JOIN users trainer ON f.trainer_id = trainer.uid "
+          ."INNER JOIN users sales ON f.sales_id = sales.uid "
+          ."WHERE f.facid = :facid", array(':facid' => $course->facid)
+     );
+  foreach($result as $row){
+    $sales_email = $row->sales_email;
+    $trainer_email = $row->trainer_email;
+    break;
   }
-  return 0;
+
+  // Create email
+  $email = array(
+    'to' => $is_trainer ? $trainer_email : $sales_email,
+    'cc' => $is_trainer ? $sales_email : $trainer_email,
+    'from' => variable_get('fa_course_default_from_email', 'webmaster@filosofianakatemia.fi'),
+  );
+
+  $course_name = _fa_course_get_course_name($facid);
+
+  if ($is_trainer){
+    $email['subject'] = t("TRAINER HANDOVER: ");
+    $email['message'] = t("@sales_email handed over the course @course_name to you the trainer @trainer_email.",
+                           array('@sales_email' => $sales_email, '@course_name' => $course_name, '@trainer_email' => $trainer_email))
+                           . "\n\n";
+  }else{
+    $email['subject'] = t("SALES HANDOVER: ");
+  }
+  $email['subject'] .= $course_name;
+  $email['message'] .= t("Visit the course at: ") . url('admin/people/courses/view/' . $course->facid, array('absolute' => TRUE));
+
+  // Send email
+  $message = _fa_course_send_email($email);
+  if ($message == NULL){
+    return FALSE;
+  }
+  return TRUE;
 }
 
 function _fa_course_get_assignment_email_template($course_session, $assignment){
@@ -259,7 +298,7 @@ function _fa_course_send_email($email){
   $message = drupal_mail('fa_course', 'fa_course', $email['to'], $language, $email, $email['from'], TRUE);
   if ($message['result'] != TRUE){
      drupal_set_message(t('Error sending email with subject "@subject"',  array('@subject' => $email['subject'])), 'error');
-     return FALSE;
+     return NULL;
   }
   return $message;
 }

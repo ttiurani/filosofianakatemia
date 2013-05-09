@@ -282,6 +282,14 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#value' => isset($course->trainer_handover) ?
                       format_date($course->trainer_handover, 'custom', DATE_FORMAT) : NULL,
   );
+  $form['course']['billing_sent'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Billing information sent'),
+      '#disabled' => TRUE,
+      '#access' => isset($course->billing_sent),
+      '#value' => isset($course->billing_sent) ?
+                      format_date($course->billing_sent, 'custom', DATE_FORMAT) : NULL,
+  );
   $form['course']['sales_handover'] = array(
       '#type' => 'textfield',
       '#title' => t('Handed back over to sales'),
@@ -654,10 +662,14 @@ function fa_course_trainer_handover_form_validate($form, &$form_state) {
 
 function fa_course_trainer_handover_form_submit($form, &$form_state) {
   $course = $form_state['values']['course'];
-  $course->trainer_handover = REQUEST_TIME;
+  $course->trainer_handover = REQUEST_<TIME;
 
-  // Send message to trainer
-  // TODO
+  module_load_include('inc', 'fa_course', 'fa_course.email');
+
+  if (fa_course_send_trainer_handover($course) == FALSE){
+    drupal_set_message(t('Error sending email to trainer.'));
+    return;
+  }
 
   drupal_write_record('fa_course', $course, 'facid');
   drupal_set_message(t('Course with id %facid has been handed over to the trainer.', array('%facid' => $course->facid)));
