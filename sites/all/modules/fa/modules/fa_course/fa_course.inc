@@ -290,6 +290,16 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#value' => isset($course->billing_sent) ?
                       format_date($course->billing_sent, 'custom', DATE_FORMAT) : NULL,
   );
+
+  $form['course']['billing_sent_value'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Value sent to billing'),
+      '#disabled' => TRUE,
+      '#access' => isset($course->price),
+      '#value' => isset($course->price) ?
+                      $course->price . ' ' . $course->currency : NULL,
+  );
+
   $form['course']['sales_handover'] = array(
       '#type' => 'textfield',
       '#title' => t('Handed back over to sales'),
@@ -367,7 +377,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#type' => 'textarea',
       '#title' => t('Billing information'),
       '#description' => t('Information about where the invoice should be sent after the first session has been held'),
-      '#disabled'       => $action == 'view',
+      '#disabled'       => $action == 'view' || isset($course->billing_sent),
       '#default_value' => isset($course->billing_information) ? $course->billing_information: NULL,
       '#required' => FALSE,
   );
@@ -736,34 +746,4 @@ function fa_course_sales_handover_form_submit($form, &$form_state) {
   drupal_write_record('fa_course', $course, 'facid');
   drupal_set_message(t('Course with id %facid has been handed back over to sales.', array('%facid' => $course->facid)));
   $form_state['redirect'] = "admin/people/courses/view/" . $course->facid;
-}
-
-/*
- * Implements hook_cron().
- */
-function fa_course_cron(){
-  // Find all
-  $result = db_query('SELECT DISTINCT(c.facid) AS facid, c.billing_information AS billing_information '
-                   . 'FROM fa_course c INNER JOIN fa_course_session s ON c.facid = s.facid '
-                   . 'WHERE s.session_end_datetime > :now AND billing_sent IS NULL', array(':now' => REQUEST_TIME));
-
-  // FIXME: Not select only the first sessions!
-  $queue = DrupalQueue::get('fa_course_send_billing');
-  foreach ($result as $course) {
-    $queue->createItem($course);
-  }
-}
-/*
- * Implements hook_cron_queue_info().
- */
-function fa_course_cron_queue_info(){
-  $queues['fa_course_send_billing'] = array(
-    'worker callback' => 'fa_course_send_billing',
-    'time' => 120,
-  );
-  return $queues;
-}
-
-function fa_course_send_billing($course){
-  return TRUE;
 }

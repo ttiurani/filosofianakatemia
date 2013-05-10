@@ -84,6 +84,11 @@ function fa_course_schema() {
         'precision' => 10,
         'scale' => 2
       ),
+      'currency' => array(
+          'description' => 'Currency of price.',
+          'type' => 'text',
+          'not null' => FALSE,
+      ),
       'billing_information' => array(
           'description' => 'Billing information.',
           'type' => 'text',

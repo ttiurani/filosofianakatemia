@@ -93,7 +93,7 @@ function mailchimp_import_admin_settings() {
         '#description'    => t('Select the input format for the content of imported campaigns.'),
       );
     }
-
+/*
     $form['mailchimp_import_cron'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Check for campaigns to import on every cron run.'),
@@ -101,7 +101,7 @@ function mailchimp_import_admin_settings() {
                              account every time cron runs.'),
       '#default_value'  => variable_get('mailchimp_import_cron', TRUE)
     );
-
+*/
     $form['mailchimp_import_extract_title'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Extract node title from content'),

@@ -42,7 +42,7 @@ function fa_course_add_email($participant){
 
 function _fa_course_alter_email($action, $participant, $old_email = NULL){
   $first_session = _fa_course_get_first_session($participant->facid);
-  if ($first_session != FALSE && $first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
+  if ($first_session != NULL && $first_session->session_start_datetime > REQUEST_TIME && isset($first_session->preliminary_assignment_sent)){
     // Preliminary assignment has already been sent, need to send it again
     $assignment = unserialize(PRELIMINARY_ASSIGNMENT);
     $email_template = _fa_course_get_assignment_email_template($first_session, $assignment);
@@ -104,6 +104,32 @@ function _fa_course_send_handover($is_trainer, $course){
   }
   $email['subject'] .= $course_name;
   $email['message'] .= t("View the course at: ") . url('admin/people/courses/view/' . $course->facid, array('absolute' => TRUE));
+
+  // Send email
+  $message = _fa_course_send_email($email);
+  if ($message == NULL){
+    return FALSE;
+  }
+  return TRUE;
+}
+
+function fa_course_send_billing_email($facid, $sum, $billing_information, $trainer_email, $sales_email){
+  // Create email
+  $email = array(
+    'to' => variable_get('fa_course_billing_emails', NULL),
+    'cc' => $trainer_email . ', ' . $sales_email,
+    'from' => variable_get('fa_course_default_from_email', 'webmaster@filosofianakatemia.fi'),
+  );
+
+  $course_name = _fa_course_get_course_name($facid);
+
+  $email['subject'] = t("READY FOR BILLING: ") . $course_name;
+  $email['message'] = t("The first session of the @course_name has been held and the course is now ready to be billed.",
+                           array('@course_name' => $course_name))
+                           . "\n\n";
+  $email['message'] .= t("Sum from CapsuleCRM: ") . $sum . "\n";
+  $email['message'] .= t("Billing information: ") . $billing_information . "\n\n";
+  $email['message'] .= t("View the course at: ") . url('admin/people/courses/view/' . $facid, array('absolute' => TRUE));
 
   // Send email
   $message = _fa_course_send_email($email);

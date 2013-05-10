@@ -388,7 +388,7 @@ function _fa_course_get_first_session($facid){
   foreach($result as $row){
     return $row;
   }
-  return FALSE;
+  return NULL;
 }
 
  /**
@@ -447,3 +447,61 @@ function fa_course_generate_reg_code() {
   return $reg_code;
 }
 
+/*
+ * Implements hook_cron().
+ */
+function fa_course_cron(){
+  watchdog('fa_course', 'hook_cron called');
+  // Find all courses that are potentially billable
+  $result = db_query('SELECT c.facid AS facid, c.billing_information AS billing_information, '
+                       . 'trainer.mail AS trainer_email, sales.mail AS sales_email, c.crm_link AS crm_link '
+                   . 'FROM fa_course c '
+                   . 'INNER JOIN users trainer ON c.lead_trainer_id = trainer.uid '
+                   . 'INNER JOIN users sales ON c.lead_sales_id = sales.uid '
+                   . 'WHERE c.billing_information IS NOT NULL AND c.billing_sent IS NULL AND c.trainer_handover IS NOT NULL');
+  $queue = DrupalQueue::get('fa_course_send_billing');
+  foreach ($result as $course_info) {
+    // Find if there is a first session and that the session has ended
+    $first_session = _fa_course_get_first_session($course_info->facid);
+    if ($first_session != NULL
+        && $first_session->session_end_datetime < REQUEST_TIME){
+      $queue->createItem($course_info);
+      watchdog('fa_course', 'Cron Queue got new item');
+    }
+  }
+}
+/*
+ * Implements hook_cron_queue_info().
+ */
+function fa_course_cron_queue_info(){
+  $queues['fa_course_send_billing'] = array(
+    'worker callback' => 'fa_course_send_billing',
+    'time' => 120,
+  );
+  return $queues;
+}
+
+function fa_course_send_billing($course_info){
+  watchdog('fa_course', 'Sending billing email');
+  // First get info from CapsuleCRM
+  module_load_include('inc', 'fa_course', 'fa_course.capsulecrm');
+  $opportunity = fa_course_get_crm_opportunity($course_info->crm_link);
+  $sum = $opportunity->value . ' ' . $opportunity->currency;
+
+  module_load_include('inc', 'fa_course', 'fa_course.email');
+  if (fa_course_send_billing_email($course_info->facid,
+                                   $sum,
+                                   $course_info->billing_information,
+                                   $course_info->trainer_email, $course_info->sales_email) == FALSE){
+    drupal_set_message(t('Error sending billing email to course with id %facid.', array('%facid' => $course_info->facid)), 'error');
+    return;
+  }
+  drupal_set_message(t('Course with id %facid has been sent to invoicing.', array('%facid' => $course_info->facid)));
+  db_query("UPDATE fa_course SET billing_sent = :now, price = :price, currency = :currency " .
+           "WHERE facid = :facid",
+            array(':now' => REQUEST_TIME,
+                  ':price' => $opportunity->value,
+                   ':currency' => $opportunity->currency,
+                   ':facid' => $course_info->facid));
+  watchdog('fa_course', 'Billing email sent successfully');
+}

@@ -46,14 +46,14 @@ function mailchimp_import_menu() {
  * Implementation of hook_cron().
  *
  * Runs the import function whenever cron runs, if configured to do so on the settings page.
- */
+
 function mailchimp_import_cron() {
   if (variable_get('mailchimp_import_cron', FALSE)) {
     require_once(dirname(__FILE__) . '/mailchimp_import.inc');
     mailchimp_import_get_campaigns();
   }
 }
-
+ */
 /**
  * Implementation of hook_node_delete().
  *
