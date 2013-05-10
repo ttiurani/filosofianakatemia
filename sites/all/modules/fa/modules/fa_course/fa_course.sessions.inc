@@ -187,6 +187,19 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#options'        => $material_choices,
   );
 
+  // Second trainer
+  $academians = _fa_course_get_academians();
+  $academians[0] = t('--no one--');
+
+  $second_trainer_id = _fa_course_get_second_trainer_id($course_session);
+  $form['course_session']['second_trainer'] = array(
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
+      '#title'          => t('Second trainer on the session'),
+      '#default_value'  => $second_trainer_id != NULL ? $second_trainer_id : 0,
+      '#options'        => $academians,
+  );
+
   $default_summary_emails = NULL;
   $lead_trainer_info = _fa_course_get_lead_trainer_info($course_session->facid);
   if ($lead_trainer_info != FALSE){
@@ -311,6 +324,30 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       t('Send'),
       t('Cancel')
     );
+  }
+}
+
+function _fa_course_get_second_trainer_id($course_session){
+  return db_query("SELECT uid FROM fa_sessions_trainers "
+                . "WHERE facsid = :facsid", array(':facsid' => $course_session->facsid))->fetchField();
+}
+
+function _fa_course_save_second_trainer($course_session, $second_trainer_id){
+  $current_second_trainer = _fa_course_get_second_trainer_id($course_session);
+  if ($current_second_trainer == NULL && $second_trainer_id != 0){
+    db_query("INSERT INTO fa_sessions_trainers(facsid, uid) "
+            ."VALUES(:facsid, :second_trainer_id)",
+          array(':second_trainer_id' => $second_trainer_id,
+                ':facsid' => $course_session->facsid));
+  }elseif($current_second_trainer != NULL && $second_trainer_id != 0){
+    db_query("UPDATE fa_sessions_trainers SET uid = :second_trainer_id "
+          ."WHERE facsid = :facsid",
+          array(':second_trainer_id' => $second_trainer_id,
+                ':facsid' => $course_session->facsid));
+  }elseif($current_second_trainer != NULL && $second_trainer_id == 0){
+    db_query("DELETE FROM fa_sessions_trainers "
+            ."WHERE facsid = :facsid",
+             array(':facsid' => $course_session->facsid));
   }
 }
 
@@ -616,6 +653,12 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   $course_session->material = $form['course_session']['material']['#options'][$form_state['values']['material']];
   $course_session->summary_emails = $form_state['values']['summary_emails'];
   $course_session->assistant_email = $form_state['values']['assistant_email'];
+
+  // Second trainer
+  $second_trainer_id = _fa_course_get_second_trainer_id($course_session);
+  if ($form_state['values']['second_trainer'] != 0 || (_fa_course_get_second_trainer_id($course_session) != NULL)){
+    _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
+  }
 
   _fa_course_store_assignment($course_session, $form_state, unserialize(PRELIMINARY_ASSIGNMENT));
   _fa_course_store_assignment($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));

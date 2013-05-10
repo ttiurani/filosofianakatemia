@@ -166,24 +166,6 @@ function fa_course_details($action, $facid){
 }
 
 /**
- * Helper function to get
- */
-function _fa_course_get_academians(){
-  // Use $query for readability
-  $query = 'SELECT DISTINCT u.uid, u.name
-              FROM {users} u
-              INNER JOIN {users_roles} ur ON u.uid = ur.uid
-              WHERE ur.rid = 4';
-  $result = db_query($query, array(':rids' => array(1,2,3)));
-
-  $academians = array();
-  foreach ($result as $row) {
-    $academians[$row->uid] = $row->name;
-  }
-  return $academians;
-}
-
-/**
  * Form for course static information.
  */
 function fa_course_info_form($form, &$form_state, $course, $action, $opportunity) {

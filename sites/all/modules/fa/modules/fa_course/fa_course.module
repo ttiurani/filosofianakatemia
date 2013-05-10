@@ -350,6 +350,22 @@ function _fa_course_get_course_roles(){
   );
 }
 
+function _fa_course_get_academians(){
+  // Use $query for readability
+  $query = 'SELECT DISTINCT u.uid, u.name
+              FROM {users} u
+              INNER JOIN {users_roles} ur ON u.uid = ur.uid
+              WHERE ur.rid = 4';
+  $result = db_query($query, array(':rids' => array(1,2,3)));
+
+  $academians = array();
+  foreach ($result as $row) {
+    $academians[$row->uid] = $row->name;
+  }
+  return $academians;
+}
+
+
 function _fa_course_set_course_role($facid){
   $result = db_query("SELECT c.course_id AS course_role_id, r1.name AS organization_role, r2.name as product_role FROM fa_course c "
                   ."INNER JOIN role r1 ON r1.rid = c.organization_id "
