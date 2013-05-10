@@ -4,6 +4,7 @@ core = 7.x
 package = Filosofian Akatemia
 dependencies[] = fa
 dependencies[] = date
+dependencies[] = rules_scheduler
 files[] = fa_course.module
 files[] = fa_course.install
 files[] = fa_course.admin.inc
