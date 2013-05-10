@@ -71,10 +71,10 @@ function fa_course_send_sales_handover($course){
 
 function _fa_course_send_handover($is_trainer, $course){
   // Get emails
-  $result = db_query("SELECT trainer.mail AS trainer_email, sales.mail AS sales_email FROM fa_course f "
-          ."INNER JOIN users trainer ON f.trainer_id = trainer.uid "
-          ."INNER JOIN users sales ON f.sales_id = sales.uid "
-          ."WHERE f.facid = :facid", array(':facid' => $course->facid)
+  $result = db_query("SELECT trainer.mail AS trainer_email, sales.mail AS sales_email FROM fa_course c "
+          ."INNER JOIN users trainer ON c.lead_trainer_id = trainer.uid "
+          ."INNER JOIN users sales ON c.lead_sales_id = sales.uid "
+          ."WHERE c.facid = :facid", array(':facid' => $course->facid)
      );
   foreach($result as $row){
     $sales_email = $row->sales_email;
@@ -89,18 +89,21 @@ function _fa_course_send_handover($is_trainer, $course){
     'from' => variable_get('fa_course_default_from_email', 'webmaster@filosofianakatemia.fi'),
   );
 
-  $course_name = _fa_course_get_course_name($facid);
+  $course_name = _fa_course_get_course_name($course->facid);
 
   if ($is_trainer){
     $email['subject'] = t("TRAINER HANDOVER: ");
-    $email['message'] = t("@sales_email handed over the course @course_name to you the trainer @trainer_email.",
+    $email['message'] = t("@sales_email handed over the course @course_name to the trainer @trainer_email.",
                            array('@sales_email' => $sales_email, '@course_name' => $course_name, '@trainer_email' => $trainer_email))
                            . "\n\n";
   }else{
     $email['subject'] = t("SALES HANDOVER: ");
+    $email['message'] = t("@trainer_email handed back over the course @course_name to the lead sales @sales_email.",
+                           array('@sales_email' => $sales_email, '@course_name' => $course_name, '@trainer_email' => $trainer_email))
+                           . "\n\n";
   }
   $email['subject'] .= $course_name;
-  $email['message'] .= t("Visit the course at: ") . url('admin/people/courses/view/' . $course->facid, array('absolute' => TRUE));
+  $email['message'] .= t("View the course at: ") . url('admin/people/courses/view/' . $course->facid, array('absolute' => TRUE));
 
   // Send email
   $message = _fa_course_send_email($email);

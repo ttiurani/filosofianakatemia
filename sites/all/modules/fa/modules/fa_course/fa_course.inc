@@ -662,7 +662,7 @@ function fa_course_trainer_handover_form_validate($form, &$form_state) {
 
 function fa_course_trainer_handover_form_submit($form, &$form_state) {
   $course = $form_state['values']['course'];
-  $course->trainer_handover = REQUEST_<TIME;
+  $course->trainer_handover = REQUEST_TIME;
 
   module_load_include('inc', 'fa_course', 'fa_course.email');
 
@@ -726,8 +726,12 @@ function fa_course_sales_handover_form_submit($form, &$form_state) {
   $course = $form_state['values']['course'];
   $course->sales_handover = REQUEST_TIME;
 
-  // Send message to sales
-  // TODO
+  module_load_include('inc', 'fa_course', 'fa_course.email');
+
+  if (fa_course_send_sales_handover($course) == FALSE){
+    drupal_set_message(t('Error sending email to sales.'));
+    return;
+  }
 
   drupal_write_record('fa_course', $course, 'facid');
   drupal_set_message(t('Course with id %facid has been handed back over to sales.', array('%facid' => $course->facid)));
