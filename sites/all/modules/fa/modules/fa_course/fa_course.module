@@ -451,7 +451,6 @@ function fa_course_generate_reg_code() {
  * Implements hook_cron().
  */
 function fa_course_cron(){
-  watchdog('fa_course', 'hook_cron called');
   // Find all courses that are potentially billable
   $result = db_query('SELECT c.facid AS facid, c.billing_information AS billing_information, '
                        . 'trainer.mail AS trainer_email, sales.mail AS sales_email, c.crm_link AS crm_link '
@@ -466,9 +465,12 @@ function fa_course_cron(){
     if ($first_session != NULL
         && $first_session->session_end_datetime < REQUEST_TIME){
       $queue->createItem($course_info);
-      watchdog('fa_course', 'Cron Queue got new item');
     }
   }
+
+  // Find scheduled but not sent assignments
+  // TODO
+
 }
 /*
  * Implements hook_cron_queue_info().
@@ -478,6 +480,11 @@ function fa_course_cron_queue_info(){
     'worker callback' => 'fa_course_send_billing',
     'time' => 120,
   );
+  $queues['fa_course_send_assignment'] = array(
+    'worker callback' => 'fa_course_send_assignment',
+    'time' => 300,
+  );
+
   return $queues;
 }
 
@@ -493,15 +500,20 @@ function fa_course_send_billing($course_info){
                                    $sum,
                                    $course_info->billing_information,
                                    $course_info->trainer_email, $course_info->sales_email) == FALSE){
-    drupal_set_message(t('Error sending billing email to course with id %facid.', array('%facid' => $course_info->facid)), 'error');
+    watchdog('fa_course', 'Error sending billing email to course %course',
+             array('%course' => $course_info->facid), WATCHDOG_ERROR);
     return;
   }
-  drupal_set_message(t('Course with id %facid has been sent to invoicing.', array('%facid' => $course_info->facid)));
   db_query("UPDATE fa_course SET billing_sent = :now, price = :price, currency = :currency " .
            "WHERE facid = :facid",
             array(':now' => REQUEST_TIME,
                   ':price' => $opportunity->value,
                    ':currency' => $opportunity->currency,
                    ':facid' => $course_info->facid));
-  watchdog('fa_course', 'Billing email sent successfully');
+  watchdog('fa_course', 'Billing email sent successfully for course %course',
+           array('%course' => $course_info->facid), WATCHDOG_NOTICE);
+}
+
+function fa_course_send_assignment($course_session, $assignment){
+  // TODO
 }

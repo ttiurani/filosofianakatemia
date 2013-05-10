@@ -631,7 +631,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     }
 
     module_load_include('inc', 'fa_course', 'fa_course.email');
-    $number_of_emails = fa_course_send_assignment($course_session, $form_state['send_info']['assignment']);
+    $number_of_emails = fa_course_send_assignment_email($course_session, $form_state['send_info']['assignment']);
 
     if ($number_of_emails > 0){
       // Set assignment sent

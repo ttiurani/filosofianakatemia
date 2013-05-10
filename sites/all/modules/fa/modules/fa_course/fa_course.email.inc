@@ -11,7 +11,7 @@ define('REMIND', 2);
 define('ADD_EMAIL', 3);
 define('FIX_EMAIL', 4);
 
-function fa_course_send_assignment($course_session, $assignment){
+function fa_course_send_assignment_email($course_session, $assignment){
   if ($assignment['is_reminder']) $action = REMIND;
   else $action = SEND;
 
