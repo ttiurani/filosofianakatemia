@@ -134,6 +134,8 @@ function smart_paging_form_alter(&$form, &$form_state, $form_id) {
       $display_settings = $display_defaults['extra_fields']['display']['smart_paging']['settings'];
     }
     if ($display_settings['smart_paging_settings_context'] == 'content') {
+      $filter_html_name  = array();
+      $supported_filters = array();
       foreach ($form_state['field'] as $field_name => $field) {
         if (isset($form[$field_name]['#language'])) {
           $lang = $form[$field_name]['#language'];
@@ -142,7 +144,8 @@ function smart_paging_form_alter(&$form, &$form_state, $form_id) {
               if (is_numeric($delta)) {
                 global $user;
                 $formats = filter_formats($user);
-                if (isset($properties['#format'])) {
+                if (array_key_exists('#format', $properties)) {
+                  $filter_html_name[] = $field_name . "[$lang][$delta][format]";
                   if (is_null($properties['#format'])) {
                     $format = $formats[filter_default_format($user)];
                     $filter = _filter_tips($format->format, FALSE);
@@ -165,166 +168,180 @@ function smart_paging_form_alter(&$form, &$form_state, $form_id) {
           }
         }
       }
-      if (isset($text_processing)) {
-        $entity_type = $form['#entity_type'];
-        $entity_info = entity_get_info($entity_type);      
-        if (isset($form_state['term']->{$entity_info['entity keys']['id']})) {
-          $entity_id = $form_state['term']->{$entity_info['entity keys']['id']};
+      foreach ($formats as $filter_name => $filter) {
+        $format = _filter_tips($filter_name, FALSE);
+        if (isset($format[$filter->name]['smart_paging_filter'])) {
+          $supported_filters[$filter_name] = TRUE;
         }
-        elseif (isset($form_state["$entity_type"]->{$entity_info['entity keys']['id']})) {
-          $entity_id = $form_state["$entity_type"]->{$entity_info['entity keys']['id']};
+      }
+      $smart_paging_js = array('smart_paging' => array(
+        'filter_html_name'    => $filter_html_name,
+        'smart_paging_filter' => $supported_filters,
+        'text_processing'     => isset($text_processing),
+      ));
+      drupal_add_js($smart_paging_js, 'setting');
+      drupal_add_js(drupal_get_path('module', 'smart_paging') . '/js/smart_paging-config.js');
+      $entity_type = $form['#entity_type'];
+      $entity_info = entity_get_info($entity_type);      
+      if (isset($form_state['term']->{$entity_info['entity keys']['id']})) {
+        $entity_id = $form_state['term']->{$entity_info['entity keys']['id']};
+      }
+      elseif (isset($form_state["$entity_type"]->{$entity_info['entity keys']['id']})) {
+        $entity_id = $form_state["$entity_type"]->{$entity_info['entity keys']['id']};
+      }
+      if (isset($entity_id)) {
+        // Retrieve the stored Smart Paging settings
+        $query = db_select('smart_paging', 'sp')
+          ->condition('sp.entity_id', $entity_id)
+          ->condition('sp.entity_type', $entity_type)
+          ->fields('sp', array('configuration'))
+          ->execute();
+        $smart_paging_config = unserialize($query->fetchField(0));
+        $form_state['storage']['smart_paging_entity_id']   = $entity_id;
+        $form_state['storage']['smart_paging_entity_type'] = $entity_type;
+      }
+      $fieldset_label = t('Smart Paging settings');
+      $form['smart_paging_settings'] = array(              
+        '#type'        => 'fieldset',
+        '#title'       => $fieldset_label,
+        '#description' => t('Remember to enable the Smart Paging input filter at !formats to be able to use this feature at your selected text format of filtered text field(s).', array('!formats' => l(t('Text formats settings page'), 'admin/config/content/formats'))),
+        '#attributes'  => array('class' => array('smart-paging-settings')),
+        '#collapsible' => TRUE,
+        '#collapsed'   => TRUE,
+        '#weight'      => 100,
+      );
+      $method_options = _smart_paging_method_list();
+      // Only node entity do have Additional settings aesthetics
+      if (isset($form_state['node'])) {
+        if (variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD) == SMART_PAGING_PLACEHOLDER_METHOD) {
+          $value = ' ' . t('(placeholder="!value")', array('!value' => variable_get('smart_paging_pagebreak', '<!--pagebreak-->')));
+          $default_method = $method_options[SMART_PAGING_PLACEHOLDER_METHOD] . $value;
         }
-        if (isset($entity_id)) {
-          // Retrieve the stored Smart Paging settings
-          $query = db_select('smart_paging', 'sp')
-            ->condition('sp.entity_id', $entity_id)
-            ->condition('sp.entity_type', $entity_type)
-            ->fields('sp', array('configuration'))
-            ->execute();
-          $smart_paging_config = unserialize($query->fetchField(0));
-          $form_state['storage']['smart_paging_entity_id']   = $entity_id;
-          $form_state['storage']['smart_paging_entity_type'] = $entity_type;
+        elseif (variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD) == SMART_PAGING_CHARACTER_LIMIT_METHOD) {
+          $value = ' ' . t('(!value characters)', array('!value' => variable_get('smart_paging_character_count', SMART_PAGING_MAX_CHAR_LIMIT)));
+          $default_method = $method_options[SMART_PAGING_CHARACTER_LIMIT_METHOD] . $value;
         }
-        $form['smart_paging_settings'] = array(              
-          '#type'        => 'fieldset',
-          '#title'       => t('Smart Paging settings'),
-          '#description' => t('Remember to enable the Smart Paging input filter at !formats to be able to use this feature at your selected text format of filtered text field(s).', array('!formats' => l(t('Text formats settings page'), 'admin/config/content/formats'))),
-          '#attributes'  => array('class' => array('smart-paging-settings')),
-          '#collapsible' => TRUE,
-          '#collapsed'   => TRUE,
-          '#weight'      => 100,
-        );
-        $method_options = _smart_paging_method_list();
-        // Only node entity do have Additional settings aesthetics
-        if (isset($form_state['node'])) {
-          if (variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD) == SMART_PAGING_PLACEHOLDER_METHOD) {
-            $value = ' ' . t('(placeholder="!value")', array('!value' => variable_get('smart_paging_pagebreak', '<!--pagebreak-->')));
-            $default_method = $method_options[SMART_PAGING_PLACEHOLDER_METHOD] . $value;
-          }
-          elseif (variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD) == SMART_PAGING_CHARACTER_LIMIT_METHOD) {
-            $value = ' ' . t('(!value characters)', array('!value' => variable_get('smart_paging_character_count', SMART_PAGING_MAX_CHAR_LIMIT)));
-            $default_method = $method_options[SMART_PAGING_CHARACTER_LIMIT_METHOD] . $value;
-          }
-          elseif (variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD) == SMART_PAGING_WORD_LIMIT_METHOD) {
-            $value = ' ' . t('(!value words)', array('!value' => variable_get('smart_paging_word_count', SMART_PAGING_MAX_WORD_LIMIT)));
-            $default_method = $method_options[SMART_PAGING_WORD_LIMIT_METHOD] . $value;
-          }
-          else {
-            $default_method = $method_options[SMART_PAGING_NO_METHOD];
-          }
-          if (variable_get('smart_paging_title_display_suffix', TRUE)) {
-            $default_method .= t(', Title suffix="') . variable_get('smart_paging_title_suffix', t(': Page ')) . '"';
-          }
-          else {
-            $default_method .= t(', No title suffix');
-          }
-          drupal_add_js(array('smart_paging' => array('default_method' => $default_method)), 'setting');
-          $form['smart_paging_settings'] += array(              
-            '#attached'    => array(
-              'js' => array(drupal_get_path('module', 'smart_paging') . '/js/smart_paging-admin.js'),
-            ),
-            '#group'      => 'additional_settings',
-          );
+        elseif (variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD) == SMART_PAGING_WORD_LIMIT_METHOD) {
+          $value = ' ' . t('(!value words)', array('!value' => variable_get('smart_paging_word_count', SMART_PAGING_MAX_WORD_LIMIT)));
+          $default_method = $method_options[SMART_PAGING_WORD_LIMIT_METHOD] . $value;
         }
-        $form['smart_paging_settings']['smart_paging_use_default'] = array(
-          '#type'  => 'checkbox', 
-          '#title' => t('Use default values'),
-          '#default_value' => isset($smart_paging_config['use_default']) ? $smart_paging_config['use_default'] : TRUE,
-        );
-        $form['smart_paging_settings']['smart_paging_method'] = array(
-          '#type'          => 'select', 
-          '#title'         => t('Page break method'),
-          '#default_value' => isset($smart_paging_config['method']) ? $smart_paging_config['method'] : variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD),
-          '#options'       => $method_options,
-          '#states'        => array(
-            'disabled' => array(
-              ':input[name="smart_paging_use_default"]' => array('checked' => TRUE),
-            ),
+        else {
+          $default_method = $method_options[SMART_PAGING_NO_METHOD];
+        }
+        if (variable_get('smart_paging_title_display_suffix', TRUE)) {
+          $default_method .= t(', Title suffix="') . variable_get('smart_paging_title_suffix', t(': Page ')) . '"';
+        }
+        else {
+          $default_method .= t(', No title suffix');
+        }
+        $smart_paging_js['smart_paging']['fieldset_label'] = $fieldset_label;
+        $smart_paging_js['smart_paging']['default_method'] = $default_method;
+        drupal_add_js($smart_paging_js, 'setting');
+        $form['smart_paging_settings'] += array(              
+          '#attached'    => array(
+            'js' => array(drupal_get_path('module', 'smart_paging') . '/js/smart_paging-admin.js'),
           ),
-        );
-        $form['smart_paging_settings']['smart_paging_pagebreak'] = array(
-          '#type'          => 'textfield',
-          '#title'         => t('Page break placeholder'),
-          '#default_value' => isset($smart_paging_config['pagebreak']) ? $smart_paging_config['pagebreak'] : variable_get('smart_paging_pagebreak', '<!--pagebreak-->'),
-          '#description'   => t('HTML comment or valid HTML tag with unique identifier, eg. &lt;hr class="pagebreak" /&gt;.'),
-          '#size'          => 50,
-          '#states'        => array(
-            'visible' => array(
-              ':input[name="smart_paging_method"]' => array(
-                'value'   => (string) SMART_PAGING_PLACEHOLDER_METHOD, 
-                'enabled' => TRUE,
-              ),
-            ),
-          ),
-        );
-        $form['smart_paging_settings']['smart_paging_character_count'] = array(
-          '#type'          => 'textfield',
-          '#title'         => t('Character limit'),
-          '#description'   => t('Number of characters that will be shown for each page when "Automatic page break by character limit" is selected.'),
-          '#default_value' => isset($smart_paging_config['character_count']) ? $smart_paging_config['character_count'] : variable_get('smart_paging_character_count', SMART_PAGING_MAX_CHAR_LIMIT),
-          '#size'          => 50,
-          '#states'        => array(
-            'visible' => array(
-              ':input[name="smart_paging_method"]' => array(
-                'value'   => (string) SMART_PAGING_CHARACTER_LIMIT_METHOD,
-                'enabled' => TRUE,
-              ),
-            ),
-          ),
-        );
-        $form['smart_paging_settings']['smart_paging_word_count'] = array(
-          '#type'          => 'textfield',
-          '#title'         => t('Word limit'),
-          '#description'   => t('Number of words that will be shown for each page when "Automatic page break by word limit" is selected.'),
-          '#default_value' => isset($smart_paging_config['word_count']) ? $smart_paging_config['word_count'] : variable_get('smart_paging_word_count', SMART_PAGING_MAX_WORD_LIMIT),
-          '#size'          => 50,
-          '#states'        => array(
-            'visible' => array(
-              ':input[name="smart_paging_method"]' => array(
-                'value'   => (string) SMART_PAGING_WORD_LIMIT_METHOD,
-                'enabled' => TRUE,
-              ),
-            ),
-          ),
-        );
-        $form['smart_paging_settings']['smart_paging_title_display_suffix'] = array(
-          '#type'          => 'checkbox',
-          '#title'         => t('Display content title suffix'),
-          '#description'   => t("Unchecking this option will stop display of content title suffix on web pages"),
-          '#default_value' => isset($smart_paging_config['title_display_suffix']) ? $smart_paging_config['title_display_suffix'] : variable_get('smart_paging_title_display_suffix', TRUE),
-          '#size'          => 50,
-          '#states'        => array(
-            'invisible' => array(
-              ':input[name="smart_paging_method"]' => array(
-                'value'   => (string) SMART_PAGING_NO_METHOD,
-              ),
-            ),
-            'disabled' => array(
-              ':input[name="smart_paging_use_default"]' => array('checked' => TRUE),
-            ),
-          ),
-        );
-        $form['smart_paging_settings']['smart_paging_title_suffix'] = array(
-          '#type'          => 'textfield',
-          '#title'         => t('Content title suffix'),
-          '#description'   => t("Text that will appear next to content's sub pages title (default is %suffix), eg. Title%suffix 2, Title%suffix 3 and so on...", array('%suffix' => t(': Page '))),
-          '#default_value' => isset($smart_paging_config['title_suffix']) ? $smart_paging_config['title_suffix'] : variable_get('smart_paging_title_suffix', t(': Page ')),
-          '#size'          => 50,
-          '#states'        => array(
-            'invisible' => array(
-              ':input[name="smart_paging_method"]' => array(
-                'value'   => (string) SMART_PAGING_NO_METHOD,
-              ),
-            ),
-            'visible' => array(
-              ':input[name="smart_paging_title_display_suffix"]' => array('checked' => TRUE),
-            ),
-            'disabled' => array(
-              ':input[name="smart_paging_use_default"]' => array('checked' => TRUE),
-            ),
-          ),
+          '#group'      => 'additional_settings',
         );
       }
+      $form['smart_paging_settings']['smart_paging_use_default'] = array(
+        '#type'  => 'checkbox', 
+        '#title' => t('Use default values'),
+        '#default_value' => isset($smart_paging_config['use_default']) ? $smart_paging_config['use_default'] : TRUE,
+      );
+      $form['smart_paging_settings']['smart_paging_method'] = array(
+        '#type'          => 'select', 
+        '#title'         => t('Page break method'),
+        '#default_value' => isset($smart_paging_config['method']) ? $smart_paging_config['method'] : variable_get('smart_paging_method', SMART_PAGING_PLACEHOLDER_METHOD),
+        '#options'       => $method_options,
+        '#states'        => array(
+          'disabled' => array(
+            ':input[name="smart_paging_use_default"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+      $form['smart_paging_settings']['smart_paging_pagebreak'] = array(
+        '#type'          => 'textfield',
+        '#title'         => t('Page break placeholder'),
+        '#default_value' => isset($smart_paging_config['pagebreak']) ? $smart_paging_config['pagebreak'] : variable_get('smart_paging_pagebreak', '<!--pagebreak-->'),
+        '#description'   => t('HTML comment or valid HTML tag with unique identifier, eg. &lt;hr class="pagebreak" /&gt;.'),
+        '#size'          => 50,
+        '#states'        => array(
+          'visible' => array(
+            ':input[name="smart_paging_method"]' => array(
+              'value'   => (string) SMART_PAGING_PLACEHOLDER_METHOD, 
+              'enabled' => TRUE,
+            ),
+          ),
+        ),
+      );
+      $form['smart_paging_settings']['smart_paging_character_count'] = array(
+        '#type'          => 'textfield',
+        '#title'         => t('Character limit'),
+        '#description'   => t('Number of characters that will be shown for each page when "Automatic page break by character limit" is selected.'),
+        '#default_value' => isset($smart_paging_config['character_count']) ? $smart_paging_config['character_count'] : variable_get('smart_paging_character_count', SMART_PAGING_MAX_CHAR_LIMIT),
+        '#size'          => 50,
+        '#states'        => array(
+          'visible' => array(
+            ':input[name="smart_paging_method"]' => array(
+              'enabled' => TRUE,
+              'value'   => (string) SMART_PAGING_CHARACTER_LIMIT_METHOD,
+            ),
+          ),
+        ),
+      );
+      $form['smart_paging_settings']['smart_paging_word_count'] = array(
+        '#type'          => 'textfield',
+        '#title'         => t('Word limit'),
+        '#description'   => t('Number of words that will be shown for each page when "Automatic page break by word limit" is selected.'),
+        '#default_value' => isset($smart_paging_config['word_count']) ? $smart_paging_config['word_count'] : variable_get('smart_paging_word_count', SMART_PAGING_MAX_WORD_LIMIT),
+        '#size'          => 50,
+        '#states'        => array(
+          'visible' => array(
+            ':input[name="smart_paging_method"]' => array(
+              'enabled' => TRUE,
+              'value'   => (string) SMART_PAGING_WORD_LIMIT_METHOD,
+            ),
+          ),
+        ),
+      );
+      $form['smart_paging_settings']['smart_paging_title_display_suffix'] = array(
+        '#type'          => 'checkbox',
+        '#title'         => t('Display content title suffix'),
+        '#description'   => t("Unchecking this option will stop display of content title suffix on web pages"),
+        '#default_value' => isset($smart_paging_config['title_display_suffix']) ? $smart_paging_config['title_display_suffix'] : variable_get('smart_paging_title_display_suffix', TRUE),
+        '#size'          => 50,
+        '#states'        => array(
+          'invisible' => array(
+            ':input[name="smart_paging_method"]' => array(
+              'value'   => (string) SMART_PAGING_NO_METHOD,
+            ),
+          ),
+          'disabled' => array(
+            ':input[name="smart_paging_use_default"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+      $form['smart_paging_settings']['smart_paging_title_suffix'] = array(
+        '#type'          => 'textfield',
+        '#title'         => t('Content title suffix'),
+        '#description'   => t("Text that will appear next to content's sub pages title (default is %suffix), eg. Title%suffix 2, Title%suffix 3 and so on...", array('%suffix' => t(': Page '))),
+        '#default_value' => isset($smart_paging_config['title_suffix']) ? $smart_paging_config['title_suffix'] : variable_get('smart_paging_title_suffix', t(': Page ')),
+        '#size'          => 50,
+        '#states'        => array(
+          'invisible' => array(
+            ':input[name="smart_paging_method"]' => array(
+              'value'   => (string) SMART_PAGING_NO_METHOD,
+            ),
+          ),
+          'visible' => array(
+            ':input[name="smart_paging_title_display_suffix"]' => array('checked' => TRUE),
+          ),
+          'disabled' => array(
+            ':input[name="smart_paging_use_default"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
       $form['#validate'][] = '_smart_paging_settings_validate';
       $form['#submit'][]   = '_smart_paging_settings_submit';
     }
@@ -665,11 +682,18 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
           if ($is_smart_paging_filter_found !== FALSE) {
             // Remove the Smart Paging input filter marker
             $markup_content = str_replace('<!--smart_paging_filter-->', '', $markup_content);
+            // Default this to 'no method' if it's being called as a full page
+            $query_parameters = drupal_get_query_parameters();
+            if (isset($query_parameters['nopaging'])) {
+              // Prevent this page from being cached
+              $GLOBALS['conf']['cache'] = FALSE;
+              return;
+            }
             if ($smart_paging_method == SMART_PAGING_NO_METHOD) {
               // Do nothing, no paging is desired
-              $cached_field = cache_get("field:$entity_type:$entity_id", 'cache_field');
-              $cached_field->data[$field_name][$language][$delta]['safe_value'] = '<!--smart_paging_filter_done-->' . $markup_content;
-              cache_set("field:$entity_type:$entity_id", $cached_field->data, 'cache_field');
+               $cached_field = cache_get("field:$entity_type:$entity_id", 'cache_field');
+               $cached_field->data[$field_name][$language][$delta]['safe_value'] = '<!--smart_paging_filter_done-->' . $markup_content;
+               cache_set("field:$entity_type:$entity_id", $cached_field->data, 'cache_field');
               return;
             }
             if ($smart_paging_method != SMART_PAGING_PLACEHOLDER_METHOD) {
@@ -834,8 +858,20 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
               ),
               '#tag' => 'meta'
             ), 'smart_paging_seo');
+            // Call this function to register the additional html head
             drupal_get_html_head();
           }
+          // Add smart_paging_on as indicator to hook_html_head_alter() that
+          // Smart Paging is applied to this page
+          drupal_add_html_head(array(
+            '#attributes' => array(
+              'name'		=> 'Smart_Paging',
+              'content' => 'on',
+            ),
+            '#tag' => 'meta'
+          ), 'smart_paging_on');
+          // Call this function to register the additional html head
+          drupal_get_html_head();
         }
       }
     }
@@ -969,9 +1005,39 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
  * Smart Paging as better SEO friendly targeting meta tags
  */
 function smart_paging_html_head_alter(&$head_elements) {
+  global $base_root;
+  if (isset($head_elements['smart_paging_on'])) {
+    // Set the single page view URL as canonical.
+    unset($head_elements['smart_paging_on']);
+    $url_components = parse_url($base_root);
+    $args = $_GET;
+    unset($args['q']);
+    $args['nopaging'] = 1;
+    $args = http_build_query($args);
+    $url_path = $url_components['host'] . '/' . request_path();
+    $canonical_link = $url_components['scheme'] . "://$url_path?$args";
+    foreach ($head_elements as $head_element_key => $head_element) {
+      if (isset($head_element['#tag']) && $head_element['#tag'] == 'link' && isset($head_element['#attributes']) && $head_element['#attributes']['rel'] == 'canonical') {
+        $head_elements[$head_element_key]['#attributes']['href'] = $canonical_link;
+        $canonical_link = '';
+        break;
+      }
+    }
+    if (!empty($canonical_link)) {
+      $head_elements['canonical'] = array(
+        '#type' => 'html_tag',    
+        '#tag'  => 'link',    
+        '#attributes' => array(
+          'rel'  => 'canonical',
+          'href' => $canonical_link,
+        ), 
+      );
+    }
+  }
   if (isset($head_elements['smart_paging_seo'])) {
     $smart_paging_seo = json_decode($head_elements['smart_paging_seo']['#attributes']['content']);
     $tags = array();
+    
     if (!empty($smart_paging_seo)) {
       foreach ($smart_paging_seo as $tag => $tag_content) {
         $target_tag = explode('_', $tag);
@@ -1015,16 +1081,7 @@ function smart_paging_html_head_alter(&$head_elements) {
       }
     }
   }
-  if (isset($head_elements['smart_paging_link_rel_prev']) || isset($head_elements['smart_paging_link_rel_next'])) {
-    // Remove rel="canonical" link
-    foreach ($head_elements as $head_element_key => $head_element) {
-      if (isset($head_element['#tag']) && $head_element['#tag'] == 'link' && $head_element['#attributes']['rel'] == 'canonical') {
-        unset($head_elements[$head_element_key]);
-      }
-    }
-  }
 }
-
 /**
  * Implements hook_permission().
  */
