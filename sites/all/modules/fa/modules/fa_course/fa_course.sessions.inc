@@ -499,7 +499,7 @@ function _fa_course_get_assignment_form($course_session, $assignment, $assignmen
       '#title'          => t('Date and time when a reminder for the ' .  $assignment['name'] . ' should be sent'),
       '#access'         => !isset($course_session->$reminder_sent_datetime),
       '#date_format'    => DATE_FORMAT,
-      '#default_value'  => isset($course_session->$assignment_datetime) ? date('Y-m-d H:i', $course_session->$assignment_reminder_datetime) :
+      '#default_value'  => isset($course_session->$assignment_reminder_datetime) ? date('Y-m-d H:i', $course_session->$assignment_reminder_datetime) :
                                  $default_reminder_datetime,
       '#states' => array(
           'visible' => array(
@@ -688,6 +688,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
 function _fa_course_store_assignment($course_session, $form_state, $assignment){
   // Save assignments only if they haven't been sent already
   $assignment_sent = $assignment['type'] . '_sent';
+  $reminder_sent = $assignment['type'] . '_reminder_sent';
 
   if (!isset($course_session->$assignment_sent)){
 
@@ -710,6 +711,14 @@ function _fa_course_store_assignment($course_session, $form_state, $assignment){
             $course_session->$assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
           }
         }
+      }
+    }
+  }
+  if($assignment['type'] != 'followup' && !isset($course_session->$reminder_sent)){
+    if (isset($form_state['values'][$assignment['type'] . '_reminder_action'])){
+      if ($form_state['values'][$assignment['type'] . '_reminder_action'] == SCHEDULE){
+        $reminder_datetime = $assignment['type'] . '_reminder_datetime';
+        $course_session->$reminder_datetime = strtotime($form_state['values'][$assignment['type'] . '_reminder_schedule_datetime']);
       }
     }
   }

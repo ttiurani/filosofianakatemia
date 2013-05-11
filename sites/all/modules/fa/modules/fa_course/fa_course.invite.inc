@@ -75,6 +75,7 @@ function _fa_course_process_invite($reg_code, $account, $status){
         $participant = new stdClass();
         $participant->facid = $master_participant->facid;
         $participant->email = $account->mail;
+        $participant->uid = $account->uid;
         $participant->invite_joined = REQUEST_TIME;
         drupal_write_record('fa_course_participant', $participant);
       }

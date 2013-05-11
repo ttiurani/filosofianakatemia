@@ -201,7 +201,7 @@ function _fa_course_get_assignment_emails($course_session, $email_template, $act
   if ($action == SEND || $action == REMIND){
     // First get all participants for the session
     $result = db_select('fa_course_participant', 'p')
-                  ->fields('p', array('facpid', 'email','invite_reg_code'));
+                  ->fields('p', array('facid', 'facpid', 'email', 'invite_reg_code'));
     $result->condition('p.facid', $course_session->facid);
 
     if ($action == REMIND){
@@ -265,9 +265,17 @@ function _fa_course_get_email_array($participant, $email_template, $from){
 }
 
 function _fa_course_get_email_content($email_template, $participant){
+  if (!isset($participant->invite_reg_code)){
+    // This participant has used a reusable invite!
+    $invite_reg_code = db_query("SELECT invite_reg_code FROM fa_course_participant "
+                              . "WHERE facid = :facid AND invite_reg_code IS NOT NULL",
+                              array(':facid' => $participant->facid))->fetchField();
+  }else{
+    $invite_reg_code = $participant->invite_reg_code;
+  }
   $email_content['subject'] = $email_template['subject'];
   $email_content['message'] = str_replace('[invite:join-link]',
-                                 url('invite/accept/' . $participant->invite_reg_code,
+                                 url('invite/accept/' . $invite_reg_code,
                                       array('absolute' => TRUE)),
                                  $email_template['message']);
   return $email_content;

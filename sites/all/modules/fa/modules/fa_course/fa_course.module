@@ -606,7 +606,8 @@ function fa_course_send_assignment($course_session, $assignment){
     drupal_set_message($mstr);
     watchdog('fa_course', $mstr);
   }elseif ($number_of_emails == 0){
-    $mstr = t('No participants match criteria, nothing sent for course @facsid.', array('@facsid' => $course_session->facsid));
+    $mstr = t('No participants match criteria, nothing sent for course @facsid assignment @assignment_name.',
+              array('@facsid' => $course_session->facsid, '@assignment_name' => $assignment['name']));
     drupal_set_message($mstr);
     watchdog('fa_course', $mstr);
   }
