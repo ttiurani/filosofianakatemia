@@ -23,6 +23,9 @@ function fa_course_invite_accept($participant) {
   if (isset($_GET['destination'])){
     $_SESSION[INVITE_SESSION_DESTINATION] = $_GET['destination'];
     unset($_GET['destination']);
+  }else{
+    // Do this so to not end up in the unsupported user home
+    $_SESSION[INVITE_SESSION_DESTINATION] = 'lykeion';
   }
   $_SESSION[INVITE_SESSION_EMAIL] = $participant->email;
   $_SESSION[INVITE_SESSION_STATUS] = $status;

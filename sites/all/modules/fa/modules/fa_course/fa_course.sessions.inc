@@ -217,12 +217,13 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#maxlength'      => 512,
   );
 
-/*  $form['course_session']['assistant_email'] = array(
+  $form['course_session']['assistant_email'] = array(
       '#type'           => 'textfield',
+      '#access'         => FALSE,
       '#title'          => t('Assistant email'),
       '#default_value'  => isset($course_session->assistant_email) ? $course_session->assistant_email : NULL,
 
-  );*/
+  );
 
   $product_name = str_replace('#', '', db_query("SELECT r.name from fa_course fac "
                   . "INNER JOIN role r ON r.rid = fac.product_id "
@@ -328,6 +329,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 }
 
 function _fa_course_get_second_trainer_id($course_session){
+  if (!isset($course_session->facsid)) return NULL;
   return db_query("SELECT uid FROM fa_sessions_trainers "
                 . "WHERE facsid = :facsid", array(':facsid' => $course_session->facsid))->fetchField();
 }
@@ -565,6 +567,7 @@ function _fa_course_get_email_template($course_session, $assignment, $assignment
 
 
 function fa_course_session_edit_form_validate($form, &$form_state) {
+  $course_session = $form_state['course_session'];
 
   if (!empty($form_state['values']['length'])){
     if (!is_numeric($form_state['values']['length']) ){
@@ -601,7 +604,7 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
 
   // Preliminary assignment
   $preliminary_assignment = unserialize(PRELIMINARY_ASSIGNMENT);
-  _fa_course_validate_assignment_schedule($form_state, $preliminary_assignment);
+  _fa_course_validate_assignment_schedule($course_session, $form_state, $preliminary_assignment);
 
   // Validate that preliminary assignment has invite token
   $preliminary_assignment_message = $preliminary_assignment['type'] . '_message';
@@ -612,33 +615,36 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
   }
 
   // Course assignment
-  _fa_course_validate_assignment_schedule($form_state, unserialize(COURSE_ASSIGNMENT));
+  _fa_course_validate_assignment_schedule($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));
 
   // Feedback
-  _fa_course_validate_assignment_schedule($form_state, unserialize(FEEDBACK));
+  _fa_course_validate_assignment_schedule($course_session, $form_state, unserialize(FEEDBACK));
 
 }
 
-function _fa_course_validate_assignment_schedule($form_state, $assignment){
-  if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
-    $assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
-    if ($assignment_datetime < strtotime("now")){
-      form_set_error($assignment['type'] . '_schedule_datetime', t('Schedule must be in the future.'));
+function _fa_course_validate_assignment_schedule($course_session, $form_state, $assignment){
+  $assignment_sent = $assignment['type'] . '_sent';
+  if (!isset($course_session->$assignment_sent)){
+    if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
+      $assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
+      if ($assignment_datetime < strtotime("now")){
+        form_set_error($assignment['type'] . '_schedule_datetime', t('Schedule must be in the future.'));
+      }
     }
-  }
 
-  if ($form_state['values'][$assignment['type'] . '_reminder_action'] == SEND_NOW){
-    $assignment_sent = $assignment['type'] . '_sent';
-    if (!isset($form_state['course_session']->$assignment_sent)){
-      form_set_error($assignment['type'] . '_reminder_action', t('Can not send reminder before assignment!'));
-    }
-  }elseif($form_state['values'][$assignment['type'] . '_reminder_action'] == SCHEDULE){
-    $reminder_datetime = strtotime($form_state['values'][$assignment['type'] . '_reminder_schedule_datetime']);
-    if ($reminder_datetime < strtotime("now")) {
-      form_set_error($assignment['type'] . 'reminder_schedule_datetime', t('Schedule must be in the future.'));
-    }
-    if (isset($assignment_datetime) && $reminder_datetime < $assignment_datetime){
-      form_set_error($assignment['type'] . '_reminder_schedule_datetime', t('Reminder schedule must be after the assignment schedule.'));
+    if ($form_state['values'][$assignment['type'] . '_reminder_action'] == SEND_NOW){
+      $assignment_sent = $assignment['type'] . '_sent';
+      if (!isset($form_state['course_session']->$assignment_sent)){
+        form_set_error($assignment['type'] . '_reminder_action', t('Can not send reminder before assignment!'));
+      }
+    }elseif($form_state['values'][$assignment['type'] . '_reminder_action'] == SCHEDULE){
+      $reminder_datetime = strtotime($form_state['values'][$assignment['type'] . '_reminder_schedule_datetime']);
+      if ($reminder_datetime < strtotime("now")) {
+        form_set_error($assignment['type'] . 'reminder_schedule_datetime', t('Schedule must be in the future.'));
+      }
+      if (isset($assignment_datetime) && $reminder_datetime < $assignment_datetime){
+        form_set_error($assignment['type'] . '_reminder_schedule_datetime', t('Reminder schedule must be after the assignment schedule.'));
+      }
     }
   }
 }
@@ -745,7 +751,9 @@ function _fa_course_get_send_info($form_state, $assignment){
   else{
     $subject = $form_state['values'][$assignment['type'] . '_subject'];
     $message = $form_state['values'][$assignment['type'] . '_message'];
-    $assignment_node_id = $form_state['values'][$assignment['type'] . '_select'];
+    $assignment_node_id = NULL;
+    if (isset($form_state['values'][$assignment['type'] . '_select']))
+      $assignment_node_id = $form_state['values'][$assignment['type'] . '_select'];
   }
   return array('assignment' => $assignment,
                'subject' => $subject,

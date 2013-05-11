@@ -497,11 +497,11 @@ function fa_course_edit_form_submit($form, &$form_state) {
 
   $course->city = $form_state['values']['city'];
   $course->crm_link = $form_state['values']['crm_link'];
-  $course->billing_information = $form_state['values']['billing_information'];
+  $course->billing_information = !empty($form_state['values']['billing_information']) ? $form_state['values']['billing_information'] : NULL;
   $course->lead_sales_id = $form_state['values']['lead_sales'];
   if ($form_state['values']['lead_trainer'] != 0)
     $course->lead_trainer_id = $form_state['values']['lead_trainer'];
-  $course->other_information = $form_state['values']['other_information'];
+  $course->other_information = !empty($form_state['values']['other_information']) ? $form_state['values']['other_information'] : NULL;
 
   // Trainer evaluation
   $trainer_evaluation = NULL;

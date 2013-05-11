@@ -18,11 +18,12 @@ function fa_course_participants($facid) {
     array('data' => t('Last Name'), 'field' => 'p.last_name'),
     t('Joined'),
     t('Invite reg code'),
+    t('Invite reuse'),
     t('Actions'),
   );
 
   $result = db_select('fa_course_participant', 'p')
-    ->fields('p', array('facid', 'facpid', 'email', 'first_name', 'last_name', 'invite_joined', 'invite_reg_code', 'uid'))
+    ->fields('p', array('facid', 'facpid', 'email', 'first_name', 'last_name', 'invite_joined', 'invite_reg_code', 'invite_reuse', 'uid'))
     ->extend('TableSort')
     ->extend('PagerDefault');
   $result->condition('p.facid', $facid);
@@ -41,6 +42,7 @@ function fa_course_participants($facid) {
     $cells[] = isset($row->last_name) ? $row->last_name : t('Not set');
     $cells[] = $row->invite_joined;
     $cells[] = $row->invite_reg_code;
+    $cells[] = $row->invite_reuse;
 	$cells[] = (user_access('administer courses'))
 						? l(t('Edit'), "admin/people/courses/participants/$facid/edit/$row->facpid") . '<br/>' .
 						  l(t('Delete'), "admin/people/courses/participants/$facid/delete/$row->facpid")
@@ -134,6 +136,16 @@ function fa_course_participants_edit_form($form, &$form_state, $participant) {
       '#default_value'  => isset($participant->email) ? $participant->email : NULL,
   );
 
+  $form['participant']['invite_reuse'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Number of times the invite can be reused'),
+      '#description'    => t('Set this only if someone else wants to send invitations to the participants on your behalf.'),
+      '#required'       => FALSE,
+      '#size'           => 4,
+      '#maxlength'      => 4,
+      '#default_value'  => isset($participant->invite_reuse) ? $participant->invite_reuse : NULL,
+  );
+
   $form['participant']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
@@ -160,12 +172,34 @@ function fa_course_participants_edit_form_validate($form, &$form_state) {
       form_set_error('email', t('Course already has a participant with given email address'));
     }
   }
+
+  if (!empty($form_state['values']['invite_reuse'])){
+    // Check that there are no other participants
+    if (!isset($form_state['participant']->facpid) &&
+      (db_select('fa_course_participant', 'p')
+            ->fields('p')
+            ->condition('p.facid', $form_state['participant']->facid)
+            ->isNotNull('p.invite_reg_code')
+            ->execute()->fetchObject() != FALSE)){
+      form_set_error('invite_reuse', t('Course already has an added participant with a register code, reuse invite has to be the only added participant.'));
+    }
+  }else{
+    if (!isset($form_state['participant']->facpid) &&
+      (db_select('fa_course_participant', 'p')
+            ->fields('p')
+            ->condition('p.facid', $form_state['participant']->facid)
+            ->isNotNull('p.invite_reuse')
+            ->execute()->fetchObject() != FALSE)){
+      form_set_error('email', t('Course already has a participant who has a reusable invite.'));
+    }
+  }
 }
 
 function fa_course_participants_edit_form_submit($form, &$form_state) {
   $participant = $form_state['participant'];
   $participant->first_name = $form_state['values']['first_name'];
   $participant->last_name = $form_state['values']['last_name'];
+  $participant->invite_reuse = !empty($form_state['values']['invite_reuse']) ? $form_state['values']['invite_reuse'] : NULL;
   if (!isset($participant->invite_reg_code)){
     // Generate reg code
     $participant->invite_reg_code = fa_course_generate_reg_code();

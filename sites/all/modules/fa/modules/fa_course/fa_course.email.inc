@@ -150,16 +150,21 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
       break;
     case 3:
       $email_template = unserialize($course_session->course_assignment_email_template);
+      break;
     case 4:
       $email_template = unserialize($course_session->course_assignment_email_template);
       $email_template['subject'] = t('Reminder: ') . $email_template['subject'];
+      break;
     case 5:
       $email_template = unserialize($course_session->followup_email_template);
+      break;
     case 6:
       $email_template = unserialize($course_session->feedback_email_template);
+      break;
     case 7:
       $email_template = unserialize($course_session->feedback_email_template);
       $email_template['subject'] = t('Reminder: ') . $email_template['subject'];
+      break;
     default:
       drupal_set_message(t('Unsupported assignment id @id.',  array('@id' => $assignment['id'])), 'error');
       return;
@@ -171,10 +176,12 @@ function _fa_course_get_assignment_email_template($course_session, $assignment){
   }else{
     $assignment_node_id = $assignment['type'] . '_node_id';
   }
-  $email_template['message'] = str_replace('[invite:join-link]',
+  if (isset($course_session->$assignment_node_id)){
+    $email_template['message'] = str_replace('[invite:join-link]',
                                    '[invite:join-link]?destination='
                                       . _fa_course_get_node_url($course_session->$assignment_node_id),
                                    $email_template['message']);
+  }
   return $email_template;
 }
 
@@ -209,39 +216,41 @@ function _fa_course_get_assignment_emails($course_session, $email_template, $act
     }
 
     // Check whether emails need to be sent one at a time, or as one big email
-    $one_email = FALSE;
+    $one_email = NULL;
     if (strpos($email_template['message'], '[invite:join-link]') == FALSE){
-      $one_email = TRUE;
+      $one_email = array();
     }
 
     foreach ($result as $row) {
-      if ($one_email){
+      $participant_email = $row->email;
+      if (is_array($one_email)){
         // Just create one big bcc address
-        if (empty($emails)){
-          $email = _fa_course_get_email_array($row, $email_template, $from);
-          $email['to'] = variable_get('fa_course_default_to_email', 'info@filosofianakatemia.fi');
-          $email['bcc'] = $row->email;
-          $email['participant_ids'] = array($row->facpid);
-          array_push($emails, $email);
+        if (empty($one_email)){
+          $one_email = _fa_course_get_email_array($row, $email_template, $from);
+          $one_email['to'] = variable_get('fa_course_default_to_email', 'info@filosofianakatemia.fi');
+          $one_email['bcc'] = $participant_email;
+          $one_email['participant_ids'] = array($row->facpid);
         }else{
           // Add participant email to the end of the address
-          $email = array_shift(array_values($emails));
-          $email['bcc'] = $email['bcc'] . ', ' . $row->email;
-          array_push($email['participant_ids'], $row->facpid);
+          $one_email['bcc'] .= ', ' . $participant_email;
         }
       }else{
         $email = _fa_course_get_email_array($row, $email_template, $from);
-        $email['to'] = $row->email;
+        $email['to'] = $participant_email;
         $email['participant_ids'] = array($row->facpid);
         array_push($emails, $email);
       }
     }
+
+    if (is_array($one_email)) array_push($emails, $one_email);
+
   }elseif ($action == ADD_EMAIL || $action == FIX_EMAIL){
     $email = _fa_course_get_email_array($participant, $email_template, $from);
     $email['to'] = $participant->email;
     $email['participant_ids'] = array($participant->facpid);
     return $email;
   }
+
   return $emails;
 }
 

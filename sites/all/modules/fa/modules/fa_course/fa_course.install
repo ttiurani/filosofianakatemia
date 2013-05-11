@@ -222,7 +222,7 @@ function fa_course_schema() {
               'type' => 'int',
               'not null' => FALSE,
           ),
-          'followup_template' => array(
+          'followup_email_template' => array(
               'description' => 'Text of the followup email template, stored in a serialized array.',
               'type' => 'text',
               'not null' => FALSE,
