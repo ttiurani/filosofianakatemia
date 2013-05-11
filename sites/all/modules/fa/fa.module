@@ -52,6 +52,7 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
     if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
       // Disable editing of the email field
       $form['account']['mail']['#disabled'] = TRUE;
+      $form['account']['mail']['#default_value'] = $_SESSION[INVITE_SESSION_EMAIL];
     }
   }
   if (empty($_GET['destination'])){

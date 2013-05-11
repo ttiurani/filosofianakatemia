@@ -616,3 +616,26 @@ function fa_course_send_assignment($course_session, $assignment){
     watchdog('fa_course', $mstr, NULL, WATCHDOG_ERROR);
   }
 }
+
+
+/**
+ * Implements hook_user_insert().
+ */
+function fa_course_user_insert(&$edit, $account, $category) {
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION]) && isset($_SESSION[INVITE_SESSION_STATUS])){
+    module_load_include('inc', 'fa_course', 'fa_course.invite');
+    _fa_course_process_invite($_SESSION[INVITE_SESSION], $account, $_SESSION[INVITE_SESSION_STATUS]);
+    _fa_course_clear_session();
+  }
+}
+
+/**
+ * Implements hook_user_login()
+  */
+function fa_course_user_login(&$edit, $account){
+  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION]) && isset($_SESSION[INVITE_SESSION_STATUS])){
+    module_load_include('inc', 'fa_course', 'fa_course.invite');
+    _fa_course_process_invite($_SESSION[INVITE_SESSION], $account, $_SESSION[INVITE_SESSION_STATUS]);
+    _fa_course_clear_session();
+  }
+}

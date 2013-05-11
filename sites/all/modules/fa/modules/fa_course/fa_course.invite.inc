@@ -52,32 +52,12 @@ function _fa_course_get_invite_status($participant) {
   return INVITE_VALID;
 }
 
-/**
- * Implements hook_user_insert().
- */
-function fa_course_user_insert(&$edit, $account, $category) {
-  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION]) && isset($_SESSION[INVITE_SESSION_STATUS])){
-    _fa_course_process_invite($_SESSION[INVITE_SESSION], $account, $_SESSION[INVITE_SESSION_STATUS]);
-    _fa_course_clear_session();
-  }
-}
-
-/**
- * Implements hook_user_login()
-  */
-function fa_course_user_login(&$edit, $account){
-  if (isset($_SESSION) && isset($_SESSION[INVITE_SESSION]) && isset($_SESSION[INVITE_SESSION_STATUS])){
-    _fa_course_process_invite($_SESSION[INVITE_SESSION], $account, $_SESSION[INVITE_SESSION_STATUS]);
-    _fa_course_clear_session();
-  }
-}
-
 function _fa_course_process_invite($reg_code, $account, $status){
   if ($status != INVITE_USED){
     if ($status == INVITE_VALID){
       $participant = fa_course_participant_load($reg_code);
       db_query("UPDATE fa_course_participant SET uid = :uid, invite_joined = :joined "
-              ."WHERE reg_code = :reg_code", array(':uid' => $account->uid, ':joined' => REQUEST_TIME, ':reg_code' => $participant->invite_reg_code));
+              ."WHERE invite_reg_code = :reg_code", array(':uid' => $account->uid, ':joined' => REQUEST_TIME, ':reg_code' => $participant->invite_reg_code));
       $update_roles = array_diff_key(_fa_course_get_new_roles($participant), $account->roles);
     }elseif($status == INVITE_REUSABLE){
       $master_participant = fa_course_participant_load($reg_code);
@@ -99,7 +79,7 @@ function _fa_course_process_invite($reg_code, $account, $status){
     // Process roles
     if (!empty($update_roles)){
       // Save new roles
-      foreach ($new_roles as $new_role) {
+      foreach ($update_roles as $new_role) {
         user_multiple_role_edit(array($account->uid), 'add_role', $new_role);
       }
     }
