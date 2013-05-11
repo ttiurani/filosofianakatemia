@@ -667,26 +667,7 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
 
   // Send emails
   if (isset($form_state['send_info'])){
-    // If course role has not been created create it now
-    if(_fa_course_set_course_role($course_session->facid) == FALSE){
-      drupal_set_message(t('Could not create course role.'), 'error');
-      return;
-    }
-
-    module_load_include('inc', 'fa_course', 'fa_course.email');
-    $number_of_emails = fa_course_send_assignment_email($course_session, $form_state['send_info']['assignment']);
-
-    if ($number_of_emails > 0){
-      // Set assignment sent
-      $assignment_sent = $form_state['send_info']['assignment']['type'] . '_sent';
-      $course_session->$assignment_sent = REQUEST_TIME;
-      drupal_set_message(t('@num emails sent to participants.', array('@num' => $number_of_emails)));
-    }elseif ($number_of_emails == 0){
-      drupal_set_message(t('No participants match criteria, nothing sent.'));
-    }
-    elseif ($number_of_emails == -1){
-      drupal_set_message(t('Error sending emails.', array('@facsid' => $course_session->facsid)), 'error');
-    }
+    fa_course_send_assignment($course_session, $form_state['send_info']['assignment']);
   }
 
   if (isset($course_session->facsid))
@@ -721,7 +702,6 @@ function _fa_course_store_assignment($course_session, $form_state, $assignment){
           if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
             $assignment_datetime = $assignment['type'] . '_datetime';
             $course_session->$assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
-            // TODO: schedule using the  Rules module!
           }
         }
       }

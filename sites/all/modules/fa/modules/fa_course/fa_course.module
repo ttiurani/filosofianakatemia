@@ -485,9 +485,57 @@ function fa_course_cron(){
   }
 
   // Find scheduled but not sent assignments
-  // TODO
+  $result = db_query('SELECT * FROM fa_course_session '
+                   . 'WHERE (preliminary_assignment_datetime < :now AND preliminary_assignment_sent IS NULL) '
+                   . 'OR (preliminary_assignment_reminder_datetime < :now AND preliminary_assignment_reminder_sent IS NULL) '
+                   . 'OR (course_assignment_datetime < :now AND course_assignment_sent IS NULL) '
+                   . 'OR (course_assignment_reminder_datetime < :now AND course_assignment_reminder_sent IS NULL) '
+                   . 'OR (feedback_datetime < :now AND feedback_sent IS NULL) '
+                   . 'OR (feedback_reminder_datetime < :now AND feedback_reminder_sent IS NULL) ',
+                   array(':now' => REQUEST_TIME));
 
+  $queue = DrupalQueue::get('fa_course_send_assignment');
+  foreach ($result as $course_session) {
+    $assignments = array();
+    $preliminary_assignment = unserialize(PRELIMINARY_ASSIGNMENT);
+    if (_fa_course_assignment_scheduled($course_session, $preliminary_assignment)){
+      array_push($assignments, $preliminary_assignment);
+    }
+    $preliminary_assignment_reminder = unserialize(PRELIMINARY_ASSIGNMENT_REMINDER);
+    if (_fa_course_assignment_scheduled($course_session, $preliminary_assignment_reminder)){
+      array_push($assignments, $preliminary_assignment_reminder);
+    }
+    $course_assignment = unserialize(COURSE_ASSIGNMENT);
+    if (_fa_course_assignment_scheduled($course_session, $course_assignment)){
+      array_push($assignments, $course_assignment);
+    }
+    $course_assignment_reminder = unserialize(COURSE_ASSIGNMENT_REMINDER);
+    if (_fa_course_assignment_scheduled($course_session, $course_assignment_reminder)){
+      array_push($assignments, $course_assignment_reminder);
+    }
+    $feedback = unserialize(FEEDBACK);
+    if (_fa_course_assignment_scheduled($course_session, $feedback)){
+      array_push($assignments, $feedback);
+    }
+    $feedback_reminder = unserialize(FEEDBACK_REMINDER);
+    if (_fa_course_assignment_scheduled($course_session, $feedback_reminder)){
+      array_push($assignments, $feedback_reminder);
+    }
+
+    foreach($assingnments as $assignment){
+      $queue->createItem($course_session, $assignment);
+    }
+  }
 }
+
+function _fa_course_assignment_scheduled($course_session, $assignment){
+  $assignment_datetime = $assignment['type'] . '_datetime';
+  $assignment_sent = $assignment['type'] . '_sent';
+  return (isset($course_session->$assignment_datetime)
+        && $course_session->$assignment_datetime < REQUEST_TIME
+        && !isset($course_session->$assignment_sent));
+}
+
 /*
  * Implements hook_cron_queue_info().
  */
@@ -531,5 +579,30 @@ function fa_course_send_billing($course_info){
 }
 
 function fa_course_send_assignment($course_session, $assignment){
-  // TODO
+  // If course role has not been created create it now
+  if(_fa_course_set_course_role($course_session->facid) == FALSE){
+    drupal_set_message(t('Could not create course role.'), 'error');
+    return;
+  }
+
+  module_load_include('inc', 'fa_course', 'fa_course.email');
+  $number_of_emails = fa_course_send_assignment_email($course_session, $assignment);
+
+  if ($number_of_emails > 0){
+    // Set assignment sent
+    $assignment_sent = $assignment['type'] . '_sent';
+    $course_session->$assignment_sent = REQUEST_TIME;
+    $mstr = t('@num emails sent to participants for course @facsid.', array('@num' => $number_of_emails, array('@facsid' => $course_session->facsid)));
+    drupal_set_message($mstr);
+    watchdog('fa_course', $mstr);
+  }elseif ($number_of_emails == 0){
+    $mstr = t('No participants match criteria, nothing sent for course @facsid.', array('@facsid' => $course_session->facsid));
+    drupal_set_message($mstr);
+    watchdog('fa_course', $mstr);
+  }
+  elseif ($number_of_emails == -1){
+    $mstr = t('Error sending emails for course @facsid.', array('@facsid' => $course_session->facsid));
+    drupal_set_message($mstr, 'error');
+    watchdog('fa_course', $mstr, NULL, WATCHDOG_ERROR);
+  }
 }
