@@ -359,7 +359,9 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#type' => 'textarea',
       '#title' => t('Billing information'),
       '#description' => t('Information about where the invoice should be sent after the first session has been held'),
-      '#disabled'       => $action == 'view' || isset($course->billing_sent),
+      // Hide this from imported courses
+      '#access' => !(isset($course->trainer_handover) && isset($course->sales_handover) &&  !isset($course->billing_information)),
+      '#disabled' => $action == 'view' || isset($course->billing_sent),
       '#default_value' => isset($course->billing_information) ? $course->billing_information: NULL,
       '#required' => FALSE,
   );

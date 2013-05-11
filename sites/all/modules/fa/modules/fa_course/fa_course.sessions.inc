@@ -16,7 +16,7 @@ function fa_course_sessions($facid) {
       t('End Time'),
       t('Address'),
       t('Material'),
-      t('Assistant email'),
+      //t('Assistant email'),
       t('Actions'),
   );
 
@@ -44,7 +44,7 @@ function fa_course_sessions($facid) {
     $cells[] = format_date($row->session_end_datetime, 'custom', 'D d.m.Y H:i');
     $cells[] = $row->address;
     $cells[] = $row->material;
-    $cells[] = $row->assistant_email;
+    //$cells[] = $row->assistant_email;
     $cells[] = (user_access('administer courses'))
                 ? l(t('Edit'), "admin/people/courses/sessions/$facid/edit/$row->facsid") . '<br/>' .
                   l(t('Delete'), "admin/people/courses/sessions/$facid/delete/$row->facsid")
@@ -217,12 +217,12 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#maxlength'      => 512,
   );
 
-  $form['course_session']['assistant_email'] = array(
+/*  $form['course_session']['assistant_email'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Assistant email'),
       '#default_value'  => isset($course_session->assistant_email) ? $course_session->assistant_email : NULL,
 
-  );
+  );*/
 
   $product_name = str_replace('#', '', db_query("SELECT r.name from fa_course fac "
                   . "INNER JOIN role r ON r.rid = fac.product_id "
