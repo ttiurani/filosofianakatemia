@@ -47,7 +47,7 @@ function fa_course_invite_accept($participant) {
 function _fa_course_get_invite_status($participant) {
 
   if (isset($participant->invite_joined)){
-    if(isset($participant->invite_reuse) && $participant->reuse > 0) {
+    if(isset($participant->invite_reuse) && $participant->invite_reuse > 0) {
       return INVITE_REUSABLE;
     }
     return INVITE_USED;
@@ -75,6 +75,7 @@ function _fa_course_process_invite($reg_code, $account, $status){
         $participant = new stdClass();
         $participant->facid = $master_participant->facid;
         $participant->email = $account->mail;
+        $participant->invite_joined = REQUEST_TIME;
         drupal_write_record('fa_course_participant', $participant);
       }
     }
