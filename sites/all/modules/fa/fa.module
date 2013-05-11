@@ -5,6 +5,19 @@
 */
 
 /**
+ * Invite constants.
+ */
+define('INVITE_SESSION', 'invite_code');
+define('INVITE_SESSION_STATUS', 'invite_status');
+define('INVITE_SESSION_DESTINATION', 'invite_destination');
+define('INVITE_SESSION_EMAIL', 'invite_email');
+
+define('INVITE_VALID', 1);
+define('INVITE_USED', 2);
+define('INVITE_REUSABLE', 3);
+define('INVITE_PROCESSED', 4);
+
+/**
 * Implements hook_help.
 *
 * Displays help and module information.
@@ -39,8 +52,6 @@ function fa_form_user_register_form_alter(&$form, &$form_state, $form_id){
     if ($_SESSION[INVITE_SESSION_STATUS] == INVITE_VALID){
       // Disable editing of the email field
       $form['account']['mail']['#disabled'] = TRUE;
-    }elseif($_SESSION[INVITE_SESSION_STATUS] == INVITE_REUSABLE){
-      // Add login form at the
     }
   }
   if (empty($_GET['destination'])){
