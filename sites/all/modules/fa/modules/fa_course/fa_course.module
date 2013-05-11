@@ -522,8 +522,11 @@ function fa_course_cron(){
       array_push($assignments, $feedback_reminder);
     }
 
-    foreach($assingnments as $assignment){
-      $queue->createItem($course_session, $assignment);
+    foreach($assignments as $assignment){
+      $data = new stdClass();
+      $data->course_session = $course_session;
+      $data->assignment = $assignment;
+      $queue->createItem($data);
     }
   }
 }
@@ -545,7 +548,7 @@ function fa_course_cron_queue_info(){
     'time' => 120,
   );
   $queues['fa_course_send_assignment'] = array(
-    'worker callback' => 'fa_course_send_assignment',
+    'worker callback' => 'fa_course_send_assignment_worker',
     'time' => 300,
   );
 
@@ -578,7 +581,14 @@ function fa_course_send_billing($course_info){
            array('%course' => $course_info->facid), WATCHDOG_NOTICE);
 }
 
+function fa_course_send_assignment_worker($data){
+  fa_course_send_assignment($data->course_session, $data->assignment);
+  // Persist session
+  drupal_write_record('fa_course_session', $data->course_session, 'facsid');
+}
+
 function fa_course_send_assignment($course_session, $assignment){
+  watchdog('fa_course', 'fa_course_send_assignment called');
   // If course role has not been created create it now
   if(_fa_course_set_course_role($course_session->facid) == FALSE){
     drupal_set_message(t('Could not create course role.'), 'error');
@@ -592,7 +602,7 @@ function fa_course_send_assignment($course_session, $assignment){
     // Set assignment sent
     $assignment_sent = $assignment['type'] . '_sent';
     $course_session->$assignment_sent = REQUEST_TIME;
-    $mstr = t('@num emails sent to participants for course @facsid.', array('@num' => $number_of_emails, array('@facsid' => $course_session->facsid)));
+    $mstr = t('@num emails sent to participants of course @facsid.', array('@num' => $number_of_emails, '@facsid' => $course_session->facsid));
     drupal_set_message($mstr);
     watchdog('fa_course', $mstr);
   }elseif ($number_of_emails == 0){
