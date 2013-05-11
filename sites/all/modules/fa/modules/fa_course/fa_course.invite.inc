@@ -78,19 +78,27 @@ function _fa_course_process_invite($reg_code, $account, $status){
       $participant = fa_course_participant_load($reg_code);
       db_query("UPDATE fa_course_participant SET uid = :uid, invite_joined = :joined "
               ."WHERE reg_code = :reg_code", array(':uid' => $account->uid, ':joined' => REQUEST_TIME, ':reg_code' => $participant->invite_reg_code));
+      $update_roles = array_diff_key(_fa_course_get_new_roles($participant), $account->roles);
     }elseif($status == INVITE_REUSABLE){
       $master_participant = fa_course_participant_load($reg_code);
-      db_query("UPDATE {fa_course_participant} SET invite_reuse = invite_reuse - 1 WHERE facpid = :facpid", array(':facpid' => $master_participant->facpid));
-      $participant = new stdClass();
-      $participant->facid = $master_participant->facid;
-      $participant->email = $account->mail;
-      drupal_write_record('fa_course_participant', $participant);
+
+      // Get the number of new roles that the user does not yet have
+      $new_roles = _fa_course_get_new_roles($master_participant);
+      $update_roles = array_diff_key($new_roles, $account->roles);
+
+      // Only use reuse and make new participant if new roles are added, i.e. this is not a second login with the same link
+      if (!empty($update_roles)){
+        db_query("UPDATE {fa_course_participant} SET invite_reuse = invite_reuse - 1 WHERE facpid = :facpid", array(':facpid' => $master_participant->facpid));
+        $participant = new stdClass();
+        $participant->facid = $master_participant->facid;
+        $participant->email = $account->mail;
+        drupal_write_record('fa_course_participant', $participant);
+      }
     }
 
     // Process roles
-    $new_roles = _fa_course_get_new_roles($participant);
-    if (!$new_roles){
-      // Save roles, skips if already set
+    if (!empty($update_roles)){
+      // Save new roles
       foreach ($new_roles as $new_role) {
         user_multiple_role_edit(array($account->uid), 'add_role', $new_role);
       }
