@@ -496,6 +496,6 @@ function _get_fboauth_div($description = NULL){
  * Implements hook_mail_alter() to set
  * Return-Path address to the same address as the sender.
  */
-function invite_mail_alter(&$message) {
+function fa_mail_alter(&$message) {
   $message['headers']['Return-Path'] = 'bounce@filosofianakatemia.fi';
 }
