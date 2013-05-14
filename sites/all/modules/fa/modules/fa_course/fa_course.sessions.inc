@@ -660,12 +660,6 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   $course_session->summary_emails = $form_state['values']['summary_emails'];
   $course_session->assistant_email = $form_state['values']['assistant_email'];
 
-  // Second trainer
-  $second_trainer_id = _fa_course_get_second_trainer_id($course_session);
-  if ($form_state['values']['second_trainer'] != 0 || (_fa_course_get_second_trainer_id($course_session) != NULL)){
-    _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
-  }
-
   _fa_course_store_assignment($course_session, $form_state, unserialize(PRELIMINARY_ASSIGNMENT));
   _fa_course_store_assignment($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));
   _fa_course_store_assignment($course_session, $form_state, unserialize(FEEDBACK));
@@ -680,6 +674,13 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     drupal_write_record('fa_course_session', $course_session, 'facsid');
   else
     drupal_write_record('fa_course_session', $course_session);
+
+  // Second trainer
+  $second_trainer_id = _fa_course_get_second_trainer_id($course_session);
+  if ($form_state['values']['second_trainer'] != 0 || (_fa_course_get_second_trainer_id($course_session) != NULL)){
+    _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
+  }
+
   drupal_set_message(t('Course session @facsid saved.', array('@facsid' => $course_session->facsid)));
 
   $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid . '/edit/' . $course_session->facsid;
