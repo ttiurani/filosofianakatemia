@@ -5,11 +5,12 @@
  * Capsulecrm functions for Filosofian Akatemia Course module.
  */
 
-define("OPPORTUNITY_URL_PREFIX", 'https://filosofianakatemia.capsulecrm.com/opportunity/');
+define("OPPORTUNITY_URL_PREFIX", 'https://filosofianakatemia.capsulecrm.com/');
 
 function fa_course_validate_crm_opportunity_url($url){
   return (strlen($url) > strlen(OPPORTUNITY_URL_PREFIX))
-         && !strncmp($url, OPPORTUNITY_URL_PREFIX, strlen(OPPORTUNITY_URL_PREFIX));
+         && (!strncmp($url, OPPORTUNITY_URL_PREFIX, strlen(OPPORTUNITY_URL_PREFIX))
+         && (strpos($url, '/opportunity/') !== FALSE));
 }
 
 function fa_course_get_crm_opportunity($url) {
@@ -41,6 +42,7 @@ function fa_course_get_crm_opportunity($url) {
 }
 
 function _fa_course_get_crm_opportunity_id($url) {
-  return substr($url, strlen(OPPORTUNITY_URL_PREFIX), strlen($url) -strlen(OPPORTUNITY_URL_PREFIX));
+  $keys = parse_url($url); // parse the url
+  $path = explode("/", $keys['path']); // splitting the path
+  return end($path); // get the value of the last element
 }
-
