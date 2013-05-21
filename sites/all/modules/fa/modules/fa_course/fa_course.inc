@@ -414,12 +414,45 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#default_value' => isset($trainer_evaluation['other']) ? $trainer_evaluation['other']: NULL,
       '#access' => isset($course->trainer_handover),
   );
+
+  if (isset($course->other_information)){
+    $other_information = unserialize($course->other_information);
+  }else{
+    $other_information = array();
+  }
+
+  $participant_actions = array(1 => t("lead sales' responsibility,"),
+                               2 => t("lead trainer's responsibility or participant list is not available before the first session."));
+
+  $form['course']['participant_responsibility'] = array(
+      '#type' => 'radios',
+      '#title' => t('Importing participants to the course is the '),
+      '#disabled'       => $action == 'view',
+      '#default_value' => isset($other_information['participant']) ? 2 : 1,
+      '#options' => $participant_actions,
+  );
+  $form['course']['participant_information'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Participant import information'),
+      '#description' => t('How will the lead trainer get the participants? If the participants have not arrived in time, what should the lead trainer do? Who should he contact? If a list participant is not available before the first session, what is known about the particiapants?'),
+      '#disabled'       => $action == 'view',
+      '#default_value' => isset($other_information['participant']) ? $other_information['participant'] : NULL,
+      '#states' => array(
+          'visible' => array(   // action to take.
+              ':input[name=participant_responsibility]' => array('value' => 2),
+          ),
+          'required' => array(
+              ':input[name=participant_responsibility]' => array('value' => 2),
+          ),
+      ),
+  );
+
   $form['course']['other_information'] = array(
       '#type' => 'textarea',
       '#title' => t('Other information'),
       '#description' => t('Other information about the course'),
       '#disabled'       => $action == 'view',
-      '#default_value' => isset($course->other_information) ? $course->other_information: NULL,
+      '#default_value' => isset($other_information['other']) ? $other_information['other'] : NULL,
       '#required' => FALSE,
   );
   $form['course']['submit'] = array(
@@ -501,7 +534,17 @@ function fa_course_edit_form_submit($form, &$form_state) {
   $course->lead_sales_id = $form_state['values']['lead_sales'];
   if ($form_state['values']['lead_trainer'] != 0)
     $course->lead_trainer_id = $form_state['values']['lead_trainer'];
-  $course->other_information = !empty($form_state['values']['other_information']) ? $form_state['values']['other_information'] : NULL;
+
+  // Other information holds two values
+  $other_information = array();
+  if (!empty($form_state['values']['other_information'])){
+    $other_information['other'] = $form_state['values']['other_information'];
+  }
+  if (!empty($form_state['values']['participant_information'])){
+    $other_information['participant'] = $form_state['values']['participant_information'];
+  }
+
+  $course->other_information = !empty($other_information) ? serialize($other_information) : NULL;
 
   // Trainer evaluation
   $trainer_evaluation = NULL;
@@ -649,7 +692,12 @@ function fa_course_trainer_handover_form_validate($form, &$form_state) {
                       array(':facid' => $course->facid)
                     )->fetchField();
 
-  if ($participant_count == 0){
+  $other_information = array();
+  if (isset($course->other_information)){
+    $other_information = unserialize($course->other_information);
+  }
+
+  if (($participant_count == 0) && (!isset($other_information['participant']))){
     form_set_error('submit', t("Course has no participants"));
   }
 }

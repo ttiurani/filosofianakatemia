@@ -80,7 +80,6 @@ function fa_course_schema() {
         'type' => 'numeric',
         'size' => 'normal',
         'not null' => FALSE,
-        'default' => 0,
         'precision' => 10,
         'scale' => 2
       ),
