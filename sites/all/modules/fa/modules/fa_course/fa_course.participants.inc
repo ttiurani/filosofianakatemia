@@ -218,7 +218,7 @@ function fa_course_participants_edit_form_submit($form, &$form_state) {
     }
   }elseif(!isset($participant->email)){
     $new_participant = TRUE;
-    $participant->email = $form_state['values']['email'];
+    $participant->email = trim($form_state['values']['email']);
     drupal_write_record('fa_course_participant', $participant);
     $number_of_emails = fa_course_add_email($participant);
     if ($number_of_emails == -1){
