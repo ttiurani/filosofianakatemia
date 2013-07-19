@@ -553,6 +553,7 @@ function _fa_course_get_email_template($course_session, $assignment, $assignment
   $form[$assignment['type'] . '_message'] = array(
       '#type'           => 'textarea',
       '#title'          => t(ucfirst($assignment['name']) . ' email body'),
+      '#description'    => t('The token <i>[invite:join-link]</i> will be converted as a unique link to first register or login to Lykeion and then, with the exception of the followup email, advance to the corresponding assignment.'),
       '#default_value'  => !empty($template) ? $template['message'] :
             variable_get($default_message_id, NULL),
       '#disabled'       => $assignment_sent,
