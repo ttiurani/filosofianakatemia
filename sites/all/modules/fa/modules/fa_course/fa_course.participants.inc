@@ -38,8 +38,8 @@ function fa_course_participants($facid) {
   foreach ($result as $row) {
     $cells = array();
     $cells[] = isset($row->uid) ? l($row->email, "user/" . $row->uid) : $row->email;
-    $cells[] = isset($row->first_name) ? $row->first_name : t('Not set');
-    $cells[] = isset($row->last_name) ? $row->last_name : t('Not set');
+    $cells[] = isset($row->first_name) ? $row->first_name : t('<i>Not set</i>');
+    $cells[] = isset($row->last_name) ? $row->last_name : t('<i>Not set</i>');
     $cells[] = $row->invite_joined;
     $cells[] = $row->invite_reg_code;
     $cells[] = $row->invite_reuse;
@@ -197,8 +197,8 @@ function fa_course_participants_edit_form_validate($form, &$form_state) {
 
 function fa_course_participants_edit_form_submit($form, &$form_state) {
   $participant = $form_state['participant'];
-  $participant->first_name = $form_state['values']['first_name'];
-  $participant->last_name = $form_state['values']['last_name'];
+  if (!empty($form_state['values']['first_name'])) $participant->first_name = $form_state['values']['first_name'];
+  if (!empty($form_state['values']['last_name'])) $participant->last_name = $form_state['values']['last_name'];
   $participant->invite_reuse = !empty($form_state['values']['invite_reuse']) ? $form_state['values']['invite_reuse'] : NULL;
   if (!isset($participant->invite_reg_code)){
     // Generate reg code

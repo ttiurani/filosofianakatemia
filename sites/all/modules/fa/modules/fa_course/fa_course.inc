@@ -65,13 +65,13 @@ function fa_course_overview() {
     $cells[] = $row->facid;
     $course_name = _fa_course_format_course_name($row->product_id, $row->organization_id, (isset($row->first_session) ? $row->first_session : NULL));
     $cells[] = l($course_name, "admin/people/courses/view/$row->facid");
-    $cells[] = isset($row->first_session) ? format_date($row->first_session, 'custom', 'D d.m.Y H:i') : t('Not set');
+    $cells[] = isset($row->first_session) ? format_date($row->first_session, 'custom', 'D d.m.Y H:i') : t('<i>Not set</i>');
     $cells[] = str_replace('#', '', $row->organization);
     $cells[] = str_replace('#', '', $row->product);
     $cells[] = l($row->sales_first_name . " " . $row->sales_last_name, "user/" . $row->lead_sales_id);
-    $cells[] = isset($row->trainer_first_name) ? l($row->trainer_first_name . " " . $row->trainer_last_name, "user/" . $row->lead_trainer_id) : t('Not set');
+    $cells[] = isset($row->trainer_first_name) ? l($row->trainer_first_name . " " . $row->trainer_last_name, "user/" . $row->lead_trainer_id) : t('<i>Not set</i>');
     $cells[] = $row->city;
-    $cells[] = $row->course_role == NULL ? t('Not set') : $row->course_role;
+    $cells[] = $row->course_role == NULL ? t('<i>Not set</i>') : $row->course_role;
     $cells[] = l(t("View CRM"), $row->crm_link, array('attributes' => array('target'=>'_blank')));
 
     $phase = _fa_course_get_phase($row);
