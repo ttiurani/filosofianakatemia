@@ -421,20 +421,30 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
     $other_information = array();
   }
 
-  $participant_actions = array(1 => t("lead sales' responsibility,"),
-                               2 => t("lead trainer's responsibility or participant list is not available before the first session."));
+  $participant_actions = array(1 => t("the lead sales' responsibility,"),
+                               2 => t("the lead trainer's responsibility,"),
+                               3 => t("not possible because the list of participants is not available before the first session."));
+
+  $default_participant_action = 1;
+  if (isset($other_information['participant'])){
+    if ($other_information['participant'] == "N/A"){
+      $default_participant_action = 3;
+    }else{
+      $default_participant_action = 2;
+    }
+  }
 
   $form['course']['participant_responsibility'] = array(
       '#type' => 'radios',
-      '#title' => t('Importing participants to the course is the '),
+      '#title' => t('Importing participants to the course is '),
       '#disabled'       => $action == 'view',
-      '#default_value' => isset($other_information['participant']) ? 2 : 1,
+      '#default_value' => $default_participant_action,
       '#options' => $participant_actions,
   );
   $form['course']['participant_information'] = array(
       '#type' => 'textarea',
       '#title' => t('Participant import information'),
-      '#description' => t('How will the lead trainer get the participants? If the participants have not arrived in time, what should the lead trainer do? Who should he contact? If a list participant is not available before the first session, what is known about the particiapants?'),
+      '#description' => t('How will the lead trainer get the participants? If the participants have not arrived in time, what should the lead trainer do? Who should he contact?'),
       '#disabled'       => $action == 'view',
       '#default_value' => isset($other_information['participant']) ? $other_information['participant'] : NULL,
       '#states' => array(
@@ -505,6 +515,14 @@ function fa_course_edit_form_validate($form, &$form_state) {
   }
   if (!isset($form_state['course']->sales_handover) && !fa_course_validate_crm_opportunity_url($form_state['values']['crm_link'])){
     form_set_error('crm_link', t('Not a valid CapsuleCRM opportunity URL'));
+    return;
+  }
+
+  // Set no participants value
+  if ($form_state['values']['participant_responsibility'] == 3){
+    $form_state['values']['participant_information'] = "N/A";
+  }elseif ($form_state['values']['participant_responsibility'] == 2 && empty($form_state['values']['participant_information'])){
+    form_set_error('participant_information', t('Participant import information is required if importing is the lead trainer\'s responsibility'));
     return;
   }
 }
