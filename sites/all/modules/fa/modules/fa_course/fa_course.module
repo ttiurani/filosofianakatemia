@@ -344,6 +344,11 @@ function _fa_course_get_course_roles(){
       $product_options[$rid] = $role_array[2];
     }
   }
+
+  // Order both lists
+  asort($organization_options);
+  asort($product_options);
+
   return array(
     'organizations' => $organization_options,
     'products' => $product_options,
