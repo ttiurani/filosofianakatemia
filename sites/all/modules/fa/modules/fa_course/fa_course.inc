@@ -593,6 +593,7 @@ function fa_course_edit_form_submit($form, &$form_state) {
 }
 
 function _fa_course_set_lead_trainer_to_sessions($course, $current_lead_trainer_id, $old_lead_trainer_id){
+  if (!isset($course->facid)) return;
   $result = db_query('SELECT s.facsid FROM fa_course_session s WHERE s.facid = :facid', array(':facid' => $course->facid));
 
   foreach ($result as $record) {
