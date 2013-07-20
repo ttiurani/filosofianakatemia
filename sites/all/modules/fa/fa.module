@@ -499,3 +499,20 @@ function _get_fboauth_div($description = NULL){
 function fa_mail_alter(&$message) {
   $message['headers']['Return-Path'] = 'bounce@filosofianakatemia.fi';
 }
+
+function _fa_get_academians(){
+  // Use $query for readability
+  $query = 'SELECT DISTINCT u.uid, u.name
+              FROM {users} u
+              INNER JOIN {users_roles} ur ON u.uid = ur.uid
+              WHERE ur.rid = 4';
+  $result = db_query($query, array(':rids' => array(1,2,3)));
+
+  $academians = array();
+  foreach ($result as $row) {
+    $academians[$row->uid] = $row->name;
+  }
+  return $academians;
+}
+
+

@@ -236,7 +236,7 @@ function _fa_course_get_course_info($facid){
 function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity) {
   global $user;
 
-  $academians = _fa_course_get_academians();
+  $academians = _fa_get_academians();
   if (!isset($course->lead_trainer_id))
     $academians[0] = t('-- unknown --');
 
@@ -550,8 +550,15 @@ function fa_course_edit_form_submit($form, &$form_state) {
   $course->crm_link = $form_state['values']['crm_link'];
   $course->billing_information = !empty($form_state['values']['billing_information']) ? $form_state['values']['billing_information'] : NULL;
   $course->lead_sales_id = $form_state['values']['lead_sales'];
-  if ($form_state['values']['lead_trainer'] != 0)
-    $course->lead_trainer_id = $form_state['values']['lead_trainer'];
+  if ($form_state['values']['lead_trainer'] != 0){
+    if (!isset($course->lead_trainer_id) || ($course->lead_trainer_id != $form_state['values']['lead_trainer'])){
+      $old_lead_trainer_id = FALSE;
+      if (isset($course->lead_trainer_id)) $old_lead_trainer_id = $course->lead_trainer_id;
+      $course->lead_trainer_id = $form_state['values']['lead_trainer'];
+      // Go through every already created session and add the lead trainer to the trainers
+      _fa_course_set_lead_trainer_to_sessions($course, $course->lead_trainer_id, $old_lead_trainer_id);
+    }
+  }
 
   // Other information holds two values
   $other_information = array();
@@ -583,6 +590,14 @@ function fa_course_edit_form_submit($form, &$form_state) {
     drupal_write_record('fa_course', $course);
   drupal_set_message(t('Course @facid saved.', array('@facid' => $course->facid)));
   $form_state['redirect'] = "admin/people/courses/view/" . $course->facid;
+}
+
+function _fa_course_set_lead_trainer_to_sessions($course, $current_lead_trainer_id, $old_lead_trainer_id){
+  $result = db_query('SELECT s.facsid FROM fa_course_session s WHERE s.facid = :facid', array(':facid' => $course->facid));
+
+  foreach ($result as $record) {
+    _fa_course_set_lead_trainer_to_session($record->facsid, $course->lead_trainer_id, $old_lead_trainer_id);
+  }
 }
 
 function fa_course_delete($facid){

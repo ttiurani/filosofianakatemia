@@ -355,22 +355,6 @@ function _fa_course_get_course_roles(){
   );
 }
 
-function _fa_course_get_academians(){
-  // Use $query for readability
-  $query = 'SELECT DISTINCT u.uid, u.name
-              FROM {users} u
-              INNER JOIN {users_roles} ur ON u.uid = ur.uid
-              WHERE ur.rid = 4';
-  $result = db_query($query, array(':rids' => array(1,2,3)));
-
-  $academians = array();
-  foreach ($result as $row) {
-    $academians[$row->uid] = $row->name;
-  }
-  return $academians;
-}
-
-
 function _fa_course_set_course_role($facid){
   $result = db_query("SELECT c.course_id AS course_role_id, r1.name AS organization_role, r2.name as product_role FROM fa_course c "
                   ."INNER JOIN role r1 ON r1.rid = c.organization_id "
@@ -410,6 +394,26 @@ function _fa_course_get_first_session($facid){
     return $row;
   }
   return NULL;
+}
+
+function _fa_course_get_lead_trainer_id($facid){
+  return db_query("SELECT c.lead_trainer_id FROM fa_course c "
+                . "WHERE c.facid = :facid", array(':facid' => $facid))->fetchField();
+}
+
+function _fa_course_set_lead_trainer_to_session($facsid, $lead_trainer_id, $old_lead_trainer_id = FALSE){
+  if ($old_lead_trainer_id != FALSE){
+   db_query("UPDATE fa_sessions_trainers SET uid = :lead_trainer_id "
+           ."WHERE facsid = :facsid AND uid = :old_lead_trainer_id",
+           array(':lead_trainer_id' => $lead_trainer_id,
+                 ':old_lead_trainer_id' => $old_lead_trainer_id,
+                 ':facsid' => $facsid));
+  }else{
+   db_query("INSERT INTO fa_sessions_trainers(facsid, uid) "
+        ."VALUES(:facsid, :lead_trainer_id)",
+      array(':lead_trainer_id' => $lead_trainer_id,
+            ':facsid' => $facsid));
+  }
 }
 
  /**

@@ -188,7 +188,8 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
   );
 
   // Second trainer
-  $academians = _fa_course_get_academians();
+  $academians = _fa_get_academians();
+  unset($academians[_fa_course_get_lead_trainer_id($course_session->facid)]);
   $academians[0] = t('--no one--');
 
   $second_trainer_id = _fa_course_get_second_trainer_id($course_session);
@@ -198,6 +199,19 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#title'          => t('Second trainer on the session'),
       '#default_value'  => $second_trainer_id != NULL ? $second_trainer_id : 0,
       '#options'        => $academians,
+  );
+
+  $lead_trainer_set = _fa_course_lead_trainer_set($course_session);
+  $lead_trainer_present = _fa_course_lead_trainer_present($course_session);
+
+  $default_lead_trainer_present = TRUE;
+  if ($lead_trainer_present === FALSE && $lead_trainer_set) $default_lead_trainer_present = FALSE;
+
+  $form['course_session']['lead_trainer_present'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('The lead trainer is present'),
+      '#disabled'       => !$lead_trainer_set,
+      '#default_value'  => $default_lead_trainer_present,
   );
 
   $default_summary_emails = NULL;
@@ -330,8 +344,8 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 
 function _fa_course_get_second_trainer_id($course_session){
   if (!isset($course_session->facsid)) return NULL;
-  return db_query("SELECT uid FROM fa_sessions_trainers "
-                . "WHERE facsid = :facsid", array(':facsid' => $course_session->facsid))->fetchField();
+  return db_query("SELECT st.uid FROM fa_sessions_trainers st INNER JOIN fa_course_session s ON st.facsid = s.facsid INNER JOIN fa_course c ON s.facid = c.facid "
+                . "WHERE st.facsid = :facsid AND st.uid <> c.lead_trainer_id", array(':facsid' => $course_session->facsid))->fetchField();
 }
 
 function _fa_course_save_second_trainer($course_session, $second_trainer_id){
@@ -341,16 +355,49 @@ function _fa_course_save_second_trainer($course_session, $second_trainer_id){
             ."VALUES(:facsid, :second_trainer_id)",
           array(':second_trainer_id' => $second_trainer_id,
                 ':facsid' => $course_session->facsid));
-  }elseif($current_second_trainer != NULL && $second_trainer_id != 0){
+  }elseif($current_second_trainer != NULL && $second_trainer_id != 0 && $current_second_trainer != $second_trainer_id){
     db_query("UPDATE fa_sessions_trainers SET uid = :second_trainer_id "
-          ."WHERE facsid = :facsid",
+          ."WHERE facsid = :facsid AND uid = :current_second_trainer",
           array(':second_trainer_id' => $second_trainer_id,
-                ':facsid' => $course_session->facsid));
+                ':facsid' => $course_session->facsid,
+                ':current_second_trainer' => $current_second_trainer));
   }elseif($current_second_trainer != NULL && $second_trainer_id == 0){
     db_query("DELETE FROM fa_sessions_trainers "
-            ."WHERE facsid = :facsid",
-             array(':facsid' => $course_session->facsid));
+            ."WHERE facsid = :facsid AND uid = :current_second_trainer",
+             array(':facsid' => $course_session->facsid,
+                   ':current_second_trainer' => $current_second_trainer));
   }
+}
+
+function _fa_course_save_lead_trainer($course_session, $lead_trainer_present){
+  $current_lead_trainer_present = _fa_course_lead_trainer_present($course_session);
+  if ($lead_trainer_present && $current_lead_trainer_present == FALSE){
+    _fa_course_set_lead_trainer_to_session($course_session->facsid, _fa_course_get_lead_trainer_id($course_session->facid));
+  }elseif(!$lead_trainer_present && $current_lead_trainer_present){
+    db_query("DELETE FROM fa_sessions_trainers "
+            ."WHERE facsid = :facsid AND uid = :current_lead_trainer",
+             array(':facsid' => $course_session->facsid,
+                   ':current_lead_trainer' => $current_lead_trainer_present));
+  }
+}
+
+
+function _fa_course_lead_trainer_set($course_session){
+  $lead_trainer_id = _fa_course_get_lead_trainer_id($course_session->facid);
+  if ($lead_trainer_id == 0 || $lead_trainer_id == NULL){
+    return FALSE;
+  }else {
+    return TRUE;
+  }
+}
+
+function _fa_course_lead_trainer_present($course_session){
+  if (!isset($course_session->facsid)) return NULL;
+  $present_lead_trainer_id =
+      db_query("SELECT st.uid FROM fa_sessions_trainers st INNER JOIN fa_course_session s ON st.facsid = s.facsid INNER JOIN fa_course c ON s.facid = c.facid "
+              . "WHERE st.facsid = :facsid AND st.uid = c.lead_trainer_id", array(':facsid' => $course_session->facsid))->fetchField();
+  if ($present_lead_trainer_id == 0) return FALSE;
+  else return $present_lead_trainer_id;
 }
 
 function _fa_course_get_participants_for_session($course_session){
@@ -586,6 +633,13 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
     }
   }
 
+  // Validate trainers
+  if ($form_state['values']['second_trainer'] == 0 && $form_state['values']['lead_trainer_present'] == FALSE){
+    form_set_error('lead_trainer_present', t('Either lead trainer must be present or second trainer selected'));
+    return;
+  }
+
+
   // Check summary emails
   if (empty($form_state['values']['summary_emails']) &&
       ($form_state['values']['preliminary_assignment_check'] ||
@@ -677,10 +731,11 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     drupal_write_record('fa_course_session', $course_session);
 
   // Second trainer
-  $second_trainer_id = _fa_course_get_second_trainer_id($course_session);
-  if ($form_state['values']['second_trainer'] != 0 || (_fa_course_get_second_trainer_id($course_session) != NULL)){
-    _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
-  }
+  _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
+
+  // Lead trainer
+  if (_fa_course_lead_trainer_set($course_session))
+    _fa_course_save_lead_trainer($course_session, $form_state['values']['lead_trainer_present']);
 
   drupal_set_message(t('Course session @facsid saved.', array('@facsid' => $course_session->facsid)));
 
@@ -805,6 +860,10 @@ function fa_course_sessions_delete_form_submit($form, &$form_state) {
   $session = $form_state['values']['session'];
 
   db_delete('fa_course_session')
+    ->condition('facsid', $session->facsid)
+    ->execute();
+
+  db_delete('fa_sessions_trainers')
     ->condition('facsid', $session->facsid)
     ->execute();
 
