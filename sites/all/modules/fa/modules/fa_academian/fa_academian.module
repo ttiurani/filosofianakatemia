@@ -53,7 +53,7 @@ function fa_academian_menu() {
       'page callback' => 'fa_academian_overview_period',
       'page arguments' => array(3),
       'access arguments' => array('administer academians'),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
       'file' => 'fa_academian.inc',
   );
 
