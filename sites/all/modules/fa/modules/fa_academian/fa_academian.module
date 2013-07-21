@@ -1,0 +1,73 @@
+<?php
+/**
+* @file
+* A course database module for Filosofian Akatemia Academians.
+*/
+
+
+/**
+* Implements hook_help.
+*
+* Displays help and module information.
+*
+* @param path
+*   Which path of the site we're using to display help
+* @param arg
+*   Array that holds the current path as returned from arg() function
+*/
+function fa_academian_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#fa":
+      return '<p>'.  t("Filosofian Akatemia Academians module.") .'</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function fa_academian_menu() {
+  // Admin menu items
+  $items['admin/config/people/academians'] = array(
+    'title' => 'Filosofian Akatemia Academians',
+    'description' => 'Modify Filosofian Akatamia Academian settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fa_academian_settings'),
+    'access arguments' => array('administer academians'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 10,
+    'file' => 'fa_academian.admin.inc',
+  );
+
+  // People->Academians menu items
+  $items['admin/people/academians'] = array(
+      'title' => t("Academians"),
+      'page callback' => 'fa_academian_overview',
+      'access arguments' => array('administer academians'),
+      'type' => MENU_LOCAL_TASK,
+      'file' => 'fa_academian.inc',
+  );
+
+  $items['admin/people/academians/%'] = array(
+      'title' => t("View course"),
+      'page callback' => 'fa_academian_overview_period',
+      'page arguments' => array(3),
+      'access arguments' => array('administer academians'),
+      'type' => MENU_CALLBACK,
+      'file' => 'fa_academian.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function fa_academian_permission() {
+  return array(
+      'administer academians' => array(
+          'title' => t('Administer academians'),
+          'description' => t('Administer Filosofian Akatemia academians'),
+      ),
+  );
+}

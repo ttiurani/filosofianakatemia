@@ -29,7 +29,7 @@ function fa_course_overview() {
     ->fields('fac', array('facid', 'city', 'crm_link', 'trainer_handover', 'sales_handover', 'lead_sales_id', 'lead_trainer_id'))
     ->extend('TableSort')
     ->extend('PagerDefault')
-    ->limit(20);
+    ->limit(50);
   $result->innerJoin('role', 'ro', 'ro.rid = fac.organization_id');
   $result->addField('ro', 'name', 'organization');
   $result->addField('ro', 'rid', 'organization_id');

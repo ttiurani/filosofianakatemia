@@ -1,0 +1,9 @@
+name = Filosofian Akatemia - Academians
+description = "Filosofian Akatemia Academians module."
+core = 7.x
+package = Filosofian Akatemia
+dependencies[] = fa
+files[] = fa_academian.module
+files[] = fa_academian.install
+files[] = fa_academian.admin.inc
+files[] = fa_academian.inc
