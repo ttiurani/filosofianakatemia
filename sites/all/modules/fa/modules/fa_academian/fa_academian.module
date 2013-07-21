@@ -49,11 +49,11 @@ function fa_academian_menu() {
   );
 
   $items['admin/people/academians/%'] = array(
-      'title' => t("View course"),
+      'title' => t("Academians"),
       'page callback' => 'fa_academian_overview_period',
       'page arguments' => array(3),
       'access arguments' => array('administer academians'),
-      'type' => MENU_CALLBACK,
+      'type' => MENU_LOCAL_TASK,
       'file' => 'fa_academian.inc',
   );
 

@@ -22,7 +22,21 @@ function fa_academian_settings() {
     '#type' => 'textfield',
     '#title' => t('Maximum number of minutes to count as 0.5 trainer point'),
     '#default_value' => variable_get('fa_academian_half_max_minutes', 60),
-    '#description' => t('Maximum number of minutes that is counted as 0.5 trainer points. Everything above it counts as 1 trainer point.'),
+    '#description' => t('Maximum number of minutes that is counted as 0.5 trainer points. Above it counts as 1 or more trainer points.'),
+    '#required' => TRUE,
+  );
+  $form['general']['fa_academian_full_max_minutes'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of minutes to count as 1 trainer point'),
+    '#default_value' => variable_get('fa_academian_full_max_minutes', 210),
+    '#description' => t('Maximum number of minutes that is counted as 1 trainer points. Above it counts as 1.5 or more trainer points.'),
+    '#required' => TRUE,
+  );
+  $form['general']['fa_academian_oneandhalf_max_minutes'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of minutes to count as 1.5 trainer point'),
+    '#default_value' => variable_get('fa_academian_oneandhalf_max_minutes', 300),
+    '#description' => t('Maximum number of minutes that is counted as 1.5 trainer points. Anything above counts as 2 trainer points.'),
     '#required' => TRUE,
   );
 
