@@ -57,6 +57,16 @@ function fa_academian_menu() {
       'file' => 'fa_academian.inc',
   );
 
+  $items['admin/people/academians/user/%'] = array(
+      'title' => t("Academians"),
+      'page callback' => 'fa_academian_user',
+      'page arguments' => array(4),
+      'access arguments' => array('administer academians'),
+      'type' => MENU_CALLBACK,
+      'file' => 'fa_academian.inc',
+  );
+
+
   return $items;
 }
 

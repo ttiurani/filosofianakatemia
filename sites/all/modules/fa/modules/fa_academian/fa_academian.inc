@@ -28,7 +28,6 @@ function fa_academian_overview_period($period_id) {
   if ($period_id == 1)
     $header[] = t('Progression');
 
-
   $result = db_select('users', 'u')
     ->fields('u', array('uid', 'name'))
     ->extend('TableSort')
@@ -73,7 +72,7 @@ function fa_academian_overview_period($period_id) {
   foreach ($result as $row) {
     $cells = array();
     $cells[] = $row->uid;
-    $cells[] = $row->name;
+    $cells[] = l($row->name, "admin/people/academians/user/" . $row->uid);
     $cells[] = $row->sessions;
     $cells[] = $row->halfpoints;
     $cells[] = $row->fullpoints;
@@ -120,4 +119,64 @@ function fa_academian_overview_period($period_id) {
   }
 
   return $output;
+}
+
+/**
+ * Return info for the single user.
+ */
+function fa_academian_user($uid) {
+
+  module_load_include('inc', 'fa_course', 'fa_course.sessions');
+
+  $header = array(
+      t('Course'),
+      array('data' => t('Session Id'), 'field' => 'facsid'),
+      t('Session type'),
+      array('data' => t('Start time'), 'field' => 'session_start_datetime', 'sort' => 'asc'),
+      t('End Time'),
+      t('Address'),
+      t('Material'),
+  );
+
+  $session_type = _fa_course_get_session_types();
+  $result = db_select('fa_course_session', 's')
+    ->fields('s', array('facid', 'facsid', 'session_type', 'session_start_datetime', 'session_end_datetime', 'address', 'material', 'assistant_email'))
+    ->extend('TableSort')
+    ->extend('PagerDefault');
+  $result->innerJoin('fa_sessions_trainers', 'st', 's.facsid = st.facsid');
+  $result->condition('st.uid', $uid);
+  $result->where('s.session_start_datetime > UNIX_TIMESTAMP(NOW())');
+  $result->distinct();
+  $result->groupBy('s.facsid');
+  $result->orderByHeader($header);
+  $result = $result->execute()->fetchAll();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $cells = array();
+    $cells[] = l(_fa_course_get_course_name($row->facid), "admin/people/courses/sessions/" . $row->facid . "/edit/$row->facsid");
+    $cells[] = $row->facsid;
+    $cells[] = $session_type[$row->session_type];
+    $cells[] = format_date($row->session_start_datetime, 'custom', 'D d.m.Y H:i');
+    $cells[] = format_date($row->session_end_datetime, 'custom', 'D d.m.Y H:i');
+    $cells[] = $row->address;
+    $cells[] = $row->material;
+    $rows[] = $cells;
+  }
+
+  $academians = _fa_get_academians();
+  $title = '<p><strong>Future sessions for ' . $academians[$uid] . '</strong><br/>'
+            . l(t("Back"), "admin/people/academians") . '</p>';
+  $output = render($title);
+
+  $output .= theme('table', array('header' => $header, 'rows' => $rows));
+
+  if (!$rows) {
+    $output .= t('No future sessions found.');
+  }
+  else {
+    $output .= theme('pager');
+  }
+  return $output;
+
 }

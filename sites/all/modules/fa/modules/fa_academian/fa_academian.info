@@ -3,6 +3,7 @@ description = "Filosofian Akatemia Academians module."
 core = 7.x
 package = Filosofian Akatemia
 dependencies[] = fa
+dependencies[] = fa_course
 files[] = fa_academian.module
 files[] = fa_academian.install
 files[] = fa_academian.admin.inc
