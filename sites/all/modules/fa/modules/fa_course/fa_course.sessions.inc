@@ -348,6 +348,11 @@ function _fa_course_get_second_trainer_id($course_session){
                 . "WHERE st.facsid = :facsid AND st.uid <> c.lead_trainer_id", array(':facsid' => $course_session->facsid))->fetchField();
 }
 
+function _fa_course_get_course_session_count($course_session){
+  return db_query("SELECT COUNT(facsid) FROM fa_course_session "
+                . "WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
+}
+
 function _fa_course_save_second_trainer($course_session, $second_trainer_id){
   $current_second_trainer = _fa_course_get_second_trainer_id($course_session);
   if ($current_second_trainer == NULL && $second_trainer_id != 0){
@@ -705,6 +710,8 @@ function _fa_course_validate_assignment_schedule($course_session, $form_state, $
 }
 
 function fa_course_session_edit_form_submit($form, &$form_state) {
+  module_load_include('inc', 'fa_course', 'fa_course.email');
+
   $course_session = $form_state['course_session'];
 
   $course_session->session_type = $form_state['values']['session_type'];
@@ -725,6 +732,9 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
     fa_course_send_assignment($course_session, $form_state['send_info']['assignment']);
   }
 
+  // Get number of sessions for course
+  $number_of_sessions = _fa_course_get_course_session_count($course_session);
+
   if (isset($course_session->facsid))
     drupal_write_record('fa_course_session', $course_session, 'facsid');
   else
@@ -737,10 +747,32 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   if (_fa_course_lead_trainer_set($course_session))
     _fa_course_save_lead_trainer($course_session, $form_state['values']['lead_trainer_present']);
 
+  // If this is the first session of the course, send a new course message to billing
+  if ($number_of_sessions == 0){
+    $course_info = _fa_course_get_course_info($course_session);
+    fa_course_send_new_course_email($course_session, $course_info->sum, $course_info->sales_email);
+    drupal_set_message(t('New course email sent to billing.'));
+  }
+
   drupal_set_message(t('Course session @facsid saved.', array('@facsid' => $course_session->facsid)));
 
   $form_state['redirect'] = "admin/people/courses/sessions/" . $course_session->facid . '/edit/' . $course_session->facsid;
 }
+
+function _fa_course_get_course_info($course_session){
+  $result = db_query('SELECT sales.mail AS sales_email, c.crm_link AS crm_link '
+                   . 'FROM fa_course c '
+                   . 'INNER JOIN users sales ON c.lead_sales_id = sales.uid '
+                   . 'WHERE c.facid = :facid', array(':facid' => $course_session->facid));
+  foreach ($result as $course_info) {
+    // Get info from CapsuleCRM
+    module_load_include('inc', 'fa_course', 'fa_course.capsulecrm');
+    $opportunity = fa_course_get_crm_opportunity($course_info->crm_link);
+    $course_info->sum = $opportunity->value . ' ' . $opportunity->currency;
+    return $course_info;
+  }
+}
+
 
 function _fa_course_store_assignment($course_session, $form_state, $assignment){
   // Save assignments only if they haven't been sent already

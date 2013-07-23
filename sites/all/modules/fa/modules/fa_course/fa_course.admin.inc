@@ -41,9 +41,9 @@ function fa_course_settings() {
   );
   $form['general']['fa_course_billing_emails'] = array(
     '#type' => 'textfield',
-    '#title' => t('Emails where billing information needs to be sent to after first session'),
+    '#title' => t('Emails where new course notification and billing information after first session will be sent'),
     '#default_value' => variable_get('fa_course_billing_emails', NULL),
-    '#description' => t('The default billing addresses, separated with a comma. Note: lead trainer and sales will be CC:d.'),
+    '#description' => t('The default new course and billing addresses, separated with a comma. Note: lead trainer and sales will be CC:d.'),
     '#required' => TRUE,
   );
   $form['general']['fa_course_capsulecrm_api_authentication_token'] = array(

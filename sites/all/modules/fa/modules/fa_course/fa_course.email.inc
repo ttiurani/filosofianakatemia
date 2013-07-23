@@ -139,6 +139,33 @@ function fa_course_send_billing_email($facid, $sum, $billing_information, $train
   return TRUE;
 }
 
+function fa_course_send_new_course_email($course_session, $sum, $sales_email){
+  // Create email
+  $email = array(
+    'to' => variable_get('fa_course_billing_emails', NULL),
+    'cc' => $sales_email,
+    'from' => variable_get('fa_course_default_from_email', 'webmaster@filosofianakatemia.fi'),
+  );
+
+  $course_name = _fa_course_get_course_name($course_session->facid);
+
+  $email['subject'] = t("NEW COURSE: ") . $course_name;
+  $email['message'] = t("The course @course_name has been added.",
+                           array('@course_name' => $course_name))
+                           . "\n\n";
+  $email['message'] .= t("Lead sales: ") . $sales_email . "\n";
+  $email['message'] .= t("Sum from CapsuleCRM: ") . $sum . "\n";
+  $email['message'] .= t("Initial first session time: ") . format_date($course_session->session_start_datetime, 'custom', 'D d.m.Y H:i') . "\n\n";
+  $email['message'] .= t("View the course at: ") . url('admin/people/courses/view/' . $course_session->facid, array('absolute' => TRUE));
+
+  // Send email
+  $message = _fa_course_send_email($email);
+  if ($message == NULL){
+    return FALSE;
+  }
+  return TRUE;
+}
+
 function _fa_course_get_assignment_email_template($course_session, $assignment){
   switch ($assignment['id']) {
     case 1:
