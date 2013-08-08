@@ -639,9 +639,11 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
   }
 
   // Validate trainers
-  if ($form_state['values']['second_trainer'] == 0 && $form_state['values']['lead_trainer_present'] == FALSE){
-    form_set_error('lead_trainer_present', t('Either lead trainer must be present or second trainer selected'));
-    return;
+  if (!isset($form_state['storage']['confirm'])){
+    if ($form_state['values']['second_trainer'] == 0 && $form_state['values']['lead_trainer_present'] == FALSE){
+      form_set_error('lead_trainer_present', t('Either lead trainer must be present or second trainer selected'));
+      return;
+    }
   }
 
 
