@@ -53,6 +53,14 @@ function fa_course_settings() {
     '#required' => TRUE,
   );
 
+  $form['general']['fa_course_products'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Options for material promises'),
+    '#default_value' => variable_get('fa_course_products', 'Kehityspolku'),
+    '#description' => t('Course products, one per row.'),
+    '#required' => TRUE,
+  );
+
   $form['general']['fa_course_materials'] = array(
     '#type' => 'textarea',
     '#title' => t('Options for material promises'),
@@ -61,10 +69,10 @@ function fa_course_settings() {
     '#required' => TRUE,
   );
 
-  // Products options settings.
-  $form['product'] = array(
+  // Module options settings.
+  $form['module'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Product settings'),
+    '#title' => t('Module settings'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#group' => 'additional_settings',
@@ -72,28 +80,28 @@ function fa_course_settings() {
 
   $course_roles = _fa_course_get_course_roles();
 
-  foreach($course_roles['products'] as $product_name){
-    // Product specific options settings.
-    $product = strtolower($product_name);
-    $form['product'][$product] = array(
+  foreach($course_roles['modules'] as $module_name){
+    // Module specific options settings.
+    $module = strtolower($module_name);
+    $form['module'][$module] = array(
       '#type' => 'fieldset',
-      '#title' => t($product_name . ' settings'),
+      '#title' => t($module_name . ' settings'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
     );
-    $form['product'][$product] = $form['product'][$product]
+    $form['module'][$module] = $form['module'][$module]
           + fa_course_get_default_assignment_form(unserialize(PRELIMINARY_ASSIGNMENT),
-                                         $product);
-    $form['product'][$product] = $form['product'][$product]
+                                         $module);
+    $form['module'][$module] = $form['module'][$module]
           + fa_course_get_default_assignment_form(unserialize(COURSE_ASSIGNMENT),
-                                         $product);
-    $form['product'][$product] = $form['product'][$product]
+                                         $module);
+    $form['module'][$module] = $form['module'][$module]
           + fa_course_get_default_assignment_form(unserialize(FOLLOWUP),
-                                         $product);
-    $form['product'][$product] = $form['product'][$product]
+                                         $module);
+    $form['module'][$module] = $form['module'][$module]
           + fa_course_get_default_assignment_form(unserialize(FEEDBACK),
-                                         $product);
+                                         $module);
   }
 
   // Add vertical tabs display if available.
@@ -102,17 +110,17 @@ function fa_course_settings() {
   return system_settings_form($form);
 }
 
-function fa_course_get_default_assignment_form($assignment, $product) {
+function fa_course_get_default_assignment_form($assignment, $module) {
   $form = array();
 
-  $subject_id = 'fa_course_default_' . $product .'_'. $assignment['type'] . '_subject_template';
+  $subject_id = 'fa_course_default_' . $module .'_'. $assignment['type'] . '_subject_template';
   $form[$subject_id] = array(
     '#type' => 'textfield',
     '#title' => t('Default subject for ' . $assignment['name']),
     '#default_value' => variable_get($subject_id, NULL),
     '#required' => FALSE,
   );
-  $message_id = 'fa_course_default_' . $product .'_'. $assignment['type'] . '_message_template';
+  $message_id = 'fa_course_default_' . $module .'_'. $assignment['type'] . '_message_template';
   $form[$message_id] = array(
     '#type' => 'textarea',
     '#title' => t('Default message for ' . $assignment['name']),

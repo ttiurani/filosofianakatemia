@@ -14,7 +14,8 @@ function fa_course_overview() {
     t('Course name'),
     array('data' => t('First session'), 'field' => 'first_session'),
     array('data' => t('Organization'), 'field' => 'organization'),
-    array('data' => t('Product'), 'field' => 'product'),
+    array('data' => t('Product'), 'field' => 'product_name'),
+    array('data' => t('Module'), 'field' => 'module'),
     array('data' => t('Lead Sales'), 'field' => 'sales'),
     array('data' => t('Lead Trainer'), 'field' => 'trainer'),
     t('City'),
@@ -26,16 +27,16 @@ function fa_course_overview() {
   );
 
   $result = db_select('fa_course', 'fac')
-    ->fields('fac', array('facid', 'city', 'crm_link', 'trainer_handover', 'sales_handover', 'lead_sales_id', 'lead_trainer_id'))
+    ->fields('fac', array('facid', 'product_name', 'city', 'crm_link', 'trainer_handover', 'sales_handover', 'lead_sales_id', 'lead_trainer_id'))
     ->extend('TableSort')
     ->extend('PagerDefault')
     ->limit(50);
   $result->innerJoin('role', 'ro', 'ro.rid = fac.organization_id');
   $result->addField('ro', 'name', 'organization');
   $result->addField('ro', 'rid', 'organization_id');
-  $result->innerJoin('role', 'rp', 'rp.rid = fac.product_id');
-  $result->addField('rp', 'name', 'product');
-  $result->addField('rp', 'rid', 'product_id');
+  $result->leftJoin('role', 'rp', 'rp.rid = fac.module_id');
+  $result->addField('rp', 'name', 'module');
+  $result->addField('rp', 'rid', 'module_id');
   $result->innerJoin('users', 'us', 'us.uid = fac.lead_sales_id');
   $result->innerJoin('field_data_field_first_name', 'us_fn', 'us_fn.entity_id = us.uid');
   $result->addField('us_fn', 'field_first_name_value', 'sales_first_name');
@@ -63,11 +64,12 @@ function fa_course_overview() {
   foreach ($result as $row) {
     $cells = array();
     $cells[] = $row->facid;
-    $course_name = _fa_course_format_course_name($row->product_id, $row->organization_id, (isset($row->first_session) ? $row->first_session : NULL));
+    $course_name = _fa_course_format_course_name($row->product_name, $row->module_id, $row->organization_id, (isset($row->first_session) ? $row->first_session : NULL));
     $cells[] = l($course_name, "admin/people/courses/view/$row->facid");
     $cells[] = isset($row->first_session) ? format_date($row->first_session, 'custom', 'D d.m.Y H:i') : t('<i>Not set</i>');
     $cells[] = str_replace('#', '', $row->organization);
-    $cells[] = str_replace('#', '', $row->product);
+    $cells[] = $row->product_name;
+    $cells[] = isset($row->module) ? str_replace('#', '', $row->module) : t('<i>Not set</i>');
     $cells[] = l($row->sales_first_name . " " . $row->sales_last_name, "user/" . $row->lead_sales_id);
     $cells[] = isset($row->trainer_first_name) ? l($row->trainer_first_name . " " . $row->trainer_last_name, "user/" . $row->lead_trainer_id) : t('<i>Not set</i>');
     $cells[] = $row->city;
@@ -138,6 +140,7 @@ function fa_course_details($action, $facid){
       'created'  => REQUEST_TIME,
     );
   }
+  
   $links = '<p><strong>' . _fa_course_get_course_name($facid) . '</strong><br/>';
   if ($action == 'view'){
     $links .= l(t("Back"), "admin/people/courses")
@@ -244,7 +247,8 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
 
   // Not listed options
   $course_roles['organizations'][0] = t('--not listed--');
-  $course_roles['products'][0] = t('--not listed--');
+  // Uncomment if it should again be possible to add modules freely
+  //$course_roles['modules'][0] = t('--not listed--');
 
   $form['course'] = array(
       '#type' => 'fieldset',
@@ -301,7 +305,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#disabled'       => $action == 'view',
       '#description'    => t('Select the organization/company where the course will be kept.'),
   );
-  $form['course']['organization'] = array(
+  $form['course']['new_organization'] = array(
       '#type'           => 'textfield',
       '#title'          => t('New Organization'),
       '#disabled'       => $action == 'view',
@@ -316,27 +320,61 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       ),
   );
 
-  // Product select
-  $form['course']['product_select'] = array(
+  // Product name
+  $product_choices = preg_split( '/\r\n|\r|\n/', variable_get('fa_course_products', 'Kehityspolku'));
+  if (isset($course->product_name) && !in_array($course->product_name, $product_choices)){
+    array_push($product_choices, $course->product_name);
+  }
+  $form['course']['product'] = array(
       '#type'           => 'select',
       '#multiple'       => FALSE,
-      '#title'          => t('Select Product'),
       '#disabled'       => $action == 'view',
-      '#options'        => $course_roles['products'],
-      '#default_value'  => isset($course->product_id) ? $course->product_id : NULL,
-      '#description'    => t('Select the product.'),
+      '#title'          => t('Course product'),
+      '#default_value'  => isset($course->product_name) ? array_search($course->product_name, $product_choices) : 0,
+      '#options'        => $product_choices,
   );
-  $form['course']['product'] = array(
-      '#type'           => 'textfield',
-      '#title'          => t('Custom product'),
+
+  // Module
+  
+  $form['course']['module'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Module'),
+  );
+
+  $form['course']['module']['module_check'] = array(
+      '#type'           => 'checkbox',
+      '#disabled'       => $action == 'view' || _fa_course_sessions_have_modules($course),
+      '#title'          => t('This course contains substance from only one predefined module.'),
+      '#default_value'  => isset($course->module_id) ? TRUE : FALSE,
+  );
+  
+  $form['course']['module']['module_select'] = array(
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
+      '#title'          => t('Select Module'),
       '#disabled'       => $action == 'view',
-      '#description'    => t('Type the name of the custom product here.'),
+      '#options'        => $course_roles['modules'],
+      '#default_value'  => isset($course->module_id) ? $course->module_id : NULL,
+      '#description'    => t('Select the module.'),
+      '#states' => array(
+          'visible' => array(
+              ':input[name=module_check]' => array('checked' => TRUE),
+          ),
+      ),
+	  
+  );
+  $form['course']['module']['new_module'] = array(
+      '#type'           => 'textfield',
+      '#title'          => t('Custom module'),
+      '#disabled'       => $action == 'view',
+      '#description'    => t('Type the name of the custom module here.'),
       '#states' => array(
           'visible' => array(   // action to take.
-              ':input[name=product_select]' => array('value' => 0),
+              ':input[name=module_check]' => array('checked' => TRUE),
+              ':input[name=module_select]' => array('value' => 0),
           ),
           'required' => array(
-              ':input[name=product_select]' => array('value' => 0),
+              ':input[name=module_select]' => array('value' => 0),
           ),
       ),
   );
@@ -475,26 +513,15 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
   return $form;
 }
 
-function _fa_course_get_selected_role($form_state, $role_type){
-  $selected_role = new stdClass();
-  if (!empty($form_state['values'][$role_type])){
-    // Role needs to be created
-    $selected_role->name = '';
-    if ($role_type == 'product'){
-      $selected_role->name .= '#';
-    }
-    $selected_role->name .= '#' . $form_state['values'][$role_type] . '#';
-  }else{
-    $roles = user_roles(TRUE);
-    $selected_role->rid = $form_state['values'][$role_type . '_select'];
-    $selected_role->name = $roles[$selected_role->rid];
-  }
-  return $selected_role;
+function _fa_course_sessions_have_modules($course){
+  $result = db_query("SELECT s.module_id FROM fa_course_session s WHERE s.module_id IS NOT NULL AND s.facid = :facid", array(':facid' => $course->facid))->fetchField();
+  if ($result != FALSE) return TRUE;
+  else return FALSE;
 }
 
 function fa_course_edit_form_validate($form, &$form_state) {
   $organization_role = _fa_course_get_selected_role($form_state, 'organization');
-  $product_role = _fa_course_get_selected_role($form_state, 'product');
+  $module_role = _fa_course_get_selected_role($form_state, 'module');
   // Check that a role with given class name does not yet exist
   $roles = user_roles(TRUE);
 
@@ -503,8 +530,8 @@ function fa_course_edit_form_validate($form, &$form_state) {
       form_set_error('organization', t('Role name with given organization already exists'));
       return;
     }
-    if (!isset($product_role->rid) && $role_name == $product_role->name){
-      form_set_error('product', t('Role name with given product already exists'));
+    if (!isset($module_role->rid) && isset($module_role->name) && ($role_name == $module_role->name)){
+      form_set_error('new_module', t('Role name with given module already exists'));
       return;
     }
   }
@@ -538,15 +565,21 @@ function fa_course_edit_form_submit($form, &$form_state) {
   }
   $course->organization_id = $organization_role->rid;
 
-  // Product role
-  $product_role = _fa_course_get_selected_role($form_state, 'product');
-  if (!isset($product_role->rid)){
-    // Product role needs to be saved
-    user_role_save($product_role);
+  // Module role
+  $module_role = _fa_course_get_selected_role($form_state, 'module');
+  	
+  if (isset($module_role->name)){
+    if (!isset($module_role->rid)){
+      // Module role needs to be saved
+      user_role_save($module_role);
+    }
+    $course->module_id = $module_role->rid;
+  }elseif (isset($course->module_id)){
+  	$course->module_id = NULL;
   }
-  $course->product_id = $product_role->rid;
 
   $course->city = $form_state['values']['city'];
+  $course->product_name = $form['course']['product']['#options'][$form_state['values']['product']];
   $course->crm_link = $form_state['values']['crm_link'];
   $course->billing_information = !empty($form_state['values']['billing_information']) ? $form_state['values']['billing_information'] : NULL;
   $course->lead_sales_id = $form_state['values']['lead_sales'];

@@ -93,13 +93,23 @@ function _fa_course_process_invite($reg_code, $account, $status){
 
 function _fa_course_get_new_roles($participant){
   $roles = array();
-  $result = db_query("SELECT c.product_id, c.organization_id, c.course_id FROM fa_course c WHERE c.facid = :facid",
+  $result = db_query("SELECT c.module_id, c.organization_id, c.course_id FROM fa_course c WHERE c.facid = :facid",
            array(':facid' => $participant->facid));
   foreach($result as $row){
-    $roles[$row->product_id] = $row->product_id;
     $roles[$row->organization_id] = $row->organization_id;
     $roles[$row->course_id] = $row->course_id;
+  	if (isset($row->module_id))
+  	  $roles[$row->module_id] = $row->module_id;
+	else{
+     // Query for roles in sessions of the course
+	  $sresult = db_query("SELECT s.module_id FROM fa_course_session s WHERE s.facid = :facid",
+	           array(':facid' => $participant->facid));
+	  foreach($sresult as $srow){
+	  	if (isset($srow->module_id)) $roles[$srow->module_id] = $srow->module_id;
+	  }
+	} 
   }
+  
   return $roles;
 }
 

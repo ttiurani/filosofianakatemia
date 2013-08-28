@@ -64,10 +64,6 @@ h2.block-title { /* Block title */
   padding-left: 0;
 } 
 
-.menu{
-  text-transform: uppercase;
-}
-
 .menu a, .menu a.active, .menu a.active-trail{
   color: #139ADE;
 }
@@ -79,6 +75,26 @@ h2.block-title { /* Block title */
 #block-menu-block-1 .menu li.active {
   margin-top: 8px;
   margin-bottom: 8px;
+}
+
+#block-menu-block-2 .menu li.leaf {
+  margin-left: 10px;
+}
+
+#block-menu-block-2 .menu li.leaf.is-active-trail {
+  margin-left: 0px;
+}
+
+#block-menu-block-2 .menu li.leaf.is-active {
+  margin-left: 10px;
+}
+
+#block-menu-block-2 {
+  width: 200px;
+}
+
+#block-system-user-menu {
+  text-transform: uppercase;
 }
 
 #block-node-recent { /* "Recent content" block */

@@ -11,6 +11,7 @@
 function fa_course_sessions($facid) {
   $header = array(
       array('data' => t('Session Id'), 'field' => 'facsid'),
+      t('Module'),
       t('Session type'),
       array('data' => t('Start time'), 'field' => 'session_start_datetime', 'sort' => 'asc'),
       t('End Time'),
@@ -26,6 +27,13 @@ function fa_course_sessions($facid) {
     ->fields('s', array('facid', 'facsid', 'session_type', 'session_start_datetime', 'session_end_datetime', 'address', 'material', 'assistant_email'))
     ->extend('TableSort')
     ->extend('PagerDefault');
+  $result->innerJoin('fa_course', 'c', 'c.facid = s.facid');
+  $result->leftJoin('role', 'rpc', 'rpc.rid = c.module_id');
+  $result->addField('rpc', 'name', 'course_module');
+  $result->addField('rpc', 'rid', 'course_module_id');
+  $result->leftJoin('role', 'rp', 'rp.rid = s.module_id');
+  $result->addField('rp', 'name', 'module');
+  $result->addField('rp', 'rid', 'module_id');
   $result->condition('s.facid', $facid);
   $result->distinct();
 
@@ -35,10 +43,19 @@ function fa_course_sessions($facid) {
   $result->orderByHeader($header);
   $result = $result->execute()->fetchAll();
 
+
   $rows = array();
   foreach ($result as $row) {
+    $module_string = t('<i>Not set</i>');
+    if (isset($row->course_module)){
+      $module_string = str_replace('#', '', $row->course_module);
+    }elseif (isset($row->module)){
+  	  $module_string = str_replace('#', '', $row->module);
+    }
+	
     $cells = array();
     $cells[] = $row->facsid;
+    $cells[] = $module_string;
     $cells[] = $session_type[$row->session_type];
     $cells[] = format_date($row->session_start_datetime, 'custom', 'D d.m.Y H:i');
     $cells[] = format_date($row->session_end_datetime, 'custom', 'D d.m.Y H:i');
@@ -132,6 +149,36 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       '#value' => $course_session->facid,
       '#size'           => 10,
       '#maxlength'      => 10,
+  );
+
+  // Module
+  $course_module_id = _fa_course_get_course_module_id($course_session);
+  
+  $course_roles = _fa_course_get_course_roles();
+  $form['course_session']['module'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Module'),
+  );
+
+  $form['course_session']['module']['module_check'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('This session contains substance from one of the predifined modules'),
+      '#disabled'       => $course_module_id,
+      '#default_value'  => $course_module_id || isset($course_session->module_id) ? TRUE : FALSE,
+  );
+
+  $form['course_session']['module']['module_select'] = array(
+      '#type'           => 'select',
+      '#multiple'       => FALSE,
+      '#title'          => t('Select module'),
+      '#disabled'       => $course_module_id,
+      '#options'        => $course_roles['modules'],
+      '#default_value'  => $course_module_id || isset($course_session->module_id) ? ($course_module_id ? $course_module_id : $course_session->module_id) : NULL,
+      '#states' => array(
+          'visible' => array(
+              ':input[name=module_check]' => array('checked' => TRUE),
+          ),
+      ),
   );
 
   $session_type = _fa_course_get_session_types();
@@ -239,26 +286,28 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 
   );
 
-  $product_name = str_replace('#', '', db_query("SELECT r.name from fa_course fac "
-                  . "INNER JOIN role r ON r.rid = fac.product_id "
-                  . "WHERE fac.facid = :facid",
-                      array(':facid' => $course_session->facid)
-                    )->fetchField());
+  // Module is primarily from the course session but also from the course
+  $module_name = FALSE;
+  if ($course_module_id){
+  	$module_name = _fa_course_get_module_name($course_module_id);
+  }elseif (isset($course_session->module_id)){
+	$module_name = _fa_course_get_module_name($course_session->module_id);
+  }
 
   // Preliminary assignment
 
-  $preliminary_assignment_options = _fa_course_get_assignment_options($product_name, 'preliminary_assignment');
+  $preliminary_assignment_options = _fa_course_get_assignment_options($module_name, 'preliminary_assignment');
   $form['course_session'] = $form['course_session'] + _fa_course_get_assignment_form($course_session,
                                                 unserialize(PRELIMINARY_ASSIGNMENT),
                                                 $preliminary_assignment_options,
-                                                $product_name);
+                                                $module_name);
   // Course assignment
 
-  $course_assignment_options = _fa_course_get_assignment_options($product_name, 'course_assignment');
+  $course_assignment_options = _fa_course_get_assignment_options($module_name, 'course_assignment');
   $form['course_session'] = $form['course_session'] + _fa_course_get_assignment_form($course_session,
                                                 unserialize(COURSE_ASSIGNMENT),
                                                 $course_assignment_options,
-                                                $product_name);
+                                                $module_name);
   // Followup
   $followup = unserialize(FOLLOWUP);
   $form['course_session'][$followup['type']] = array(
@@ -275,11 +324,12 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
   $form['course_session'][$followup['type']] = $form['course_session'][$followup['type']]
             + _fa_course_get_email_template($course_session, $followup,
               isset($course_session->followup_sent),
-              $product_name);
+              $module_name);
 
   $form['course_session'][$followup['type']][$followup['type'] . '_action'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Send ' . $followup['name']),
+      '#disabled'       => isset($course_session->followup_sent),
       '#default_value'  => FALSE,
       '#states' => array(
           'visible' => array(
@@ -302,11 +352,11 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 
   // Feedback
 
-  $feedback_options = _fa_course_get_assignment_options($product_name, 'course_feedback');
+  $feedback_options = _fa_course_get_assignment_options($module_name, 'course_feedback');
   $form['course_session'] = $form['course_session'] + _fa_course_get_assignment_form($course_session,
                                                 unserialize(FEEDBACK),
                                                 $feedback_options,
-                                                $product_name);
+                                                $module_name);
 
   $form['course_session']['submit'] = array(
       '#type' => 'submit',
@@ -340,6 +390,17 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
       t('Cancel')
     );
   }
+}
+
+function _fa_course_get_module_name($module_id){
+  return str_replace('#', '', db_query("SELECT r.name from role r "
+                  . "WHERE r.rid = :module_id",
+                      array(':module_id' => $module_id)
+                    )->fetchField());
+}
+
+function _fa_course_get_course_module_id($course_session){
+  return db_query("SELECT c.module_id FROM fa_course c WHERE c.facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
 function _fa_course_get_second_trainer_id($course_session){
@@ -410,7 +471,7 @@ function _fa_course_get_participants_for_session($course_session){
                 . "WHERE facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
-function _fa_course_get_assignment_form($course_session, $assignment, $assignment_options, $product_name) {
+function _fa_course_get_assignment_form($course_session, $assignment, $assignment_options, $module_name) {
 
   $form = array();
 
@@ -446,7 +507,7 @@ function _fa_course_get_assignment_form($course_session, $assignment, $assignmen
   );
 
   $form[$assignment['type']] = $form[$assignment['type']]
-            + _fa_course_get_email_template($course_session, $assignment, $assignment_sent, $product_name);
+            + _fa_course_get_email_template($course_session, $assignment, $assignment_sent, $module_name);
 
   $assignment_datetime = $assignment['type'] . '_datetime';
   $form[$assignment['type']][$assignment['type'] . '_action'] = array(
@@ -578,7 +639,7 @@ function _fa_course_get_assignment_form($course_session, $assignment, $assignmen
   return $form;
 }
 
-function _fa_course_get_email_template($course_session, $assignment, $assignment_sent, $product_name){
+function _fa_course_get_email_template($course_session, $assignment, $assignment_sent, $module_name){
 
   $form = array();
 
@@ -587,7 +648,7 @@ function _fa_course_get_email_template($course_session, $assignment, $assignment
   if (isset($course_session->$assignment_email_template))
     $template = unserialize($course_session->$assignment_email_template);
 
-  $default_subject_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment['type'] . '_subject_template';
+  $default_subject_id = 'fa_course_default_' . strtolower($module_name) .'_'. $assignment['type'] . '_subject_template';
   $form[$assignment['type'] . '_subject'] = array(
       '#type'           => 'textfield',
       '#title'          => t(ucfirst($assignment['name']) . ' email title'),
@@ -601,7 +662,7 @@ function _fa_course_get_email_template($course_session, $assignment, $assignment
       ),
   );
 
-  $default_message_id = 'fa_course_default_' . strtolower($product_name) .'_'. $assignment['type'] . '_message_template';
+  $default_message_id = 'fa_course_default_' . strtolower($module_name) .'_'. $assignment['type'] . '_message_template';
   $form[$assignment['type'] . '_message'] = array(
       '#type'           => 'textarea',
       '#title'          => t(ucfirst($assignment['name']) . ' email body'),
@@ -664,28 +725,31 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
   }
 
   // Preliminary assignment
-  $preliminary_assignment = unserialize(PRELIMINARY_ASSIGNMENT);
-  _fa_course_validate_assignment_schedule($course_session, $form_state, $preliminary_assignment);
-
-  // Validate that preliminary assignment has invite token
-  $preliminary_assignment_message = $preliminary_assignment['type'] . '_message';
-  if (!empty($form_state['values'][$preliminary_assignment_message])){
-    if (strpos($form_state['values'][$preliminary_assignment_message], '[invite:join-link]') == FALSE){
-      form_set_error($preliminary_assignment_message, t('Preliminary assignment has to have an [invite:join-link] token.'));
-    }
-  }
+  _fa_course_validate_assignment($course_session, $form_state, unserialize(PRELIMINARY_ASSIGNMENT));
 
   // Course assignment
-  _fa_course_validate_assignment_schedule($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));
+  _fa_course_validate_assignment($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));
 
   // Feedback
-  _fa_course_validate_assignment_schedule($course_session, $form_state, unserialize(FEEDBACK));
+  _fa_course_validate_assignment($course_session, $form_state, unserialize(FEEDBACK));
 
 }
 
-function _fa_course_validate_assignment_schedule($course_session, $form_state, $assignment){
+function _fa_course_validate_assignment($course_session, $form_state, $assignment){
+  
+
+  
   $assignment_sent = $assignment['type'] . '_sent';
   if (!isset($course_session->$assignment_sent)){
+  	
+    // Validate that the assignment has invite token
+	$assignment_message = $assignment['type'] . '_message';
+	if (!empty($form_state['values'][$assignment_message])){
+	  if (strpos($form_state['values'][$assignment_message], '[invite:join-link]') == FALSE){
+	    form_set_error($assignment_message, t('Assignment has to have an [invite:join-link] token.'));
+      }
+    }
+	
     if ($form_state['values'][$assignment['type'] . '_action'] == SCHEDULE){
       $assignment_datetime = strtotime($form_state['values'][$assignment['type'] . '_schedule_datetime']);
       if ($assignment_datetime < strtotime("now")){
@@ -722,6 +786,15 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   $course_session->material = $form['course_session']['material']['#options'][$form_state['values']['material']];
   $course_session->summary_emails = $form_state['values']['summary_emails'];
   $course_session->assistant_email = $form_state['values']['assistant_email'];
+
+  if (!isset($form_state['send_info'])){
+    $module_role = _fa_course_get_selected_role($form_state, 'module');
+    if (isset($module_role->name)){
+      $course_session->module_id = $module_role->rid;
+    }elseif (isset($course_session->module_id)){
+      $course_session->module_id = NULL;
+    }
+  }
 
   _fa_course_store_assignment($course_session, $form_state, unserialize(PRELIMINARY_ASSIGNMENT));
   _fa_course_store_assignment($course_session, $form_state, unserialize(COURSE_ASSIGNMENT));

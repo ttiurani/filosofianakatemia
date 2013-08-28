@@ -18,10 +18,16 @@ function fa_course_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'product_id' => array(
-        'description' => 'Product role id.',
-        'type' => 'int',
+      'product_name' => array(
+        'description' => 'Name of the product.',
+        'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE,
+      ),
+      'module_id' => array(
+        'description' => 'Module role id.',
+        'type' => 'int',
+        'not null' => FALSE,
       ),
       'organization_id' => array(
         'description' => 'Organization role id.',
@@ -122,6 +128,11 @@ function fa_course_schema() {
               'unsigned' => TRUE,
               'not null' => TRUE,
           ),
+          'module_id' => array(
+	          'description' => 'Module role id.',
+	          'type' => 'int',
+	          'not null' => FALSE,
+	      ),		  
           'session_type' => array(
               'description' => 'Session type, 0=other, 1=lecture, 2=workshop, 3=lecture and workshop, 4=discussion, 5=1on1',
               'type' => 'int',
