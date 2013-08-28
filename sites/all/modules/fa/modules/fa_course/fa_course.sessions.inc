@@ -646,7 +646,6 @@ function fa_course_session_edit_form_validate($form, &$form_state) {
     }
   }
 
-
   // Check summary emails
   if (empty($form_state['values']['summary_emails']) &&
       ($form_state['values']['preliminary_assignment_check'] ||
@@ -742,13 +741,14 @@ function fa_course_session_edit_form_submit($form, &$form_state) {
   else
     drupal_write_record('fa_course_session', $course_session);
 
-  // Second trainer
-  _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
-
-  // Lead trainer
-  if (_fa_course_lead_trainer_set($course_session))
-    _fa_course_save_lead_trainer($course_session, $form_state['values']['lead_trainer_present']);
-
+  if (!isset($form_state['send_info'])){
+	  // Second trainer
+	  _fa_course_save_second_trainer($course_session, $form_state['values']['second_trainer']);
+	
+	  // Lead trainer
+	  if (_fa_course_lead_trainer_set($course_session))
+	    _fa_course_save_lead_trainer($course_session, $form_state['values']['lead_trainer_present']);
+  }
   // If this is the first session of the course, send a new course message to billing
   if ($number_of_sessions == 0){
     $course_info = _fa_course_get_course_info($course_session);
