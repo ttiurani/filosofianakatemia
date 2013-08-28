@@ -154,7 +154,7 @@ function fa_academian_user($uid) {
   $rows = array();
   foreach ($result as $row) {
     $cells = array();
-    $cells[] = l(_fa_course_get_course_name($row->facid), "admin/people/courses/sessions/" . $row->facid . "/edit/$row->facsid");
+    $cells[] = l(_fa_course_get_course_name($row->facid), "admin/people/courses/sessions/" . $row->facid . "/edit/" . $row->facsid);
     $cells[] = $row->facsid;
     $cells[] = $session_type[$row->session_type];
     $cells[] = format_date($row->session_start_datetime, 'custom', 'D d.m.Y H:i');
