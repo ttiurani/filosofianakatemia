@@ -101,7 +101,7 @@ function _fa_course_get_new_roles($participant){
   	if (isset($row->module_id))
   	  $roles[$row->module_id] = $row->module_id;
 	else{
-     // Query for roles in sessions of the course
+      // Query for roles in sessions of the course
 	  $sresult = db_query("SELECT s.module_id FROM fa_course_session s WHERE s.facid = :facid",
 	           array(':facid' => $participant->facid));
 	  foreach($sresult as $srow){

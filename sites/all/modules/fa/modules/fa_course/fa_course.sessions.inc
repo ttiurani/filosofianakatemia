@@ -293,17 +293,20 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
   }elseif (isset($course_session->module_id)){
 	$module_name = _fa_course_get_module_name($course_session->module_id);
   }
+  
+  // Get product name
+  $product_name = _fa_course_get_product_name($course_session);
 
   // Preliminary assignment
 
-  $preliminary_assignment_options = _fa_course_get_assignment_options($module_name, 'preliminary_assignment');
+  $preliminary_assignment_options = _fa_course_get_assignment_options($module_name, $product_name, 'preliminary_assignment');
   $form['course_session'] = $form['course_session'] + _fa_course_get_assignment_form($course_session,
                                                 unserialize(PRELIMINARY_ASSIGNMENT),
                                                 $preliminary_assignment_options,
                                                 $module_name);
   // Course assignment
 
-  $course_assignment_options = _fa_course_get_assignment_options($module_name, 'course_assignment');
+  $course_assignment_options = _fa_course_get_assignment_options($module_name, $product_name, 'course_assignment');
   $form['course_session'] = $form['course_session'] + _fa_course_get_assignment_form($course_session,
                                                 unserialize(COURSE_ASSIGNMENT),
                                                 $course_assignment_options,
@@ -352,7 +355,7 @@ function fa_course_session_edit_form($form, &$form_state, $course_session) {
 
   // Feedback
 
-  $feedback_options = _fa_course_get_assignment_options($module_name, 'course_feedback');
+  $feedback_options = _fa_course_get_assignment_options($module_name, $product_name, 'course_feedback');
   $form['course_session'] = $form['course_session'] + _fa_course_get_assignment_form($course_session,
                                                 unserialize(FEEDBACK),
                                                 $feedback_options,
@@ -397,6 +400,10 @@ function _fa_course_get_module_name($module_id){
                   . "WHERE r.rid = :module_id",
                       array(':module_id' => $module_id)
                     )->fetchField());
+}
+
+function _fa_course_get_product_name($course_session){
+  return db_query("SELECT c.product_name FROM fa_course c WHERE c.facid = :facid", array(':facid' => $course_session->facid))->fetchField();
 }
 
 function _fa_course_get_course_module_id($course_session){
