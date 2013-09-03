@@ -514,9 +514,11 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
 }
 
 function _fa_course_sessions_have_modules($course){
-  $result = db_query("SELECT s.module_id FROM fa_course_session s WHERE s.module_id IS NOT NULL AND s.facid = :facid", array(':facid' => $course->facid))->fetchField();
-  if ($result != FALSE) return TRUE;
-  else return FALSE;
+  if (isset($course->facid)){
+	$result = db_query("SELECT s.module_id FROM fa_course_session s WHERE s.module_id IS NOT NULL AND s.facid = :facid", array(':facid' => $course->facid))->fetchField();
+    if ($result != FALSE) return TRUE;
+  }
+  return FALSE;
 }
 
 function fa_course_edit_form_validate($form, &$form_state) {
