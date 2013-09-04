@@ -377,7 +377,7 @@ function _fa_course_get_selected_role($form_state, $role_type){
     if ($role_type == 'module'){
       $selected_role->name .= '#';
     }
-    $selected_role->name .= '#' . $form_state['values'][$role_type] . '#';
+    $selected_role->name .= '#' . $form_state['values']['new_' . $role_type] . '#';
   }elseif($role_type != 'module' || $form_state['values']['module_check'] == TRUE){
     $roles = user_roles(TRUE);
     $selected_role->rid = $form_state['values'][$role_type . '_select'];
