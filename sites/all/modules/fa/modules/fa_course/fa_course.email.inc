@@ -113,7 +113,7 @@ function _fa_course_send_handover($is_trainer, $course){
   return TRUE;
 }
 
-function fa_course_send_billing_email($facid, $sum, $billing_information, $trainer_email, $sales_email){
+function fa_course_send_billing_email($facid, $sum, $billing_information, $city, $trainer_email, $sales_email){
   // Create email
   $email = array(
     'to' => variable_get('fa_course_billing_emails', NULL),
@@ -128,6 +128,7 @@ function fa_course_send_billing_email($facid, $sum, $billing_information, $train
                            array('@course_name' => $course_name))
                            . "\n\n";
   $email['message'] .= t("Sum from CapsuleCRM: ") . $sum . "\n";
+  $email['message'] .= t("City: ") . $city . "\n";
   $email['message'] .= t("Billing information: ") . $billing_information . "\n\n";
   $email['message'] .= t("View the course at: ") . url('admin/people/courses/view/' . $facid, array('absolute' => TRUE));
 

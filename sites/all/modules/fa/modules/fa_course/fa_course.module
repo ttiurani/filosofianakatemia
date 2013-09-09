@@ -507,7 +507,7 @@ function fa_course_generate_reg_code() {
  */
 function fa_course_cron(){
   // Find all courses that are potentially billable
-  $result = db_query('SELECT c.facid AS facid, c.billing_information AS billing_information, '
+  $result = db_query('SELECT c.facid AS facid, c.billing_information AS billing_information, c.city AS city '
                        . 'trainer.mail AS trainer_email, sales.mail AS sales_email, c.crm_link AS crm_link '
                    . 'FROM fa_course c '
                    . 'INNER JOIN users trainer ON c.lead_trainer_id = trainer.uid '
@@ -605,6 +605,7 @@ function fa_course_send_billing($course_info){
   if (fa_course_send_billing_email($course_info->facid,
                                    $sum,
                                    $course_info->billing_information,
+                                   $course_info->city,
                                    $course_info->trainer_email, $course_info->sales_email) == FALSE){
     watchdog('fa_course', 'Error sending billing email to course %course',
              array('%course' => $course_info->facid), WATCHDOG_ERROR);
