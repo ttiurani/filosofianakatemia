@@ -507,7 +507,7 @@ function fa_course_generate_reg_code() {
  */
 function fa_course_cron(){
   // Find all courses that are potentially billable
-  $result = db_query('SELECT c.facid AS facid, c.billing_information AS billing_information, c.city AS city '
+  $result = db_query('SELECT c.facid AS facid, c.billing_information AS billing_information, c.city AS city, '
                        . 'trainer.mail AS trainer_email, sales.mail AS sales_email, c.crm_link AS crm_link '
                    . 'FROM fa_course c '
                    . 'INNER JOIN users trainer ON c.lead_trainer_id = trainer.uid '
