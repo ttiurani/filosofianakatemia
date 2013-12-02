@@ -383,7 +383,7 @@ function fa_course_edit_form($form, &$form_state, $course, $action, $opportunity
       '#type' => 'textfield',
       '#title' => t('City'),
       '#disabled'       => $action == 'view',
-      '#default_value' => isset($course->city) ? $course->city: 'Helsinki',
+      '#default_value' => isset($course->city) ? $course->city: NULL,
       '#required' => TRUE,
   );
   $form['course']['crm_link'] = array(
