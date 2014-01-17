@@ -139,7 +139,7 @@ function fa_course_participants_edit_form($form, &$form_state, $participant) {
   $form['participant']['invite_reuse'] = array(
       '#type'           => 'textfield',
       '#title'          => t('Number of times the invite can be reused'),
-      '#description'    => t('Set this only if someone else wants to send invitations to the participants on your behalf.'),
+      '#description'    => t('Set this only if someone else wants to send invitations to the participants on your behalf. NOTE: This person must remember to register/login through the link first herself, before sending the same link to others!'),
       '#required'       => FALSE,
       '#size'           => 4,
       '#maxlength'      => 4,
