@@ -43,10 +43,16 @@ function smart_paging_admin_settings($form, &$form_state) {
   );
   $form['smart_paging_use_link_rel'] = array(
     '#type'          => 'checkbox',
-    '#title'         => t('Pagination with rel="next" and rel="prev" (!details)', array('!details' => l(t('more details'), 'http://googlewebmastercentral.blogspot.co.uk/2011/09/pagination-with-relnext-and-relprev.html'))),
+    '#title'         => t('Pagination with rel="next" and rel="prev"'),
     '#default_value' => variable_get('smart_paging_use_link_rel', TRUE),
-    '#description'   => t('This will remove the rel="canonical" link.'),
+    '#description'   => t('This adds next and prev hints according to !google.', array('!google' => l(t('Google pagination policies'), 'http://googlewebmastercentral.blogspot.co.uk/2011/09/pagination-with-relnext-and-relprev.html'))),
   );
+  $form['smart_paging_use_nopaging_canonical'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Use the unpaged version as canonical'),
+    '#default_value' => variable_get('smart_paging_use_nopaging_canonical', FALSE),
+    '#description'   => t('Use {page one}?nopaging=1 as the canonical link for all pages.'),
+  );  
   // Container for default values
   $form['smart_paging_defaults'] = array(
     '#type'        => 'fieldset',

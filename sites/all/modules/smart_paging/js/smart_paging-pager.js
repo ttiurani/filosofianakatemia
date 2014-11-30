@@ -8,8 +8,8 @@
         var current_page  = settings.smart_paging.current_page;
         var first_element = settings.smart_paging.first_element;
         var path_prefix   = settings.smart_paging.path_prefix;
-        var first_page = $('.smart-paging-pager .pager-first a', context).attr('href');
-        var last_page  = $('.smart-paging-pager .pager-last a', context).attr('href');
+        var first_page = $('.smart-paging-pager .pager-first a', context).attr('href').split('?')[0];
+        var last_page  = $('.smart-paging-pager .pager-last a', context).attr('href').split('?')[0];
         var base_url   = settings.smart_paging.base_url;
         var current_url = settings.smart_paging.current_url;
         var total_page = last_page == undefined ? current_page : last_page.replace(/^\/.*\//i, '');
@@ -40,7 +40,7 @@
           $('.smart-paging-pager .pager-previous').after(js_box);
         }
         $('.smart-paging-pager-box').bind('change', function () {
-          window.location = $(this).attr('value');
+          window.location = $(this).val();
         });
       }
     }

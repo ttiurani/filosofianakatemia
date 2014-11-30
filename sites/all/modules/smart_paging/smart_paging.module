@@ -405,10 +405,12 @@ function _smart_paging_settings_submit($form, &$form_state) {
     }
   }
   elseif (isset($form_state['values']['smart_paging_use_default']) && $form_state['values']['smart_paging_use_default']) {
-    db_delete('smart_paging')
-      ->condition('entity_id', $form_state['storage']['smart_paging_entity_id'])
-      ->condition('entity_type', $form_state['storage']['smart_paging_entity_type'])
-      ->execute();
+    if (isset($form_state['storage']['smart_paging_entity_id']) && isset($form_state['storage']['smart_paging_entity_type'])) {
+      db_delete('smart_paging')
+        ->condition('entity_id', $form_state['storage']['smart_paging_entity_id'])
+        ->condition('entity_type', $form_state['storage']['smart_paging_entity_type'])
+        ->execute();
+    }
   }
 }
 
@@ -482,6 +484,42 @@ function smart_paging_entity_insert($entity, $entity_type) {
         ->execute();
     }
   }
+}
+
+/**
+ * Intercept the views_view template to alter the pager links when AJAX is enabled
+ */
+function smart_paging_preprocess_views_view(&$vars) {
+  if ($vars['view']->use_ajax && isset($vars['pager'])) {
+    $vars['pager'] = preg_replace_callback('/href="(.+?)"/', '_smart_paging_href_replace', $vars['pager']);
+  }
+}
+
+/**
+ * Callback function for fixing ajax pagination links
+ * Similar to smart_paging_url_inbound_alter() but returns the fixed
+ * path with the page in the query string rather than in $_GET
+ */
+function _smart_paging_href_replace($match) {
+  $path = trim($match[1], '/');
+  $path_info = parse_url($path);
+  $args = arg(NULL, $path_info['path']);
+  $arg_count = count($args) - 1;
+  $page = $args[$arg_count];
+  $sub_page = $args[$arg_count - 1];
+  if ($arg_count > 2 && is_numeric($sub_page) && is_numeric($page)) {
+    if ($args[$arg_count - 2] == variable_get('smart_paging_path_prefix', 'page')) {
+      if (isset($path_info['query'])) {
+        parse_str($path_info['query'], $query_array);
+      }
+      $query_array['page'] = "$sub_page,$page";
+      $path_info['query'] = http_build_query($query_array);
+      $alias = arg(NULL, $path_info['path']);
+      unset($alias[$arg_count - 2], $alias[$arg_count - 1], $alias[$arg_count]);
+      $path_info['path'] = implode('/', $alias);
+    }
+  }
+  return 'href="/' . $path_info['path'] . '?' . urldecode($path_info['query']) . '"';
 }
 
 /**
@@ -685,8 +723,34 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
             // Default this to 'no method' if it's being called as a full page
             $query_parameters = drupal_get_query_parameters();
             if (isset($query_parameters['nopaging'])) {
-              // Prevent this page from being cached
-              $GLOBALS['conf']['cache'] = FALSE;
+              // @TODO: Somewhat duplicated from below pagination code. Refactor candidate.
+              $get = drupal_get_query_parameters();
+              // Do we want nopaging as canonical instead of current page?
+              if (variable_get('smart_paging_use_nopaging_canonical', FALSE)) {
+                $get['nopaging'] = 1;
+              }
+              // Build url representation of current page. Using an absolute url allows outbound 
+              // url hooks to modify the domain if necessary (domain module).
+              $link_current_page = url($_GET['q'], array(
+                'absolute' => TRUE,
+                'query'    => $get,
+              ));
+              // By default add a canonical head element here. We will clean up any duplicates 
+              // in the hook.
+              drupal_add_html_head(array(
+                '#attributes' => array(
+                  'rel'  => 'canonical',
+                  'href' => $link_current_page,
+                ),
+                '#tag' => 'link',
+                '#attached' => array(
+                  'drupal_add_http_header' => array(array('Link', '<' . $link_current_page . '>; rel="canonical"', 1)),
+                ),
+              ), 'smart_paging_link_canonical');
+              // If set, use "Convert line breaks into HTML" filter
+              if (isset($use_autop)) {
+                $build[$field_name][$delta]['#markup'] = _filter_autop($markup_content);
+              }
               return;
             }
             if ($smart_paging_method == SMART_PAGING_NO_METHOD) {
@@ -762,16 +826,10 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
                 }
               }
             }
-            // Remove all line break/new line near the closing tag. Eg. Change from <[html tag]/>\n\r<[html tag]> to <[html tag]/><[html tag]>
-            preg_match_all('#<[A-Za-z/ ]+>#', $markup_content, $matched_tags);
-            foreach ($matched_tags[0] as $matched_tag) {
-              $matched_tag_regex = preg_quote($matched_tag, '#');
-              $markup_content = preg_replace('#' . $matched_tag_regex . '[\n\r]*<#', "$matched_tag<", $markup_content);
-            }
             do {
               // Look for consecutive placeholder and closing tag. Eg. <!--pagebreak--></p>
               $placeholder_regex = preg_quote($placeholder, '#');
-              preg_match_all("#($placeholder_regex)([ \t]*)(</[a-zA-Z]+>)#", $markup_content, $match);
+              preg_match_all("#($placeholder_regex)([ \t\r\n]*)(</[a-zA-Z]+>)#", $markup_content, $match);
               if (isset($match[1][0]) && isset($match[3][0])) {
                 // Move the placeholder to the end of closing tag. From the above example </p><!--pagebreak-->
                 $match_regex = preg_quote($match[1][0] . (isset($match[2][0]) ? $match[2][0] : '') . $match[3][0], '#');
@@ -851,27 +909,22 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
           preg_match_all('#<!--smartpagingmeta [[:punct:][:alnum:][:space:]]*-->#', $sub_content, $matched_tags);
           if (!empty($matched_tags[0])) {
             $smart_paging_seo = preg_replace('#<!--smartpagingmeta |<!--smartpagingurl [[:punct:][:alnum:][:space:]]*-->|-->#', '', $matched_tags[0][0]);
-            drupal_add_html_head(array(
-              '#attributes' => array(
-                'name'		=> 'Smart_Paging',
-                'content' => $smart_paging_seo,
-              ),
-              '#tag' => 'meta'
-            ), 'smart_paging_seo');
-            // Call this function to register the additional html head
-            drupal_get_html_head();
+            if (!module_exists('metatag')) {
+              drupal_add_html_head(array(
+                '#attributes' => array(
+                  'name'		=> 'Smart_Paging',
+                  'content' => $smart_paging_seo,
+                ),
+                '#tag' => 'meta'
+              ), 'smart_paging_seo');
+              // Call this function to register the additional html head
+              drupal_get_html_head();
+            }
+            else {
+              $output = &drupal_static('smart_paging');
+              $output = json_decode($smart_paging_seo, TRUE);
+            }
           }
-          // Add smart_paging_on as indicator to hook_html_head_alter() that
-          // Smart Paging is applied to this page
-          drupal_add_html_head(array(
-            '#attributes' => array(
-              'name'		=> 'Smart_Paging',
-              'content' => 'on',
-            ),
-            '#tag' => 'meta'
-          ), 'smart_paging_on');
-          // Call this function to register the additional html head
-          drupal_get_html_head();
         }
       }
     }
@@ -896,16 +949,50 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
         drupal_add_js(array('smart_paging' => $pager_details), 'setting');
       }
 
+      // Set up pager arguments.
+      $total_page_offset = $total_page - 1;
+      if ($enable_clean_url) {
+        $pager_prefix = $pager_details['path_prefix'] . '/' . $pager_details['first_element'];
+      }
+      else {
+        $pager_prefix = 'page=' . $pager_details['first_element'];
+      }
+      $get = drupal_get_query_parameters();
+      $q   = $_GET['q'];
+      // Do we want nopaging as canonical instead of current page?
+      if (variable_get('smart_paging_use_nopaging_canonical', FALSE)) {
+        $get['nopaging'] = 1;
+      }
+      elseif ($current_page != 0) {
+        // No. Make current paginated page canonical.
+        if ($enable_clean_url) {
+          $q .= "/$pager_prefix/$current_page";
+        }
+        else {
+          $get[$pager_prefix] = $current_page;
+        }
+      }
+      // Build url representation of current page. Using an absolute url allows outbound 
+      // url hooks to modify the domain if necessary (domain module).
+      $link_current_page = url($_GET['q'], array(
+        'absolute' => TRUE,
+        'query'    => $get,
+      ));
+      // By default add a canonical head element here. We will clean up any duplicates in the hook.
+      drupal_add_html_head(array(
+        '#attributes' => array(
+          'rel'  => 'canonical',
+          'href' => $link_current_page,
+        ),
+        '#tag' => 'link',
+        '#attached' => array(
+          'drupal_add_http_header' => array(array('Link', '<' . $link_current_page . '>; rel="canonical"', 1)),
+        ),
+      ), 'smart_paging_link_canonical');
+
       if (variable_get('smart_paging_use_link_rel', TRUE)) {
         // Pagination with rel="next" and rel="prev"
         // Ref: http://googlewebmastercentral.blogspot.co.uk/2011/09/pagination-with-relnext-and-relprev.html
-        $total_page_offset = $total_page - 1;
-        if ($enable_clean_url) {
-          $pager_prefix = $pager_details['path_prefix'] . '/' . $pager_details['first_element'];
-        }
-        else {
-          $pager_prefix = 'page=' . $pager_details['first_element'];
-        }
         if ($current_page == 0) {
           // We are on first page
           $link_rel_next_page = $enable_clean_url ? "$pager_prefix/1" : "$pager_prefix%2C1";
@@ -1006,32 +1093,45 @@ function smart_paging_field_attach_view_alter(&$build, $context) {
  */
 function smart_paging_html_head_alter(&$head_elements) {
   global $base_root;
-  if (isset($head_elements['smart_paging_on'])) {
-    // Set the single page view URL as canonical.
-    unset($head_elements['smart_paging_on']);
-    $url_components = parse_url($base_root);
-    $args = $_GET;
-    unset($args['q']);
-    $args['nopaging'] = 1;
-    $args = http_build_query($args);
-    $url_path = $url_components['host'] . '/' . request_path();
-    $canonical_link = $url_components['scheme'] . "://$url_path?$args";
+  if (isset($head_elements['smart_paging_link_canonical'])) {
+    // Process the canonical.
+    $smart_paging_canonical['smart_paging_link_canonical'] = $head_elements['smart_paging_link_canonical'];
+    unset($head_elements['smart_paging_link_canonical']);
+	   $current_alias = function_exists('path_alias_xt_get_path_alias') ? path_alias_xt_get_path_alias($_GET['q']) : drupal_get_path_alias($_GET['q']);
+    $current_absolute_alias = url($_GET['q'], array('absolute' => TRUE));
+    $override_canonical = array();
+    // Collect other existing canonical element(s)    
     foreach ($head_elements as $head_element_key => $head_element) {
-      if (isset($head_element['#tag']) && $head_element['#tag'] == 'link' && isset($head_element['#attributes']) && $head_element['#attributes']['rel'] == 'canonical') {
-        $head_elements[$head_element_key]['#attributes']['href'] = $canonical_link;
-        $canonical_link = '';
-        break;
+      $canonical_tag = isset($head_element['#tag']) && $head_element['#tag'] == 'link' && isset($head_element['#attributes']) && $head_element['#attributes']['rel'] == 'canonical';
+      $canonical_metatag = $head_element_key == 'metatag_canonical';
+      // Drupal standard canonical link style plus metatag edge case - does not overwrite standard drupal
+      if (strpos($head_element_key, 'drupal_add_html_head_link:canonical') === 0 || $canonical_tag || $canonical_metatag) {
+        // If other canonicals are different from the base url (page1), collect them.
+        // Check absolute url alias for page as well, this should allow Domain Source, or other absolute, provided canonical to be authoratative.
+        if (($canonical_tag && $head_element['#attributes']['href'] != $current_alias && $head_element['#attributes']['href'] != $current_absolute_alias) || ($canonical_metatag && $head_element['#value'] != $current_alias && $head_element['#value'] != $current_absolute_alias)) {
+          $override_canonical[$head_element_key] = $head_element;
+        }
+        unset($head_elements[$head_element_key]);
       }
     }
-    if (!empty($canonical_link)) {
-      $head_elements['canonical'] = array(
-        '#type' => 'html_tag',    
-        '#tag'  => 'link',    
-        '#attributes' => array(
-          'rel'  => 'canonical',
-          'href' => $canonical_link,
-        ), 
-      );
+    // If there are existing canonicals that don't match the base url, use them
+    // We are erring on the side that if another module is specifying a canonical different from this page's root (page1) then we shouldn't change it.
+    if (!empty($override_canonical)) {
+      $head_elements = array_merge($head_elements, $override_canonical);
+    }
+    else {
+      // Otherwise use the smart_paging canonical
+      $head_elements = array_merge($head_elements, $smart_paging_canonical);
+      // Remove any other canonicals already in the http response
+      // Here we are assuming that if the canonicals in the <head> element are ok to override, so is the http header
+      $http_header_link = drupal_get_http_header('Link');
+      $http_header_link = explode(',', $http_header_link);
+      foreach ($http_header_link as $key => $link) {
+        if (preg_match('#rel="canonical"#i', $link)) {
+          unset($http_header_link[$key]);
+        }
+      }
+      drupal_add_http_header('Link', implode(',', $http_header_link));
     }
   }
   if (isset($head_elements['smart_paging_seo'])) {
@@ -1416,6 +1516,39 @@ function smart_paging_wysiwyg_include_directory($type) {
       // You can just return $type, if you place your Wysiwyg plugins into a
       // sub-directory named 'plugins'.
       return 'plugins/wysiwyg';
+  }
+}
+
+/**
+ * Implements hook_metatags_view_alter().
+ */
+function smart_paging_metatag_metatags_view_alter(&$output, $instance) {
+  // Load metatags set for this page.
+  $page_metatags = drupal_static('smart_paging');
+
+  if (!empty($page_metatags)) {
+    $metatags = array();
+    $output_metatags = array();
+    $options['instance'] = $instance;
+    $node = menu_get_object();
+    // Rearrange the array so that we can use metatag module classes.
+    foreach ($page_metatags as $metatag => $value) {
+      if (isset($value) && !empty($value)) {
+        $target_tag = explode('_', $metatag);
+        if (isset($target_tag[0]) && isset($target_tag[1]) && isset($target_tag[2]) && isset($target_tag[3])) {
+          $metatags[$target_tag[2]] = array('value' => token_replace($value, array('node' => $node)));
+        }
+      }
+    }
+    // Create objects for each metatag so that we get all required information.
+    foreach ($metatags as $metatag => $data) {
+      if ($metatag_instance = metatag_get_instance($metatag, $data)) {
+        $output_metatags[$metatag] = $metatag_instance->getElement($options);
+      }
+    }
+
+    // Merge with metatags provided by other modules.
+    $output = array_merge($output, $output_metatags);
   }
 }
 
